@@ -1,0 +1,8 @@
+{
+  "appId": "com.example.app",
+  "appName": "stufffinder",
+  "webDir": "build",
+  "server": {
+    "androidScheme": "http"
+  }
+}

@@ -1,5 +1,0 @@
-{
-  "extends": "./.svelte-kit/tsconfig.json",
-  "compilerOptions": {},
-  "exclude": ["node_modules"]
-}

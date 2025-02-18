@@ -1,4 +1,3 @@
-```md
 # Frontend Test
 
 ## Installation and Build Steps
@@ -17,5 +16,3 @@
    ```sh
    npx cap sync
    ```
-```
-

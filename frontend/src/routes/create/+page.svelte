@@ -97,67 +97,48 @@
         return enrichedTags;
     }
     let handlePost = async () => {
-        // Reset errors
-        errors.title = '';
-        errors.image = '';
-
-        // Validation
-        if (!title.trim()) {
-            errors.title = 'Title is required.';
-        }
-        if (!imageSrc) {
-            errors.image = 'Image is required.';
-        }
-
-        // Stop submission if there are errors
-        if (errors.title || errors.image) {
-            return;
-        }
-
-        const endPoint = 'https://threef.vercel.app/api/thread/';
+        if (errors.title || errors.image) return;
 
         try {
             const imageUrl = await uploadToSupabase(imageSrc);
-
-            // Fetch labels for qcodes
             const enrichedTags = await enrichTagsWithLabels(tags);
 
-            const tagIds = enrichedTags.map(tag => tag.id);
-            const labelValues = enrichedTags.map(tag => tag.label);
+            const payload = {
+                post: {
+                    title: title,
+                    content: description,
+                    tags: tags.map(t => t.id),
+                    image: imageUrl,
+                    mysteryObject: {
+                        description,
+                        color,
+                        shape,
+                        location,
+                        smell,
+                        taste: smell,
+                        texture,
+                        functionality,
+                        markings: marking,
+                        handmade: false,
+                        oneOfAKind: false,
+                        weight: parseFloat(weight) || 0,
+                        timePeriod: period,
+                    }
+                }
+            };
 
-            let data = new FormData();
-            data.append('title', title);
-            data.append('tags', JSON.stringify(tagIds));
-            data.append('labels', JSON.stringify(labelValues));
-            data.append('imageSrc', imageUrl); 
-            data.append('postedBy', anonymous ? 'Anonymous' : postedBy);
-            data.append('description', description);
-            data.append('material', material);
-            data.append('size', size);
-            data.append('shape', shape);
-            data.append('color', color);
-            data.append('texture', texture);
-            data.append('weight', weight);
-            data.append('smell', smell);
-            data.append('marking', marking);
-            data.append('functionality', functionality);
-            data.append('period', period);
-            data.append('location', location);
-            data.append('resolved', resolved);
-
-            const response = await fetch(endPoint, {
+            const response = await fetch('http://localhost:8080/api/posts/create', {
                 method: 'POST',
-                body: data
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload)
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(JSON.stringify(errorData));
-            }
-
+            if (!response.ok) throw new Error('Failed to create post');
             const responseData = await response.json();
             threadStore.update(prev => [...prev, responseData]);
-            goto(`/`);
+            goto('/');
         } catch (error) {
             console.error('Error:', error);
         }

@@ -20,84 +20,73 @@
   let handleRegister = async () => {
     registerErrors = {};
 
-    const endpoint = `https://threef.vercel.app/api/register/`;
-    const requestOptions = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const payload = {
         username: registerUsername,
+        email: `${registerUsername}@example.com`, // temporary email solution
         password: registerPassword,
-      }),
+        bio: "",
+        profilePictureUrl: "",
+        receiveNotifications: true
     };
 
     try {
-      const response = await fetch(endpoint, requestOptions);
-      const contentType = response.headers.get("content-type");
-      let data;
+        const response = await fetch('http://localhost:8080/api/auth/register', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
 
-      if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
-      } else {
-        const textData = await response.text();
-        throw new Error(`Unexpected response format: ${textData}`);
-      }
+        if (!response.ok) {
+            const data = await response.json();
+            registerErrors = data;
+            throw new Error(data.message || 'Registration failed');
+        }
 
-      if (response.ok) {
         console.log("User registered successfully");
         loginBar = false;
         registerUsername = "";
         registerPassword = "";
-      } else {
-        registerErrors = data;
-        console.error("Error registering user:", data);
-      }
     } catch (error) {
-      console.error("Error registering user:", error);
-      registerErrors = { non_field_errors: ["An unexpected error occurred."] };
+        console.error("Error registering user:", error);
+        registerErrors = { non_field_errors: [error.message || "An unexpected error occurred."] };
     }
   };
 
   let handleLogin = async () => {
     loginErrors = {};
 
-    const endpoint = `https://threef.vercel.app/api/login/`;
-    const requestOptions = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const payload = {
         username: loginUsername,
-        password: loginPassword,
-      }),
+        password: loginPassword
     };
 
     try {
-      const response = await fetch(endpoint, requestOptions);
-      const contentType = response.headers.get("content-type");
-      let data;
+        const response = await fetch('http://localhost:8080/api/auth/login', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
 
-      if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
-      } else {
-        const textData = await response.text();
-        throw new Error(`Unexpected response format: ${textData}`);
-      }
-      if (response.ok) {
+        if (!response.ok) {
+            const data = await response.json();
+            loginErrors = data;
+            throw new Error(data.message || 'Login failed');
+        }
+
+        const data = await response.json();
         console.log("User logged in successfully");
         activeUser.set(loginUsername);
+        // You might want to store the JWT token here if your API returns one
         loginBar = false;
         loginUsername = "";
         loginPassword = "";
-      } else {
-        loginErrors = data;
-        console.error("Error logging in:", data);
-      }
     } catch (error) {
-      console.error("Error logging in:", error);
-      loginErrors = { non_field_errors: ["An unexpected error occurred."] };
+        console.error("Error logging in:", error);
+        loginErrors = { non_field_errors: [error.message || "An unexpected error occurred."] };
     }
   };
 </script>

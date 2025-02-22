@@ -19,29 +19,23 @@
       loadingThreads = true;
       loadingComments = true;
 
-      // Fetch all threads
-      const threadResponse = await fetch(`https://threef.vercel.app/api/thread`);
-      if (!threadResponse.ok) {
-        throw new Error(`HTTP error! status: ${threadResponse.status}`);
-      }
-      const allThreads = await threadResponse.json();
-      threadStore.set(allThreads); // Update threadStore
-      threads = allThreads.filter(thread => thread.postedBy === username);
+      const userResponse = await fetch(`http://localhost:8080/api/auth/${username}`);
+      if (!userResponse.ok) throw new Error('User not found');
+      const userData = await userResponse.json();
+      const userId = userData.id;
 
-      // Fetch all comments
-      const commentResponse = await fetch(`https://threef.vercel.app/api/comment`);
-      if (!commentResponse.ok) {
-        throw new Error(`HTTP error! status: ${commentResponse.status}`);
-      }
-      const allComments = await commentResponse.json();
-      
-      // Get user's direct comments and extract their replies from other comments
-      const directComments = allComments.filter(comment => comment.commentator === username);
-      const repliesFromOthersComments = allComments
-        .flatMap(comment => comment.replies || [])
-        .filter(reply => reply.commentator === username);
-      
-      comments = [...directComments, ...repliesFromOthersComments];
+      // Fetch user's posts
+      const postsResponse = await fetch(`http://localhost:8080/api/auth/${userId}/posts`);
+      if (!postsResponse.ok) throw new Error('Failed to fetch posts');
+      const postsData = await postsResponse.json();
+      threadStore.set(postsData);
+      threads = postsData;
+
+      // Fetch user's comments
+      const commentsResponse = await fetch(`http://localhost:8080/api/auth/${userId}/comments`);
+      if (!commentsResponse.ok) throw new Error('Failed to fetch comments');
+      const commentsData = await commentsResponse.json();
+      comments = commentsData;
 
     } catch (error) {
       console.error("Error fetching data:", error);

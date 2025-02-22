@@ -94,7 +94,6 @@ class JwtRequestFilterTest {
     void doFilterInternal_ExpiredToken_ShouldSetUnauthorizedResponse() throws Exception {
         // Arrange
         String token = "expired-jwt-token";
-        String username = "testuser";
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtUtil.extractUsername(token)).thenThrow(new ExpiredJwtException(null, null, "Token expired"));
@@ -114,7 +113,6 @@ class JwtRequestFilterTest {
     void doFilterInternal_InvalidToken_ShouldSetUnauthorizedResponse() throws Exception {
         // Arrange
         String token = "invalid-jwt-token";
-        String username = "testuser";
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
         when(jwtUtil.extractUsername(token)).thenThrow(new RuntimeException("Invalid token"));

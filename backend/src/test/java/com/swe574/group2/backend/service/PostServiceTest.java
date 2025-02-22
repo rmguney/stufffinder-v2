@@ -215,7 +215,7 @@ class PostServiceTest {
         List<Post> posts = Collections.singletonList(mockPost);
 
         when(postRepository.findByUserId(anyLong())).thenReturn(posts);
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(mockUser));
+        //when(userRepository.findById(anyLong())).thenReturn(Optional.of(mockUser));
         when(postRepository.findTagsByPostId(anyLong())).thenReturn(new HashSet<>());
 
         // Act

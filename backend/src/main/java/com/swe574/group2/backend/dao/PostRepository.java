@@ -7,12 +7,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.List;
 import java.util.Set;
 
-@CrossOrigin(origins = {"http://localhost:4200", "https://swe573-frontend-594781402587.us-central1.run.app"})
 public interface PostRepository  extends JpaRepository<Post, Long> {
     @Query("SELECT DISTINCT new com.swe574.group2.backend.dto.PostListDto(p.id, p.title, p.description, mo.image, p.solved) " +
             "FROM Post p " +

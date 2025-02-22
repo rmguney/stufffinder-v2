@@ -9,5 +9,4 @@ public class Swe574BackendApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(Swe574BackendApplication.class, args);
 	}
-
 }

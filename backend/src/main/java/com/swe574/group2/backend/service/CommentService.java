@@ -9,7 +9,6 @@ import com.swe574.group2.backend.entity.Comment;
 import com.swe574.group2.backend.entity.Post;
 import com.swe574.group2.backend.entity.User;
 import org.springframework.stereotype.Service;
-import org.modelmapper.ModelMapper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,14 +22,12 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-    private final ModelMapper modelMapper;
     private final NotificationService notificationService;
 
-    public CommentService(CommentRepository commentRepository, PostRepository postRepository, UserRepository userRepository, ModelMapper modelMapper, NotificationService notificationService) {
+    public CommentService(CommentRepository commentRepository, PostRepository postRepository, UserRepository userRepository, NotificationService notificationService) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
-        this.modelMapper = modelMapper;
         this.notificationService = notificationService;
     }
 

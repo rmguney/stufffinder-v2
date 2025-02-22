@@ -1,7 +1,6 @@
 package com.swe574.group2.backend.config;
 
 import com.swe574.group2.backend.security.JwtRequestFilter;
-import com.swe574.group2.backend.security.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,9 +22,6 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
 
     @Autowired
     private JwtRequestFilter jwtRequestFilter;
@@ -63,14 +59,16 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "api/posts/getForPostList",
                                 "api/posts/getForPostDetails/**",
-                                "api/comments/get/**").permitAll() // Allow public access to log in, register and see posts & comments
+                                "api/comments/get/**",
+                                "swagger-ui.html",
+                                "v3/api-docs/**",
+                                "/swagger-ui/**").permitAll() // Allow public access to log in, register and see posts & comments
                         .anyRequest().authenticated() // All other requests need authentication
                 )
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
-                .csrf(csrf -> csrf.disable());
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

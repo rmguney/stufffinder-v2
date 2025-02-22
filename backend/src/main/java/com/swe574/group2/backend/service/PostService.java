@@ -209,7 +209,6 @@ public class PostService {
 
     public List<PostListDto> getUserPosts(Long userId) {
         List<Post> posts = postRepository.findByUserId(userId);
-        User currentUser = userRepository.findById(userId).orElseThrow();
 
         return posts.stream()
                 .map(post -> {

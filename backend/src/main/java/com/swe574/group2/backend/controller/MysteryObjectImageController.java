@@ -10,7 +10,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/mysteryObjects")
-@CrossOrigin(origins = {"http://localhost:4200", "https://swe573-frontend-594781402587.us-central1.run.app"})
 public class MysteryObjectImageController {
 
     private final MysteryObjectRepository mysteryObjectRepository;

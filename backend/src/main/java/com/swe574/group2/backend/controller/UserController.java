@@ -7,7 +7,6 @@ import com.swe574.group2.backend.dao.UserRepository;
 import com.swe574.group2.backend.security.JwtUtil;
 import com.swe574.group2.backend.service.CommentService;
 import com.swe574.group2.backend.service.PostService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,7 +21,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = {"http://localhost:4200", "https://swe573-frontend-594781402587.us-central1.run.app"})
 public class UserController {
 
     private final UserRepository userRepository;
@@ -32,7 +30,6 @@ public class UserController {
     private final PostService postService;
     private final CommentService commentService;
 
-    @Autowired
     public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtil jwtUtil, PostService postService, CommentService commentService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;

@@ -25,9 +25,6 @@ import java.util.List;
 public class SecurityConfig {
 
     @Autowired
-    private CustomUserDetailsService userDetailsService;
-
-    @Autowired
     private JwtRequestFilter jwtRequestFilter;
 
     @Bean
@@ -63,14 +60,16 @@ public class SecurityConfig {
                                 "/api/auth/login",
                                 "api/posts/getForPostList",
                                 "api/posts/getForPostDetails/**",
-                                "api/comments/get/**").permitAll() // Allow public access to log in, register and see posts & comments
+                                "api/comments/get/**",
+                                "swagger-ui.html",
+                                "v3/api-docs/**",
+                                "/swagger-ui/**").permitAll() // Allow public access to log in, register and see posts & comments
                         .anyRequest().authenticated() // All other requests need authentication
                 )
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
-                .csrf(csrf -> csrf.disable());
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

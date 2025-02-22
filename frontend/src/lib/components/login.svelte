@@ -20,73 +20,83 @@
   let handleRegister = async () => {
     registerErrors = {};
 
+    // Validate required fields
+    if (!registerUsername || !registerPassword) {
+      registerErrors = { message: "Username and password are required" };
+      return;
+    }
+
     const payload = {
-        username: registerUsername,
-        email: `${registerUsername}@example.com`, // temporary email solution
-        password: registerPassword,
-        bio: "",
-        profilePictureUrl: "",
-        receiveNotifications: true
+      username: registerUsername,
+      email: `${registerUsername}@example.com`,
+      password: registerPassword
     };
 
     try {
-        const response = await fetch('http://localhost:8080/api/auth/register', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-        });
+      const response = await fetch('http://localhost:8080/api/auth/register', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-        if (!response.ok) {
-            const data = await response.json();
-            registerErrors = data;
-            throw new Error(data.message || 'Registration failed');
-        }
+      const data = await response.json();
 
-        console.log("User registered successfully");
-        loginBar = false;
-        registerUsername = "";
-        registerPassword = "";
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      // Success - try to log in automatically
+      await handleLogin(registerUsername, registerPassword);
+      loginBar = false;
+      registerUsername = "";
+      registerPassword = "";
+      
     } catch (error) {
-        console.error("Error registering user:", error);
-        registerErrors = { non_field_errors: [error.message || "An unexpected error occurred."] };
+      console.error("Error registering user:", error);
+      registerErrors = { message: error.message || "Registration failed" };
     }
   };
 
-  let handleLogin = async () => {
+  let handleLogin = async (username = loginUsername, password = loginPassword) => {
     loginErrors = {};
 
+    // Validate required fields
+    if (!username || !password) {
+      loginErrors = { message: "Username and password are required" };
+      return;
+    }
+
     const payload = {
-        username: loginUsername,
-        password: loginPassword
+      username: username,
+      password: password
     };
 
     try {
-        const response = await fetch('http://localhost:8080/api/auth/login', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-        });
+      const response = await fetch('http://localhost:8080/api/auth/login', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-        if (!response.ok) {
-            const data = await response.json();
-            loginErrors = data;
-            throw new Error(data.message || 'Login failed');
-        }
+      const data = await response.json();
 
-        const data = await response.json();
-        console.log("User logged in successfully");
-        activeUser.set(loginUsername);
-        // You might want to store the JWT token here if your API returns one
-        loginBar = false;
-        loginUsername = "";
-        loginPassword = "";
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Store user data
+      activeUser.set(username);
+      loginBar = false;
+      loginUsername = "";
+      loginPassword = "";
+      
     } catch (error) {
-        console.error("Error logging in:", error);
-        loginErrors = { non_field_errors: [error.message || "An unexpected error occurred."] };
+      console.error("Error logging in:", error);
+      loginErrors = { message: error.message || "Login failed" };
     }
   };
 </script>
@@ -129,8 +139,8 @@
                 {/if}
 <!--                 <small><a href="/" class="hover:text-rose-900">Forgot your password?</a></small>
  -->              </div>
-              {#if loginErrors.non_field_errors}
-                <p class="text-red-500 text-sm">{loginErrors.non_field_errors[0]}</p>
+              {#if loginErrors.message}
+                <p class="text-red-500 text-sm">{loginErrors.message}</p>
               {/if}
             </Card.Content>
             <Card.Footer>
@@ -161,8 +171,8 @@
                   <p class="text-red-500 text-sm">{registerErrors.password}</p>
                 {/if}
               </div>
-              {#if registerErrors.non_field_errors}
-                <p class="text-red-500 text-sm">{registerErrors.non_field_errors[0]}</p>
+              {#if registerErrors.message}
+                <p class="text-red-500 text-sm">{registerErrors.message}</p>
               {/if}
             </Card.Content>
             <Card.Footer>

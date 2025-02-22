@@ -19,6 +19,7 @@
 
   let handleRegister = async () => {
     registerErrors = {};
+    console.log('Starting registration with username:', registerUsername);
 
     // Validate required fields
     if (!registerUsername || !registerPassword) {
@@ -33,6 +34,7 @@
     };
 
     try {
+      //console.log('Sending registration request:', payload);
       const response = await fetch('http://localhost:8080/api/auth/register', {
         method: "POST",
         headers: {
@@ -41,21 +43,35 @@
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      //console.log('Response status:', response.status);
+      //console.log('Response headers:', Object.fromEntries(response.headers));
+
+      let data;
+      try {
+        const rawText = await response.text();
+        //console.log('Raw response:', rawText);
+        data = rawText ? JSON.parse(rawText) : {};
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        data = { message: 'Invalid server response' };
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+        throw new Error(data.message || `Registration failed with status ${response.status}`);
       }
 
       // Success - try to log in automatically
-      await handleLogin(registerUsername, registerPassword);
+      console.log('Registration successful, attempting login');
+      await handleLogin(`${registerUsername}@example.com`, registerPassword);
       loginBar = false;
       registerUsername = "";
       registerPassword = "";
       
     } catch (error) {
       console.error("Error registering user:", error);
-      registerErrors = { message: error.message || "Registration failed" };
+      registerErrors = { 
+        message: error.message || "Registration failed. Please try again later." 
+      };
     }
   };
 
@@ -69,7 +85,7 @@
     }
 
     const payload = {
-      username: username,
+      email: `${username}@example.com`,
       password: password
     };
 
@@ -86,6 +102,11 @@
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
+      }
+
+      // Save auth token to localStorage
+      if (data.token) {
+        localStorage.setItem('tokenKey', data.token);
       }
 
       // Store user data
@@ -144,7 +165,7 @@
               {/if}
             </Card.Content>
             <Card.Footer>
-              <Button class="hover:bg-rose-900" on:click={handleLogin}>Login</Button>
+              <Button class="hover:bg-rose-900" on:click={() => handleLogin()}>Login</Button>
             </Card.Footer>
           </Card.Root>
         </Tabs.Content>

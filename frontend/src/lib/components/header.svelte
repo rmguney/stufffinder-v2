@@ -150,6 +150,7 @@
 
   function handleLogout() {
       activeUser.set(null);
+      localStorage.clear();
       goto("/");
   }
 

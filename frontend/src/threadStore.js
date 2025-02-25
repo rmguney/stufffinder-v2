@@ -29,13 +29,30 @@ if (isClient) {
     });
 }
 
-// Update vote count for a thread
-export function updateThreadVote(threadId, newVoteCount) {
-    threadStore.update((threads) =>
-        threads.map((thread) =>
-            thread.id === threadId ? { ...thread, voteCount: newVoteCount } : thread
-        )
-    );
+// Update vote count for a thread (replace with new upvote/downvote endpoints)
+export async function updateThreadVote(threadId, isUpvote) {
+    const endpoint = `http://localhost:8080/api/posts/${isUpvote ? 'upvote' : 'downvote'}/${threadId}`;
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!response.ok) throw new Error('Vote update failed');
+        const data = await response.json();
+        threadStore.update(threads =>
+            threads.map(thread =>
+                thread.id === threadId ? { 
+                    ...thread, 
+                    upvotes: data.upvotes,
+                    downvotes: data.downvotes
+                } : thread
+            )
+        );
+    } catch (error) {
+        console.error('Error updating vote:', error);
+    }
 }
 
 // Add a comment to a thread

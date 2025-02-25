@@ -1,1 +1,0 @@
-import{w as r}from"./index.uwkupACH.js";const e="threadStoreData",o=typeof window<"u",a=()=>{if(!o)return[];const t=localStorage.getItem(e);return t?JSON.parse(t):[]},s=t=>{o&&localStorage.setItem(e,JSON.stringify(t))},n=r(a());o&&n.subscribe(t=>{s(t)});export{n as t};

@@ -5,14 +5,14 @@
 
   onMount(async function () {
   try {
-    const response = await fetch(`https://threef.vercel.app/api/thread`);
+    const response = await fetch('http://localhost:8080/api/posts/getForPostList?page=0&size=100');
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json(); 
-    threadStore.set(data); 
+    threadStore.set(data.content); // API returns PagedModelPostListDto
   } catch (error) {
     console.error("Error fetching data:", error);
   }

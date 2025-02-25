@@ -19,85 +19,105 @@
 
   let handleRegister = async () => {
     registerErrors = {};
+    console.log('Starting registration with username:', registerUsername);
 
-    const endpoint = `https://threef.vercel.app/api/register/`;
-    const requestOptions = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: registerUsername,
-        password: registerPassword,
-      }),
+    // Validate required fields
+    if (!registerUsername || !registerPassword) {
+      registerErrors = { message: "Username and password are required" };
+      return;
+    }
+
+    const payload = {
+      username: registerUsername,
+      email: `${registerUsername}@example.com`,
+      password: registerPassword
     };
 
     try {
-      const response = await fetch(endpoint, requestOptions);
-      const contentType = response.headers.get("content-type");
+      //console.log('Sending registration request:', payload);
+      const response = await fetch('http://localhost:8080/api/auth/register', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      //console.log('Response status:', response.status);
+      //console.log('Response headers:', Object.fromEntries(response.headers));
+
       let data;
-
-      if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
-      } else {
-        const textData = await response.text();
-        throw new Error(`Unexpected response format: ${textData}`);
+      try {
+        const rawText = await response.text();
+        //console.log('Raw response:', rawText);
+        data = rawText ? JSON.parse(rawText) : {};
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError);
+        data = { message: 'Invalid server response' };
       }
 
-      if (response.ok) {
-        console.log("User registered successfully");
-        loginBar = false;
-        registerUsername = "";
-        registerPassword = "";
-      } else {
-        registerErrors = data;
-        console.error("Error registering user:", data);
+      if (!response.ok) {
+        throw new Error(data.message || `Registration failed with status ${response.status}`);
       }
+
+      // Success - try to log in automatically
+      console.log('Registration successful, attempting login');
+      await handleLogin(`${registerUsername}@example.com`, registerPassword);
+      loginBar = false;
+      registerUsername = "";
+      registerPassword = "";
+      
     } catch (error) {
       console.error("Error registering user:", error);
-      registerErrors = { non_field_errors: ["An unexpected error occurred."] };
+      registerErrors = { 
+        message: error.message || "Registration failed. Please try again later." 
+      };
     }
   };
 
-  let handleLogin = async () => {
+  let handleLogin = async (username = loginUsername, password = loginPassword) => {
     loginErrors = {};
 
-    const endpoint = `https://threef.vercel.app/api/login/`;
-    const requestOptions = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: loginUsername,
-        password: loginPassword,
-      }),
+    // Validate required fields
+    if (!username || !password) {
+      loginErrors = { message: "Username and password are required" };
+      return;
+    }
+
+    const payload = {
+      email: `${username}@example.com`,
+      password: password
     };
 
     try {
-      const response = await fetch(endpoint, requestOptions);
-      const contentType = response.headers.get("content-type");
-      let data;
+      const response = await fetch('http://localhost:8080/api/auth/login', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-      if (contentType && contentType.includes("application/json")) {
-        data = await response.json();
-      } else {
-        const textData = await response.text();
-        throw new Error(`Unexpected response format: ${textData}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
       }
-      if (response.ok) {
-        console.log("User logged in successfully");
-        activeUser.set(loginUsername);
-        loginBar = false;
-        loginUsername = "";
-        loginPassword = "";
-      } else {
-        loginErrors = data;
-        console.error("Error logging in:", data);
+
+      // Save auth token to localStorage
+      if (data.token) {
+        localStorage.setItem('tokenKey', data.token);
       }
+
+      // Store user data
+      activeUser.set(username);
+      loginBar = false;
+      loginUsername = "";
+      loginPassword = "";
+      
     } catch (error) {
       console.error("Error logging in:", error);
-      loginErrors = { non_field_errors: ["An unexpected error occurred."] };
+      loginErrors = { message: error.message || "Login failed" };
     }
   };
 </script>
@@ -140,12 +160,12 @@
                 {/if}
 <!--                 <small><a href="/" class="hover:text-rose-900">Forgot your password?</a></small>
  -->              </div>
-              {#if loginErrors.non_field_errors}
-                <p class="text-red-500 text-sm">{loginErrors.non_field_errors[0]}</p>
+              {#if loginErrors.message}
+                <p class="text-red-500 text-sm">{loginErrors.message}</p>
               {/if}
             </Card.Content>
             <Card.Footer>
-              <Button class="hover:bg-rose-900" on:click={handleLogin}>Login</Button>
+              <Button class="hover:bg-rose-900" on:click={() => handleLogin()}>Login</Button>
             </Card.Footer>
           </Card.Root>
         </Tabs.Content>
@@ -172,8 +192,8 @@
                   <p class="text-red-500 text-sm">{registerErrors.password}</p>
                 {/if}
               </div>
-              {#if registerErrors.non_field_errors}
-                <p class="text-red-500 text-sm">{registerErrors.non_field_errors[0]}</p>
+              {#if registerErrors.message}
+                <p class="text-red-500 text-sm">{registerErrors.message}</p>
               {/if}
             </Card.Content>
             <Card.Footer>

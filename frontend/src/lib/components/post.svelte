@@ -57,21 +57,16 @@
   const toggleResolved = async () => {
     if (currentUser !== postedBy) return;
     try {
-        const response = await fetch(`https://threef.vercel.app/api/threads/${id}/updateResolved`, {
-            method: "PATCH",
+        const response = await fetch(`http://localhost:8080/api/posts/${id}/markSolved`, {
+            method: "PUT",
             headers: {
                 "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ resolved: !resolved }),
+            }
         });
 
-        if (!response.ok) {
-            console.error("Failed to toggle resolved status");
-            return;
-        }
-
+        if (!response.ok) throw new Error('Failed to toggle resolved status');
         const data = await response.json();
-        resolved = data.resolved; 
+        resolved = data.solved;
     } catch (error) {
         console.error("Error toggling resolved status:", error);
     }

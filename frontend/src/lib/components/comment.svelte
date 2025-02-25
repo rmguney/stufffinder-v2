@@ -35,56 +35,55 @@
   const addReply = async () => {
     if (!replyText.trim()) return;
 
-    const endpoint = `https://threef.vercel.app/api/comments/${commentId}/add-reply/`;
     const payload = {
-      comment: replyText,
-      commentator: currentUser || "Anonymous",
+        content: replyText,
+        postId: thread.id,
+        parentCommentId: commentId
     };
 
     try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+        const response = await fetch('http://localhost:8080/api/comments/create', {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
 
-      if (!response.ok) {
-        console.error("Failed to add reply");
-        return;
-      }
+        if (!response.ok) {
+            console.error("Failed to add reply");
+            return;
+        }
 
-      const newReply = await response.json();
+        const newReply = await response.json();
+        
+        // Update local store
+        threadStore.update(threads =>
+            threads.map(thread => ({
+                ...thread,
+                comments: thread.comments.map(c =>
+                    c.id === commentId
+                        ? {
+                            ...c,
+                            replies: [...(c.replies || []), {
+                                id: newReply.id,
+                                content: newReply.content,
+                                author: newReply.author,
+                                createdAt: newReply.createdAt,
+                                upvotes: newReply.upvotes,
+                                downvotes: newReply.downvotes,
+                                bestAnswer: newReply.bestAnswer
+                            }]
+                        }
+                        : c
+                )
+            }))
+        );
 
-      // Update local store for nesting
-      threadStore.update((threads) =>
-        threads.map((thread) => ({
-          ...thread,
-          comments: thread.comments.map((c) =>
-            c.id === commentId
-              ? { ...c, replies: [...(c.replies || []), newReply] }
-              : {
-                  ...c,
-                  replies: c.replies
-                    ? c.replies.map((subReply) =>
-                        subReply.id === commentId
-                          ? {
-                              ...subReply,
-                              replies: [...(subReply.replies || []), newReply],
-                            }
-                          : subReply
-                      )
-                    : [],
-                }
-          ),
-        }))
-      );
-
-      replyText = "";
-      replyInputVisible = false;
+        replyText = "";
+        replyInputVisible = false;
     } catch (error) {
-      console.error("Error adding reply:", error);
+        console.error("Error adding reply:", error);
     }
   };
 
@@ -110,9 +109,9 @@
   const toggleHelpful = async () => {
     try {
       const response = await fetch(
-        `https://threef.vercel.app/api/comments/${commentId}/toggle-selected/`,
+        `http://localhost:8080/api/posts/${thread.id}/markBestAnswer/${commentId}`,
         {
-          method: "PATCH",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
@@ -125,7 +124,7 @@
       }
 
       const data = await response.json();
-      selected = data.selected; // Update the local "selected" state
+      selected = data.bestAnswer; // Update the local "selected" state
     } catch (error) {
       console.error("Error toggling helpful status:", error);
     }

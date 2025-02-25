@@ -175,7 +175,7 @@ public class PostService {
         Page<Post> postsPage = postRepository.searchPosts(keyword, pageable);
         return postsPage.map(post -> {
             Set<String> tags = postRepository.findTagsByPostId(post.getId());
-            PostListDto postListDto = new PostListDto(post.getId(), post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
+            PostListDto postListDto = new PostListDto(post.getId(), post.getUser().getUsername(),post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
             postListDto.setTags(tags);
             return postListDto;
         });
@@ -183,7 +183,7 @@ public class PostService {
 
     private void mapPostToDto(Post post, Set<String> tags, PostDetailsDto postDetailsDto, User currentUser) {
         postDetailsDto.setId(post.getId());
-        postDetailsDto.setAuthor(post.getUser().getEmail());
+        postDetailsDto.setAuthor(post.getUser().getUsername());
         postDetailsDto.setTitle(post.getTitle());
         postDetailsDto.setDescription(post.getDescription());
         postDetailsDto.setTags(tags);
@@ -213,7 +213,7 @@ public class PostService {
         return posts.stream()
                 .map(post -> {
                     Set<String> tags = postRepository.findTagsByPostId(post.getId());
-                    PostListDto postListDto = new PostListDto(post.getId(), post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
+                    PostListDto postListDto = new PostListDto(post.getId(), post.getUser().getUsername(), post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
                     postListDto.setTags(tags);
                     return postListDto;
                 })

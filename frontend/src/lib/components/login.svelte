@@ -122,7 +122,13 @@
   };
 </script>
 
-<Button class="lg:px-12 hover:bg-rose-900" on:click={() => (loginBar = !loginBar)}>Sign In</Button>
+<Button 
+    variant="ghost"
+    class="text-sm font-medium hover:bg-rose-900 hover:text-white" 
+    on:click={() => (loginBar = !loginBar)}
+>
+    Sign In
+</Button>
 
 <Sheet.Root bind:open={loginBar}>
   <Sheet.Overlay />

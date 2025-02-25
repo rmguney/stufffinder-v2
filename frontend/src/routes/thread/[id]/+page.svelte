@@ -4,7 +4,7 @@
   import * as Card from "$lib/components/ui/card";
   import Post from '$lib/components/post.svelte';
   import Comment from '$lib/components/comment.svelte';
-  import { threadStore } from '../../../threadStore';
+  import { threadStore, updateThread } from '../../../threadStore';
   import { activeUser } from '../../../userStore';
   import { onMount } from 'svelte';
 
@@ -18,7 +18,55 @@
         const response = await fetch(`http://localhost:8080/api/posts/getForPostDetails/${data.id}`);
         if (!response.ok) throw new Error('Failed to fetch post details');
         const postData = await response.json();
-        threadStore.update(prev => [...prev, postData]);
+        console.log('Raw API response:', postData);
+        
+        // Use the new updateThread function instead of directly updating store
+        updateThread({
+            ...postData,
+            mysteryObject: postData.mysteryObject ? {
+                // Match exact field names from PostDetailsDto and MysteryObject schema
+                description: postData.mysteryObject.description,
+                writtenText: postData.mysteryObject.writtenText,
+                color: postData.mysteryObject.color,
+                shape: postData.mysteryObject.shape,
+                descriptionOfParts: postData.mysteryObject.descriptionOfParts,
+                location: postData.mysteryObject.location,
+                hardness: postData.mysteryObject.hardness,
+                timePeriod: postData.mysteryObject.timePeriod,
+                smell: postData.mysteryObject.smell,
+                taste: postData.mysteryObject.taste,
+                texture: postData.mysteryObject.texture,
+                value: postData.mysteryObject.value,
+                originOfAcquisition: postData.mysteryObject.originOfAcquisition,
+                pattern: postData.mysteryObject.pattern,
+                brand: postData.mysteryObject.brand,
+                print: postData.mysteryObject.print,
+                functionality: postData.mysteryObject.functionality,
+                imageLicenses: postData.mysteryObject.imageLicenses,
+                markings: postData.mysteryObject.markings,
+                handmade: postData.mysteryObject.handmade,
+                oneOfAKind: postData.mysteryObject.oneOfAKind,
+                sizeX: postData.mysteryObject.sizeX,
+                sizeY: postData.mysteryObject.sizeY,
+                sizeZ: postData.mysteryObject.sizeZ,
+                weight: postData.mysteryObject.weight,
+                item_condition: postData.mysteryObject.item_condition
+            } : null,
+            // Other PostDetailsDto fields
+            title: postData.title,
+            description: postData.description,
+            tags: postData.tags || [],
+            author: postData.author,
+            createdAt: postData.createdAt,
+            updatedAt: postData.updatedAt,
+            upvotes: postData.upvotes,
+            downvotes: postData.downvotes,
+            userUpvoted: postData.userUpvoted,
+            userDownvoted: postData.userDownvoted,
+            solved: postData.solved
+        });
+
+        console.log('Updated thread store:', $threadStore);
         
         const commentsResponse = await fetch(`http://localhost:8080/api/comments/get/${data.id}`);
         if (!commentsResponse.ok) throw new Error('Failed to fetch comments');
@@ -88,31 +136,37 @@
   };
 
   $: thread = $threadStore.find(thread => thread.id == data.id);
+
+  $: {
+    if (thread) {
+      console.log('Current thread data:', thread);
+      console.log('Mystery object in thread:', thread.mysteryObject);
+    }
+  }
 </script>
 
 <div class="flex flex-col items-center bg-change dark:bg-dark shifting p-4 lg:p-8">
   <div class="w-full lg:w-2/3">
-    <Post 
-      id={data.id}
-      title={thread.title}
-      description={thread.description}
-      tags={thread.tags}
-      imageSrc={thread.imageSrc}
-      postedBy={thread.postedBy}
-      postedDate={thread.postedDate}
-      material={thread.material}
-      size={thread.size}
-      shape={thread.shape}
-      color={thread.color}
-      texture={thread.texture}
-      weight={thread.weight}
-      smell={thread.smell}
-      functionality={thread.functionality}
-      period={thread.period}
-      location={thread.location}
-      variant="thread"
-      resolved={thread.resolved}
-    />
+    {#if thread}
+      <Post 
+        id={data.id}
+        title={thread.title}
+        description={thread.description}
+        tags={thread.tags}
+        mysteryObject={thread.mysteryObject}
+        imageSrc={thread.mysteryObjectImage ? `data:image/png;base64,${thread.mysteryObjectImage}` : ''}
+        postedBy={thread.author}
+        postedDate={thread.createdAt}
+        upvotes={thread.upvotes}
+        downvotes={thread.downvotes}
+        userUpvoted={thread.userUpvoted}
+        userDownvoted={thread.userDownvoted}
+        createdAt={thread.createdAt}
+        updatedAt={thread.updatedAt}
+        solved={thread.solved}
+        variant="thread"
+      />
+    {/if}
     
     {#if $activeUser}
     <Card.Root class="bg-opacity-90 hover:bg-opacity-100 p-4 mt-4 flex flex-row justify-center items-center">

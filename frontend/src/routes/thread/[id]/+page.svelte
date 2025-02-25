@@ -4,7 +4,7 @@
   import * as Card from "$lib/components/ui/card";
   import Post from '$lib/components/post.svelte';
   import Comment from '$lib/components/comment.svelte';
-  import { threadStore } from '../../../threadStore';
+  import { threadStore, updateThread } from '../../../threadStore';
   import { activeUser } from '../../../userStore';
   import { onMount } from 'svelte';
 
@@ -19,15 +19,42 @@
         if (!response.ok) throw new Error('Failed to fetch post details');
         const postData = await response.json();
         console.log('Raw API response:', postData);
-        console.log('MysteryObject data:', postData.mysteryObject);
-        console.log('Description:', postData.description);
         
-        // Update thread store with the complete post details
-        threadStore.update(prev => [...prev, {
+        // Use the new updateThread function instead of directly updating store
+        updateThread({
             ...postData,
+            mysteryObject: postData.mysteryObject ? {
+                // Match exact field names from PostDetailsDto and MysteryObject schema
+                description: postData.mysteryObject.description,
+                writtenText: postData.mysteryObject.writtenText,
+                color: postData.mysteryObject.color,
+                shape: postData.mysteryObject.shape,
+                descriptionOfParts: postData.mysteryObject.descriptionOfParts,
+                location: postData.mysteryObject.location,
+                hardness: postData.mysteryObject.hardness,
+                timePeriod: postData.mysteryObject.timePeriod,
+                smell: postData.mysteryObject.smell,
+                taste: postData.mysteryObject.taste,
+                texture: postData.mysteryObject.texture,
+                value: postData.mysteryObject.value,
+                originOfAcquisition: postData.mysteryObject.originOfAcquisition,
+                pattern: postData.mysteryObject.pattern,
+                brand: postData.mysteryObject.brand,
+                print: postData.mysteryObject.print,
+                functionality: postData.mysteryObject.functionality,
+                imageLicenses: postData.mysteryObject.imageLicenses,
+                markings: postData.mysteryObject.markings,
+                handmade: postData.mysteryObject.handmade,
+                oneOfAKind: postData.mysteryObject.oneOfAKind,
+                sizeX: postData.mysteryObject.sizeX,
+                sizeY: postData.mysteryObject.sizeY,
+                sizeZ: postData.mysteryObject.sizeZ,
+                weight: postData.mysteryObject.weight,
+                item_condition: postData.mysteryObject.item_condition
+            } : null,
+            // Other PostDetailsDto fields
             title: postData.title,
             description: postData.description,
-            mysteryObject: postData.mysteryObject,
             tags: postData.tags || [],
             author: postData.author,
             createdAt: postData.createdAt,
@@ -37,8 +64,8 @@
             userUpvoted: postData.userUpvoted,
             userDownvoted: postData.userDownvoted,
             solved: postData.solved
-        }]);
-        
+        });
+
         console.log('Updated thread store:', $threadStore);
         
         const commentsResponse = await fetch(`http://localhost:8080/api/comments/get/${data.id}`);

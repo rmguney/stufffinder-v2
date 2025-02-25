@@ -13,35 +13,7 @@
   export let imageSrc = '';
   export let solved = false;
   export let variant = "thumb";
-  export let mysteryObject = {
-    description: '',
-    material: '',
-    shape: '',
-    color: '',
-    texture: '',
-    markings: '',
-    smell: '',
-    taste: '',
-    functionality: '',
-    timePeriod: '',
-    location: '',
-    brand: '',
-    writtenText: '',
-    descriptionOfParts: '',
-    hardness: '',
-    value: null,
-    originOfAcquisition: '',
-    pattern: '',
-    print: '',
-    imageLicenses: '',
-    item_condition: '',
-    sizeX: null,
-    sizeY: null,
-    sizeZ: null,
-    weight: null,
-    handmade: false,
-    oneOfAKind: false
-  };
+  export let mysteryObject = null;  // Changed from object with defaults to null
   export let postedBy = '';
   export let postedDate = '';
   export let upvotes = 0;
@@ -264,23 +236,16 @@ function handleImageError(event) {
           <div class="flex flex-col">
             <ul>
               {#if mysteryObject.description}<li class="mt-2"><span class="font-semibold text-md">Description:</span> {mysteryObject.description}</li>{/if}
-              {#if mysteryObject.material}<li class="mt-2"><span class="font-semibold text-md">Material:</span> {mysteryObject.material}</li>{/if}
-              {#if mysteryObject.sizeX || mysteryObject.sizeY || mysteryObject.sizeZ}
-                <li class="mt-2"><span class="font-semibold text-md">Dimensions:</span> {mysteryObject.sizeX}x{mysteryObject.sizeY}x{mysteryObject.sizeZ} cm</li>
-              {/if}
-              {#if mysteryObject.weight}<li class="mt-2"><span class="font-semibold text-md">Weight:</span> {mysteryObject.weight}g</li>{/if}
-              {#if mysteryObject.shape}<li class="mt-2"><span class="font-semibold text-md">Shape:</span> {mysteryObject.shape}</li>{/if}
+              {#if mysteryObject.writtenText}<li class="mt-2"><span class="font-semibold text-md">Written Text:</span> {mysteryObject.writtenText}</li>{/if}
               {#if mysteryObject.color}<li class="mt-2"><span class="font-semibold text-md">Color:</span> {mysteryObject.color}</li>{/if}
-              {#if mysteryObject.texture}<li class="mt-2"><span class="font-semibold text-md">Texture:</span> {mysteryObject.texture}</li>{/if}
+              {#if mysteryObject.shape}<li class="mt-2"><span class="font-semibold text-md">Shape:</span> {mysteryObject.shape}</li>{/if}
+              {#if mysteryObject.descriptionOfParts}<li class="mt-2"><span class="font-semibold text-md">Parts Description:</span> {mysteryObject.descriptionOfParts}</li>{/if}
+              {#if mysteryObject.location}<li class="mt-2"><span class="font-semibold text-md">Location:</span> {mysteryObject.location}</li>{/if}
+              {#if mysteryObject.hardness}<li class="mt-2"><span class="font-semibold text-md">Hardness:</span> {mysteryObject.hardness}</li>{/if}
+              {#if mysteryObject.timePeriod}<li class="mt-2"><span class="font-semibold text-md">Time Period:</span> {mysteryObject.timePeriod}</li>{/if}
               {#if mysteryObject.smell}<li class="mt-2"><span class="font-semibold text-md">Smell:</span> {mysteryObject.smell}</li>{/if}
               {#if mysteryObject.taste}<li class="mt-2"><span class="font-semibold text-md">Taste:</span> {mysteryObject.taste}</li>{/if}
-              {#if mysteryObject.markings}<li class="mt-2"><span class="font-semibold text-md">Markings:</span> {mysteryObject.markings}</li>{/if}
-              {#if mysteryObject.functionality}<li class="mt-2"><span class="font-semibold text-md">Functionality:</span> {mysteryObject.functionality}</li>{/if}
-              {#if mysteryObject.timePeriod}<li class="mt-2"><span class="font-semibold text-md">Period:</span> {mysteryObject.timePeriod}</li>{/if}
-              {#if mysteryObject.location}<li class="mt-2"><span class="font-semibold text-md">Location:</span> {mysteryObject.location}</li>{/if}
-              {#if mysteryObject.writtenText}<li class="mt-2"><span class="font-semibold text-md">Written Text:</span> {mysteryObject.writtenText}</li>{/if}
-              {#if mysteryObject.descriptionOfParts}<li class="mt-2"><span class="font-semibold text-md">Parts Description:</span> {mysteryObject.descriptionOfParts}</li>{/if}
-              {#if mysteryObject.hardness}<li class="mt-2"><span class="font-semibold text-md">Hardness:</span> {mysteryObject.hardness}</li>{/if}
+              {#if mysteryObject.texture}<li class="mt-2"><span class="font-semibold text-md">Texture:</span> {mysteryObject.texture}</li>{/if}
               {#if mysteryObject.value}<li class="mt-2"><span class="font-semibold text-md">Value:</span> ${mysteryObject.value}</li>{/if}
               {#if mysteryObject.originOfAcquisition}<li class="mt-2"><span class="font-semibold text-md">Origin:</span> {mysteryObject.originOfAcquisition}</li>{/if}
               {#if mysteryObject.pattern}<li class="mt-2"><span class="font-semibold text-md">Pattern:</span> {mysteryObject.pattern}</li>{/if}
@@ -290,6 +255,10 @@ function handleImageError(event) {
               {#if mysteryObject.handmade}<li class="mt-2"><span class="font-semibold text-md">Handmade:</span> Yes</li>{/if}
               {#if mysteryObject.oneOfAKind}<li class="mt-2"><span class="font-semibold text-md">One of a Kind:</span> Yes</li>{/if}
               {#if mysteryObject.item_condition}<li class="mt-2"><span class="font-semibold text-md">Condition:</span> {mysteryObject.item_condition}</li>{/if}
+              {#if mysteryObject.sizeX || mysteryObject.sizeY || mysteryObject.sizeZ}
+                <li class="mt-2"><span class="font-semibold text-md">Dimensions:</span> {mysteryObject.sizeX}x{mysteryObject.sizeY}x{mysteryObject.sizeZ} cm</li>
+              {/if}
+              {#if mysteryObject.weight}<li class="mt-2"><span class="font-semibold text-md">Weight:</span> {mysteryObject.weight}g</li>{/if}
             </ul>
           </div>
         {/if}

@@ -9,6 +9,7 @@
   import Login from "$lib/components/login.svelte";
   import { activeUser } from "../../userStore";
   import * as Popover from "$lib/components/ui/popover/index.js";
+  import { goto } from "$app/navigation";
 
   let navbar = false;
   let loginBar = false;
@@ -144,6 +145,35 @@
 
   // Fetch threads on component mount
   fetchAllThreads();
+
+  let menuOpen = false;
+
+  function handleLogout() {
+      activeUser.set(null);
+      localStorage.clear();
+      goto("/");
+  }
+
+  async function getNotifications() {
+      try {
+          // First get user ID from username
+          const userResponse = await fetch(`http://localhost:8080/api/auth/${$activeUser}`);
+          if (!userResponse.ok) throw new Error('Failed to fetch user');
+          const userData = await userResponse.json();
+          
+          // Then fetch notifications for that user
+          const notifResponse = await fetch(`http://localhost:8080/api/notifications/${userData.id}`);
+          if (!notifResponse.ok) throw new Error('Failed to fetch notifications');
+          const notifications = await notifResponse.json();
+          
+          // Handle notifications as needed
+          console.log(notifications);
+          return notifications;
+      } catch (error) {
+          console.error('Error fetching notifications:', error);
+          return [];
+      }
+  }
 </script>
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
@@ -255,7 +285,7 @@
     {#if $activeUser}
       <span class="lg:mr-0 -mr-3">Welcome <a href={`/user/${$activeUser}`}
         class="text-rose-900 hover:underline font-bold">{$activeUser}!</a></span>
-      <Button class="lg:px-12 transition-all hover:bg-rose-900" on:click={() => activeUser.set(null)}>
+      <Button class="lg:px-12 transition-all hover:bg-rose-900" on:click={handleLogout}>
         Logout
       </Button>
     {:else}

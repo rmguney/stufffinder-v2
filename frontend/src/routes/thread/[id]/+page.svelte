@@ -6,11 +6,31 @@
   import Comment from '$lib/components/comment.svelte';
   import { threadStore } from '../../../threadStore';
   import { activeUser } from '../../../userStore';
+  import { onMount } from 'svelte';
 
   export let data;
   let comment = '';
 
   $: commentator = $activeUser || 'Anonymous';
+
+  onMount(async () => {
+    try {
+        const response = await fetch(`http://localhost:8080/api/posts/getForPostDetails/${data.id}`);
+        if (!response.ok) throw new Error('Failed to fetch post details');
+        const postData = await response.json();
+        threadStore.update(prev => [...prev, postData]);
+        
+        const commentsResponse = await fetch(`http://localhost:8080/api/comments/get/${data.id}`);
+        if (!commentsResponse.ok) throw new Error('Failed to fetch comments');
+        const commentsData = await commentsResponse.json();
+        // Update thread store with comments
+        threadStore.update(prev => 
+            prev.map(t => t.id === data.id ? {...t, comments: commentsData} : t)
+        );
+    } catch (error) {
+        console.error('Error fetching thread data:', error);
+    }
+});
 
   let handleSend = async () => {
     if (!comment.trim()) {
@@ -18,16 +38,14 @@
         return;
     }
 
-    const endPoint = `https://threef.vercel.app/api/comment/`;
     const payload = {
-        thread: data.id,
-        comment: comment,
-        commentator: commentator,
-        postedDateComment: new Date().toISOString(),
+        content: comment,
+        postId: data.id,
+        parentCommentId: null
     };
 
     try {
-        const response = await fetch(endPoint, {
+        const response = await fetch('http://localhost:8080/api/comments/create', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -42,20 +60,28 @@
 
         const newComment = await response.json();
 
+        // Update the thread store with new comment
         threadStore.update(prev => {
             return prev.map(thread => {
                 if (thread.id == data.id) {
-                    const comments = thread.comments ? thread.comments : [];
                     return {
                         ...thread,
-                        comments: [...comments, newComment]
+                        comments: [...(thread.comments || []), {
+                            id: newComment.id,
+                            content: newComment.content,
+                            author: newComment.author,
+                            createdAt: newComment.createdAt,
+                            upvotes: newComment.upvotes,
+                            downvotes: newComment.downvotes,
+                            bestAnswer: newComment.bestAnswer
+                        }]
                     };
                 }
                 return thread;
             });
         });
 
-        comment = ''; 
+        comment = '';
     } catch (error) {
         console.error('Error submitting comment:', error);
     }

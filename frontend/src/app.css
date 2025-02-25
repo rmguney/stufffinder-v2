@@ -73,12 +73,14 @@
     linear-gradient(rgba(245, 245, 245, 0.5), rgba(104, 104, 104, 0.5)),
     radial-gradient(circle farthest-corner at 25% 25%, #d7a09d, transparent 50%),
     radial-gradient(circle at 75% 75%, #b0c6d0, transparent 50%), 
-    radial-gradient(circle at 50% 50%, #8ca3a0, transparent 50%), 
-    radial-gradient(circle at 25% 75%, #c3d1cf, transparent 50%),
-    radial-gradient(circle at 75% 25%, #f8d6d3, transparent 50%),
-    radial-gradient(circle at 50% 100%, #e0e0e0, transparent 50%);
+    radial-gradient(circle at 50% 50%, #8ca3a0, transparent 50%);
   animation: bg-change 10s infinite;
   filter: blur(100px);
+  will-change: transform;
+  contain: strict;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .dark .shifting::before {
@@ -87,17 +89,14 @@
     linear-gradient(rgba(28, 28, 28, 0.5), rgba(0, 0, 0, 0.5)),
     radial-gradient(circle farthest-corner at 25% 25%, #8a4843, transparent 50%),
     radial-gradient(circle at 75% 75%, #5b7d8a, transparent 50%), 
-    radial-gradient(circle at 50% 50%, #2c5f5a, transparent 50%), 
-    radial-gradient(circle at 25% 75%, #627978, transparent 50%),
-    radial-gradient(circle at 75% 25%, #E5A39E, transparent 50%),
-    radial-gradient(circle at 50% 100%, #484854ff, transparent 50%);
+    radial-gradient(circle at 50% 50%, #2c5f5a, transparent 50%);
 }
 
 @keyframes bg-change {
   0%, 100% {
-    filter: hue-rotate(0deg);
+    transform: rotate(0deg) scale(1);
   }
   50% {
-    filter: hue-rotate(-30deg);
+    transform: rotate(-2deg) scale(1.05);
   }
 }

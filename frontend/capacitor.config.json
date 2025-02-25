@@ -1,5 +1,5 @@
 {
-  "appId": "com.stufffinder.app",
+  "appId": "app.vercel.stufffinder",
   "appName": "StuffFinder",
   "webDir": "dist",
   "server": {

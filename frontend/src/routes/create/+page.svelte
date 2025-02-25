@@ -76,12 +76,12 @@
         return enrichedTags;
     }
     
-    let handlePost = async () => {
+        let handlePost = async () => {
         if (!title.trim()) {
             errors.title = 'Title is required';
             return;
         }
-
+    
         try {
             const enrichedTags = await enrichTagsWithLabels(tags);
             
@@ -115,7 +115,6 @@
                 item_condition: itemCondition || null
             };
             
-            
             // Create FormData for multipart request
             const formData = new FormData();
             formData.append('title', title);
@@ -123,35 +122,48 @@
             
             // Add tags
             if (tags && tags.length > 0) {
-                tags.forEach((tag, index) => {
-                    formData.append(`tags[${index}]`, tag.id);
-                });
-            }
-            
-            // Add the image file if available
-            if (imageFile) {
-                formData.append('image', imageFile);
+                const tagIds = tags.map(tag => tag.id);
+                formData.append('tags', new Blob([JSON.stringify(tagIds)], {
+                    type: 'application/json'
+                }));
             }
             
             // Add mystery object as JSON string
             formData.append('mysteryObject', new Blob([JSON.stringify(mysteryObject)], {
                 type: 'application/json'
             }));
-
-            // Send to backend
+    
+            // Create post first
             const response = await fetch('http://localhost:8080/api/posts/create', {
                 method: 'POST',
                 body: formData,
-                credentials: 'include' // Include credentials for authentication
-                // Don't set Content-Type header - browser will set it with boundary for multipart/form-data
+                credentials: 'include'
             });
-
+    
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to create post');
             }
             
             const responseData = await response.json();
+            
+            // If we have an image, upload it separately
+            if (imageFile) {
+                const imageFormData = new FormData();
+                imageFormData.append('image', imageFile);
+                
+                const imageResponse = await fetch(`http://localhost:8080/api/mysteryObjects/${responseData.mysteryObjectId}/upload-image`, {
+                    method: 'POST',
+                    body: imageFormData,
+                    credentials: 'include'
+                });
+    
+                if (!imageResponse.ok) {
+                    console.error('Failed to upload image');
+                    // Don't throw error here, as the post was created successfully
+                }
+            }
+    
             threadStore.update(prev => [...prev, responseData]);
             goto('/');
         } catch (error) {

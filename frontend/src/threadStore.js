@@ -29,7 +29,26 @@ if (isClient) {
     });
 }
 
-// Update vote count for a thread (replace with new upvote/downvote endpoints)
+// Function to update or add a thread
+export function updateThread(newThread) {
+    threadStore.update(threads => {
+        const index = threads.findIndex(t => t.id === newThread.id);
+        if (index !== -1) {
+            // Update existing thread
+            const updatedThreads = [...threads];
+            updatedThreads[index] = {
+                ...updatedThreads[index],
+                ...newThread
+            };
+            return updatedThreads;
+        } else {
+            // Add new thread
+            return [...threads, newThread];
+        }
+    });
+}
+
+// Update vote count for a thread
 export async function updateThreadVote(threadId, isUpvote) {
     const endpoint = `http://localhost:8080/api/posts/${isUpvote ? 'upvote' : 'downvote'}/${threadId}`;
     try {
@@ -41,12 +60,15 @@ export async function updateThreadVote(threadId, isUpvote) {
         });
         if (!response.ok) throw new Error('Vote update failed');
         const data = await response.json();
+        
         threadStore.update(threads =>
             threads.map(thread =>
                 thread.id === threadId ? { 
                     ...thread, 
                     upvotes: data.upvotes,
-                    downvotes: data.downvotes
+                    downvotes: data.downvotes,
+                    userUpvoted: isUpvote,
+                    userDownvoted: !isUpvote
                 } : thread
             )
         );

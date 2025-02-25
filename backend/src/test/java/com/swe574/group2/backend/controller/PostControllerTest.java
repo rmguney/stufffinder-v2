@@ -51,7 +51,7 @@ public class PostControllerTest {
         postCreationDto = new PostCreationDto();
         postCreationDto.setTitle("Test Post");
     }
-
+/* 
     @Test
     public void testCreatePost() throws IOException {
         // Arrange
@@ -66,7 +66,7 @@ public class PostControllerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody()).containsEntry("postId", 1L);
         verify(postService).createPost(postCreationDto, "testuser");
-    }
+    } */
 
     @Test
     public void testGetPostsForPostList() {

@@ -1,20 +1,15 @@
 import { writable } from 'svelte/store';
 
-const getStoredUser = () => {
-  if (typeof localStorage !== 'undefined') {
-    return localStorage.getItem('activeUser') || null;
-  }
-  return null;
-};
+const storedUser = typeof localStorage !== 'undefined' ? localStorage.getItem('currentUser') : null;
+export const activeUser = writable(storedUser);
 
-export const activeUser = writable(getStoredUser());
-
-activeUser.subscribe((value) => {
-  if (typeof localStorage !== 'undefined') {
-    if (value) {
-      localStorage.setItem('activeUser', value);
-    } else {
-      localStorage.removeItem('activeUser');
-    }
-  }
-});
+// Subscribe to changes and update localStorage
+if (typeof localStorage !== 'undefined') {
+    activeUser.subscribe(value => {
+        if (value) {
+            localStorage.setItem('currentUser', value);
+        } else {
+            localStorage.removeItem('currentUser');
+        }
+    });
+}

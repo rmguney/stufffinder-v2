@@ -114,4 +114,11 @@ public class UserController {
         return ResponseEntity.ok(userComments);
     }
 
+    //get user id from username
+    @GetMapping("/username/{username}")
+    public ResponseEntity<Map<String, Long>> getUserId(@PathVariable String username) {
+        User user = userRepository.findByUsername(username).orElseThrow();
+        return ResponseEntity.ok(Map.of("userId", user.getId()));
+    }
+
 }

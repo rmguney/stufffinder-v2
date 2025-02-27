@@ -23,7 +23,11 @@ public class PostDetailsDto {
     private boolean userUpvoted;
     private boolean userDownvoted;
 
-    public PostDetailsDto(Long id, String author, String title, String description, Set<String> tags, MysteryObject mysteryObject, LocalDateTime createdAt, LocalDateTime updatedAt, int upvotes, int downvotes, boolean userUpvoted, boolean userDownvoted) {
+    private boolean solved;
+
+    public PostDetailsDto(Long id, String author, String title, String description, Set<String> tags, 
+                            MysteryObject mysteryObject, LocalDateTime createdAt, LocalDateTime updatedAt, int upvotes, 
+                            int downvotes, boolean userUpvoted, boolean userDownvoted, boolean solved) {
         this.id = id;
         this.author = author;
         this.title = title;
@@ -36,6 +40,7 @@ public class PostDetailsDto {
         this.downvotes = downvotes;
         this.userUpvoted = userUpvoted;
         this.userDownvoted = userDownvoted;
+        this.solved = solved;
     }
 
     public PostDetailsDto() {

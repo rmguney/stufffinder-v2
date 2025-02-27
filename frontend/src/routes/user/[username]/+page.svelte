@@ -73,21 +73,21 @@
   });
 </script>
 
-<div class="flex justify-center p-6 lg:py-10 bg-change dark:bg-dark shifting">
-  <div class="w-full lg:w-2/3">
+<div class="min-h-screen flex justify-center p-4 md:p-6 lg:py-10 bg-change dark:bg-dark shifting">
+  <div class="w-full max-w-3xl">
     <!-- Profile Header -->
-    <Card.Root class="bg-opacity-90 mb-6">
-      <Card.Header class="flex items-center">
-        <div class="flex items-center gap-4">
-          <div class="bg-slate-100 dark:bg-slate-800 rounded-full p-3">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-            </svg>
+    <Card.Root class="bg-opacity-90 mb-6 transition-transform hover:scale-[1.01] duration-200">
+      <Card.Header class="flex items-center p-6">
+        <div class="flex flex-col sm:flex-row items-center gap-4">
+          <div class="flex items-center justify-center w-20 h-20 rounded-full bg-neutral-100 dark:bg-neutral-900">
+            <span class="text-2xl font-medium">
+              {userName ? userName[0].toUpperCase() : '?'}
+            </span>
           </div>
           {#if userName}
-            <div>
-              <Card.Title class="text-2xl">{userName}'s Profile</Card.Title>
-              <Card.Description>View {userName}'s posts and comments</Card.Description>
+            <div class="text-center sm:text-left">
+              <Card.Title class="text-2xl md:text-3xl font-bold">{userName}'s Profile</Card.Title>
+              <Card.Description class="text-sm md:text-base mt-1">View {userName}'s posts and comments</Card.Description>
             </div>
           {/if}
         </div>
@@ -95,23 +95,23 @@
     </Card.Root>
 
     <!-- Posts Section -->
-    <Card.Root class="bg-opacity-90 mb-6">
-      <Card.Header class="flex justify-between items-center">
+    <Card.Root class="bg-opacity-90 mb-6 transition-all duration-200 hover:shadow-lg">
+      <Card.Header class="flex flex-col sm:flex-row justify-between items-center gap-2 p-6">
         <div class="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
           </svg>
-          <Card.Title>Posts</Card.Title>
+          <Card.Title class="text-xl font-bold">Posts</Card.Title>
         </div>
-        <span class="px-3 py-1 text-xs font-medium rounded-full bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
+        <span class="px-4 py-1.5 text-sm font-medium rounded-full bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 transition-colors">
           {threads.length} posts
         </span>
       </Card.Header>
       
       <!-- Loading State -->
       {#if loadingThreads}
-        <Card.Content class="text-center py-12">
-          <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+        <Card.Content class="text-center py-16">
+          <div class="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite] opacity-75" role="status">
             <span class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading posts...</span>
           </div>
         </Card.Content>
@@ -119,42 +119,42 @@
 
       <!-- No Posts State -->
       {#if !loadingThreads && threads.length === 0}
-        <Card.Content class="text-center py-12">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mx-auto w-12 h-12 text-slate-400 mb-3">
+        <Card.Content class="text-center py-16">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mx-auto w-16 h-16 text-neutral-400 mb-4">
             <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
-          <p class="text-slate-500 dark:text-slate-400">No posts found</p>
+          <p class="text-neutral-500 dark:text-neutral-400 text-lg">No posts found</p>
         </Card.Content>
       {/if}
 
       <!-- Posts List -->
       {#if !loadingThreads && threads.length > 0}
-        <div class="divide-y divide-slate-200 dark:divide-slate-700">
+        <div class="divide-y divide-neutral-200 dark:divide-neutral-700">
           {#each threads as thread}
-            <div class="p-4">
-              <div class="flex justify-between items-start gap-4">
-                <div class="flex-1">
-                  <a href={`/thread/${thread.id}`} class="hover:underline">
-                    <h3 class="text-lg font-medium">{thread.title}</h3>
+            <div class="p-6 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50">
+              <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div class="flex-1 min-w-0">
+                  <a href={`/thread/${thread.id}`} class="hover:underline block">
+                    <h3 class="text-xl font-semibold line-clamp-2">{thread.title}</h3>
                   </a>
-                  <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mt-1">{thread.description}</p>
+                  <p class="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2 mt-2">{thread.description}</p>
                   
                   {#if thread.tags && thread.tags.length > 0}
-                    <div class="flex flex-wrap gap-1 mt-2">
+                    <div class="flex flex-wrap gap-2 mt-3">
                       {#each thread.tags as tag}
-                        <span class="px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300">
+                        <span class="px-3 py-1 text-xs font-medium rounded-full bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-300 transition-colors">
                           {tag}
                         </span>
                       {/each}
                     </div>
                   {/if}
                   
-                  <div class="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                  <div class="text-sm text-neutral-500 dark:text-neutral-400 mt-3">
                     {formatDate(thread.createdAt)}
                   </div>
                 </div>
-                <Button variant="outline" size="sm" class="whitespace-nowrap hover:bg-rose-900 hover:text-white">
-                  <a href={`/thread/${thread.id}`} class="flex items-center gap-1">
+                <Button variant="outline" size="sm" class="w-full sm:w-auto whitespace-nowrap hover:bg-rose-900 hover:text-white transition-colors duration-200">
+                  <a href={`/thread/${thread.id}`} class="flex items-center justify-center gap-2">
                     View Post
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -169,23 +169,23 @@
     </Card.Root>
 
     <!-- Comments Section -->
-    <Card.Root class="bg-opacity-90">
-      <Card.Header class="flex justify-between items-center">
+    <Card.Root class="bg-opacity-90 transition-all duration-200 hover:shadow-lg">
+      <Card.Header class="flex flex-col sm:flex-row justify-between items-center gap-2 p-6">
         <div class="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
           </svg>
-          <Card.Title>Comments</Card.Title>
+          <Card.Title class="text-xl font-bold">Comments</Card.Title>
         </div>
-        <span class="px-3 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300">
+        <span class="px-4 py-1.5 text-sm font-medium rounded-full bg-neutral-100 text-neutral-800 dark:bg-neutral-950 dark:text-neutral-300 transition-colors">
           {comments.length} comments
         </span>
       </Card.Header>
       
       <!-- Loading State -->
       {#if loadingComments}
-        <Card.Content class="text-center py-12">
-          <div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+        <Card.Content class="text-center py-16">
+          <div class="inline-block h-10 w-10 animate-spin rounded-full border-4 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite] opacity-75" role="status">
             <span class="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading comments...</span>
           </div>
         </Card.Content>
@@ -193,28 +193,28 @@
 
       <!-- No Comments State -->
       {#if !loadingComments && comments.length === 0}
-        <Card.Content class="text-center py-12">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mx-auto w-12 h-12 text-slate-400 mb-3">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 0 0-.375.375v.875c0 .207.168.375.375.375h.875a.375.375 0 0 0 .375-.375v-.875a.375.375 0 0 0-.375-.375h-.875ZM12.75 9.75a.375.375 0 0 0-.375.375v.875c0 .207.168.375.375.375h.875a.375.375 0 0 0 .375-.375v-.875a.375.375 0 0 0-.375-.375h-.875ZM18.75 10.125c0 .207.168.375.375.375h.875a.375.375 0 0 0 .375-.375v-.875a.375.375 0 0 0-.375-.375h-.875a.375.375 0 0 0-.375.375v.875ZM7.5 12.375a.375.375 0 0 0-.375.375v.875c0 .207.168.375.375.375h.875a.375.375 0 0 0 .375-.375v-.875a.375.375 0 0 0-.375-.375H7.5ZM12.75 12.375a.375.375 0 0 0-.375.375v.875c0 .207.168.375.375.375h.875a.375.375 0 0 0 .375-.375v-.875a.375.375 0 0 0-.375-.375h-.875ZM12.75 15a.375.375 0 0 0-.375.375v.875c0 .207.168.375.375.375h.875a.375.375 0 0 0 .375-.375v-.875a.375.375 0 0 0-.375-.375h-.875ZM18.75 15.375c0 .207.168.375.375.375h.875a.375.375 0 0 0 .375-.375v-.875a.375.375 0 0 0-.375-.375h-.875a.375.375 0 0 0-.375.375v.875ZM7.5 15a.375.375 0 0 0-.375.375v.875c0 .207.168.375.375.375h.875a.375.375 0 0 0 .375-.375v-.875a.375.375 0 0 0-.375-.375H7.5Z" />
+        <Card.Content class="text-center py-16">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mx-auto w-16 h-16 text-neutral-400 mb-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
           </svg>
-          <p class="text-slate-500 dark:text-slate-400">No comments found</p>
+          <p class="text-neutral-500 dark:text-neutral-400 text-lg">No comments found</p>
         </Card.Content>
       {/if}
 
       <!-- Comments List -->
       {#if !loadingComments && comments.length > 0}
-        <div class="divide-y divide-slate-200 dark:divide-slate-700">
+        <div class="divide-y divide-neutral-200 dark:divide-neutral-700">
           {#each comments as comment}
-            <div class="p-4">
-              <div class="flex justify-between items-start gap-4">
-                <div class="flex-1">
-                  <p class="text-sm">{comment.content}</p>
-                  <div class="text-xs text-slate-500 dark:text-slate-400 mt-2">
+            <div class="p-6 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900/100">
+              <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm md:text-base">{comment.content}</p>
+                  <div class="text-sm text-neutral-500 dark:text-neutral-400 mt-3">
                     {formatDate(comment.createdAt)}
                   </div>
                 </div>
-                <Button variant="outline" size="sm" class="whitespace-nowrap hover:bg-rose-900 hover:text-white">
-                  <a href={`/thread/${comment.postId}`} class="flex items-center gap-1">
+                <Button variant="outline" size="sm" class="w-full sm:w-auto whitespace-nowrap hover:bg-rose-900 hover:text-white transition-colors duration-200">
+                  <a href={`/thread/${comment.postId}`} class="flex items-center justify-center gap-2">
                     Go to Post
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />

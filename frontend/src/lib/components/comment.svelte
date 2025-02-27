@@ -311,7 +311,7 @@
         <div class="flex flex-row gap-4 mt-2">
           <button 
             on:click={() => voteOnComment(true)} 
-            class={`text-xs hover:text-rose-900 flex items-center ${userUpvoted ? 'font-bold text-green-600' : ''}`}
+            class={`text-xs hover:text-rose-900 flex items-center ${userUpvoted ? 'font-bold text-teal-600' : ''}`}
           >
             ⬆️ Upvote ({upvotes})
           </button>

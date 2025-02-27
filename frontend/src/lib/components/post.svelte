@@ -135,32 +135,34 @@ function handleImageError(event) {
           </div>
         </Card.Title>
         <Card.Description class={`${variant === "thumb" ? 'lg:translate-y-2 text-ellipsis overflow-hidden whitespace-nowrap' : 'my-2.5'}`}>
-          <span>
-            {#if postedBy}
-              <a href={`/user/${postedBy}`} class="hover:text-rose-900 hover:underline font-bold">
-                {postedBy}
-              </a>
-            {:else}
-              <span class="font-bold">Anonymous</span>
-            {/if}
-            at {formatDate(postedDate)}
-          </span>
-          <div class={`${variant === "thumb" ? 'mt-1' : 'mt-1.5'}`}>
-            {#if solved}
-              <div class="flex items-center text-teal-800 font-semibold">
-                <span class="text-teal-800 font-bold">Resolved</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            {:else}
-              <div class="flex items-center text-rose-900 font-semibold">
-                <span class="text-rose-900 font-bold">Unresolved</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </div>
-            {/if}
+          <div>
+            <div>
+              {#if postedBy}
+                <a href={`/user/${postedBy}`} class="hover:text-rose-900 hover:underline font-bold">
+                  {postedBy}
+                </a>
+              {:else}
+                <span class="font-bold">Anonymous</span>
+              {/if}
+              at {formatDate(createdAt)}
+            </div>
+            <div class={`${variant === "thumb" ? 'mt-1' : 'mt-1.5'}`}>
+              {#if solved}
+                <div class="flex items-center text-teal-800 font-semibold">
+                  <span class="text-teal-800 font-bold">Resolved</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              {:else}
+                <div class="flex items-center text-rose-900 font-semibold">
+                  <span class="text-rose-900 font-bold">Unresolved</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+              {/if}
+            </div>
           </div>
         </Card.Description>
       </div>
@@ -176,8 +178,6 @@ function handleImageError(event) {
             <!-- Voting section -->
             <div class="flex items-center gap-2">
               <button 
-                class="flex items-center gap-1 {userUpvoted ? 'text-green-600' : ''}"
-                on:click={() => handleVote(true)}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M5 14l5-5 5 5H5z"/>

@@ -3,7 +3,9 @@ package com.swe574.group2.backend.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Entity
@@ -34,13 +36,9 @@ public class Post {
 
     @ElementCollection
     @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "tag")
-    private Set<String> tags;
-
-    @ElementCollection
-    @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
+    @MapKeyColumn(name = "tag")
     @Column(name = "tag_label")
-    private Set<String> tag_labels;
+    private Map<String, String> tagMap = new HashMap<>();
 
     @Column(nullable = false)
     private int upvotesCount = 0;

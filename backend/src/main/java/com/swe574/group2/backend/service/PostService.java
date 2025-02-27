@@ -46,12 +46,42 @@ public class PostService {
         Post post = new Post();
         post.setTitle(postCreationDto.getTitle());
         post.setDescription(postCreationDto.getContent());
-        post.setTags(postCreationDto.getTags());
 
-        // Fetch tag labels from Wikidata
+        // Handle tags and their labels
         if (postCreationDto.getTags() != null && !postCreationDto.getTags().isEmpty()) {
-            Set<String> tagLabels = fetchTagLabelsFromWikidata(postCreationDto.getTags());
-            post.setTag_labels(tagLabels);
+            Map<String, String> tagMap = new HashMap<>();
+            Set<String> tags = postCreationDto.getTags();
+
+            RestTemplate restTemplate = new RestTemplate();
+            ObjectMapper mapper = new ObjectMapper();
+
+            // Process each tag individually
+            for (String tagId : tags) {
+                try {
+                    String url = "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + tagId +
+                            "&props=labels&languages=en&format=json";
+
+                    String response = restTemplate.getForObject(url, String.class);
+                    JsonNode root = mapper.readTree(response);
+                    JsonNode entity = root.path("entities").path(tagId);
+
+                    String label = tagId; // Default fallback
+                    if (!entity.isMissingNode()) {
+                        JsonNode enLabel = entity.path("labels").path("en").path("value");
+                        if (!enLabel.isMissingNode()) {
+                            label = enLabel.asText();
+                        }
+                    }
+
+                    tagMap.put(tagId, label);
+                } catch (Exception e) {
+                    // Log the error and use the tag ID as fallback
+                    System.err.println("Error fetching label for tag " + tagId + ": " + e.getMessage());
+                    tagMap.put(tagId, tagId);
+                }
+            }
+
+            post.setTagMap(tagMap);
         }
 
         post.setUser(userRepository.findByEmail(userName).orElseThrow());
@@ -78,7 +108,8 @@ public class PostService {
     public Page<PostListDto> getAllPostsForPostList(Pageable pageable) {
         Page<PostListDto> posts = postRepository.findAllForPostList(pageable);
         posts.forEach(post -> {
-            Set<String> tags = postRepository.findTagsByPostId(post.getId());
+            // Using tag keys (Q-IDs) for consistency with existing code
+            Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
             post.setTags(tags);
         });
         return posts;
@@ -143,7 +174,8 @@ public class PostService {
             throw new ResourceNotFoundException("Post not found with ID: " + postId);
         }
 
-        Set<String> tags = postRepository.findTagsByPostId(postId);
+        // Use tag keys (Q-IDs) for consistency
+        Set<String> tags = postRepository.findTagKeysByPostId(postId);
 
         PostDetailsDto postDetailsDto = new PostDetailsDto();
         mapPostToDto(post, tags, postDetailsDto, user);
@@ -185,8 +217,9 @@ public class PostService {
     public Page<PostListDto> searchPosts(String keyword, Pageable pageable) {
         Page<Post> postsPage = postRepository.searchPosts(keyword, pageable);
         return postsPage.map(post -> {
-            Set<String> tags = postRepository.findTagsByPostId(post.getId());
-            PostListDto postListDto = new PostListDto(post.getId(), post.getUser().getUsername(),post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
+            Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
+            PostListDto postListDto = new PostListDto(post.getId(), post.getUser().getUsername(),
+                    post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
             postListDto.setTags(tags);
             return postListDto;
         });
@@ -224,8 +257,9 @@ public class PostService {
 
         return posts.stream()
                 .map(post -> {
-                    Set<String> tags = postRepository.findTagsByPostId(post.getId());
-                    PostListDto postListDto = new PostListDto(post.getId(), post.getUser().getUsername(), post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
+                    Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
+                    PostListDto postListDto = new PostListDto(post.getId(), post.getUser().getUsername(),
+                            post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
                     postListDto.setTags(tags);
                     return postListDto;
                 })

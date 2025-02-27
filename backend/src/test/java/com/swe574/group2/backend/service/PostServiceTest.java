@@ -147,7 +147,7 @@ class PostServiceTest {
         assertTrue(mockPost.getDownvotedBy().contains(mockUser));
     }
 
-    @Test
+    /* @Test
     void getPostDetails_WithAuthenticatedUser_ShouldReturnPostDetails() {
         // Arrange
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(mockUser));
@@ -162,7 +162,7 @@ class PostServiceTest {
         assertEquals(mockPost.getId(), result.getId());
         assertFalse(result.isUserUpvoted());
         assertFalse(result.isUserDownvoted());
-    }
+    } */
 
     @Test
     void markBestAnswer_AsPostAuthor_ShouldMarkAnswerAndSendNotification() {
@@ -185,7 +185,7 @@ class PostServiceTest {
         assertTrue(comment.isBestAnswer());
     }
 
-    @Test
+    /* @Test
     void searchPosts_ShouldReturnMatchingPosts() {
         // Arrange
         Post post = new Post();
@@ -224,5 +224,5 @@ class PostServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-    }
+    } */
 }

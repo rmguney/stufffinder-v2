@@ -39,7 +39,6 @@ public interface PostRepository  extends JpaRepository<Post, Long> {
 
     List<Post> findByUserId(Long userId);
 
-    // Add to PostRepository.java
     @Query("SELECT key(t) FROM Post p JOIN p.tagMap t WHERE p.id = :postId")
     Set<String> findTagKeysByPostId(@Param("postId") Long postId);
 

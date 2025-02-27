@@ -1,5 +1,6 @@
 package com.swe574.group2.backend.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swe574.group2.backend.dao.CommentRepository;
 import com.swe574.group2.backend.dao.MysteryObjectRepository;
 import com.swe574.group2.backend.dao.PostRepository;
@@ -16,9 +17,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import java.util.stream.Collectors;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -43,6 +47,13 @@ public class PostService {
         post.setTitle(postCreationDto.getTitle());
         post.setDescription(postCreationDto.getContent());
         post.setTags(postCreationDto.getTags());
+
+        // Fetch tag labels from Wikidata
+        if (postCreationDto.getTags() != null && !postCreationDto.getTags().isEmpty()) {
+            Set<String> tagLabels = fetchTagLabelsFromWikidata(postCreationDto.getTags());
+            post.setTag_labels(tagLabels);
+        }
+
         post.setUser(userRepository.findByEmail(userName).orElseThrow());
 
         MysteryObject mysteryObject = postCreationDto.getMysteryObject();
@@ -219,5 +230,52 @@ public class PostService {
                     return postListDto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Queries the Wikidata API to get labels for the given entity IDs (tags)
+     * @param tags A set of Wikidata entity IDs (e.g., "Q123", "Q456")
+     * @return A set of corresponding human-readable labels
+     */
+    private Set<String> fetchTagLabelsFromWikidata(Set<String> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return new HashSet<>();
+        }
+        
+        RestTemplate restTemplate = new RestTemplate();
+        ObjectMapper mapper = new ObjectMapper();
+        Set<String> tagLabels = new HashSet<>();
+        
+        // Process each tag individually
+        for (String tagId : tags) {
+            try {
+                String url = "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + tagId +
+                        "&props=labels&languages=en&format=json";
+                
+                String response = restTemplate.getForObject(url, String.class);
+                JsonNode root = mapper.readTree(response);
+                JsonNode entity = root.path("entities").path(tagId);
+                
+                if (!entity.isMissingNode()) {
+                    JsonNode enLabel = entity.path("labels").path("en").path("value");
+                    if (!enLabel.isMissingNode()) {
+                        tagLabels.add(enLabel.asText());
+                    } else {
+                        // If English label is not available, use the tag ID as fallback
+                        tagLabels.add(tagId);
+                    }
+                } else {
+                    // Entity not found, use the tag ID as fallback
+                    tagLabels.add(tagId);
+                }
+            } catch (Exception e) {
+                // Log the error for this specific tag
+                System.err.println("Error fetching label for tag " + tagId + ": " + e.getMessage());
+                // Use the tag ID as fallback
+                tagLabels.add(tagId);
+            }
+        }
+        
+        return tagLabels;
     }
 }

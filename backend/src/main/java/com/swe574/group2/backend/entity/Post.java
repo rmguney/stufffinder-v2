@@ -37,6 +37,11 @@ public class Post {
     @Column(name = "tag")
     private Set<String> tags;
 
+    @ElementCollection
+    @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "tag_label")
+    private Set<String> tag_labels;
+
     @Column(nullable = false)
     private int upvotesCount = 0;
 

@@ -268,13 +268,13 @@ function handleImageError(event) {
     {/if}
 
     <div class={`${variant === "thumb" ? 'overflow-hidden flex justify-center items-center' : ''}`}>
-      {#if currentUser === postedBy}
+      <!-- {#if currentUser === postedBy}
         <Button 
           on:click={toggleResolved} 
           class={`${variant === "thumb" ? 'hidden' : 'w-full mt-4 hover:bg-rose-900'}`}>
           {solved ? "Mark as Unresolved" : "Mark as Resolved"}
         </Button>
-      {/if}
+      {/if} -->
       
       {#if imageSrc}
         {#if variant !== "thumb"}

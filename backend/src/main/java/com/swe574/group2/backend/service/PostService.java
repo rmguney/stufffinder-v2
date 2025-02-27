@@ -145,7 +145,7 @@ public class PostService {
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new IllegalArgumentException("Comment not found."));
 
         // Check if the logged-in user is the creator of the post
-        if (!post.getUser().getUsername().equals(username)) {
+        if (!post.getUser().getEmail().equals(username)) {
             return false; // Not authorized
         }
 
@@ -205,6 +205,7 @@ public class PostService {
 
         postDetailsDto.setUserUpvoted(userUpvoted);
         postDetailsDto.setUserDownvoted(userDownvoted);
+        postDetailsDto.setSolved(post.getBestAnswer() != null);
     }
 
     public List<PostListDto> getUserPosts(Long userId) {

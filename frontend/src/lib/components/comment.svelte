@@ -326,12 +326,14 @@
         <Separator class="mt-4"/>
         <div class="flex flex-row justify-center mt-4 gap-2">
           {#if isOwner}
-            <Button 
-              on:click={toggleBestAnswer} 
-              class="w-1/4 text-xs py-1 px-2 hover:bg-rose-900"
-            >
-              {selected ? "Unmark" : "Mark as Helpful"}
-            </Button>
+            {#if !selected}
+              <Button 
+                on:click={toggleBestAnswer} 
+                class="w-1/4 text-xs py-1 px-2 hover:bg-rose-900"
+              >
+                Mark as Best Answer
+              </Button>
+            {/if}
           {/if}
 
           <Button 

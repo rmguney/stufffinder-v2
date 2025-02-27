@@ -7,6 +7,7 @@
     let searchResults = [];
     let loading = false;
     let debounceTimeout;
+    let tagLabels = {}; // Store tag IDs and their labels
 
     async function searchPosts() {
         clearTimeout(debounceTimeout);
@@ -30,6 +31,20 @@
                 
                 const data = await response.json();
                 searchResults = data.content || [];
+                
+                // Collect all unique tag IDs
+                const tagIds = new Set();
+                searchResults.forEach(post => {
+                    if (post.tags && post.tags.length > 0) {
+                        post.tags.forEach(tag => tagIds.add(tag));
+                    }
+                });
+                
+                // Fetch labels for all tags
+                if (tagIds.size > 0) {
+                    await fetchTagLabels(Array.from(tagIds));
+                }
+                
                 console.log("Search results:", searchResults);
             } catch (error) {
                 console.error("Error searching posts:", error);
@@ -40,6 +55,34 @@
         }, 300); // Debounce delay of 300ms
     }
 
+    async function fetchTagLabels(tagIds) {
+        try {
+            // Batch fetch labels for all tags
+            const queryString = tagIds.join('|');
+            const response = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${queryString}&props=labels&languages=en&format=json&origin=*`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch tag labels');
+            }
+            
+            const data = await response.json();
+            
+            // Process the response to extract labels
+            if (data.entities) {
+                Object.keys(data.entities).forEach(id => {
+                    const entity = data.entities[id];
+                    if (entity.labels && entity.labels.en) {
+                        tagLabels[id] = entity.labels.en.value;
+                    } else {
+                        tagLabels[id] = id; // Fallback to ID if no label found
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching tag labels:", error);
+        }
+    }
+
     function highlightMatches(text, query) {
         if (!text || !query) return text || '';
         
@@ -48,6 +91,10 @@
             new RegExp(`(${terms.join("|")})`, "gi"), 
             "<mark>$1</mark>"
         );
+    }
+
+    function getTagLabel(tagId) {
+        return tagLabels[tagId] || tagId;
     }
 </script>
 
@@ -114,7 +161,7 @@
                                         <div class="flex gap-1 flex-wrap">
                                             {#each post.tags as tag}
                                                 <span class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                                                    {tag}
+                                                    {@html highlightMatches(getTagLabel(tag), searchQuery)}
                                                 </span>
                                             {/each}
                                         </div>

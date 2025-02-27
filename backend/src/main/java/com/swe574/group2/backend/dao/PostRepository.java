@@ -24,16 +24,25 @@ public interface PostRepository  extends JpaRepository<Post, Long> {
             "WHERE p.id = :id")
     Post findPostDetailsById(Long id);
 
-
+/*
     @Query("SELECT p.tags FROM Post p WHERE p.id = :postId")
     Set<String> findTagsByPostId(@Param("postId") Long postId);
+*/
 
     @Query("SELECT DISTINCT p FROM Post p " +
-            "LEFT JOIN p.tags tag " +
+            "LEFT JOIN p.tagMap t " +
             "WHERE FUNCTION('REGEXP_LIKE', LOWER(p.title), CONCAT('\\b', LOWER(:keyword), '\\b')) = true OR " +
             "FUNCTION('REGEXP_LIKE', LOWER(p.description), CONCAT('\\b', LOWER(:keyword), '\\b')) = true OR " +
-            "FUNCTION('REGEXP_LIKE', LOWER(tag), CONCAT('\\b', LOWER(:keyword), '\\b')) = true")
+            "FUNCTION('REGEXP_LIKE', LOWER(key(t)), CONCAT('\\b', LOWER(:keyword), '\\b')) = true OR " +
+            "FUNCTION('REGEXP_LIKE', LOWER(value(t)), CONCAT('\\b', LOWER(:keyword), '\\b')) = true")
     Page<Post> searchPosts(@Param("keyword") String keyword, Pageable pageable);
 
     List<Post> findByUserId(Long userId);
+
+    // Add to PostRepository.java
+    @Query("SELECT key(t) FROM Post p JOIN p.tagMap t WHERE p.id = :postId")
+    Set<String> findTagKeysByPostId(@Param("postId") Long postId);
+
+    @Query("SELECT value(t) FROM Post p JOIN p.tagMap t WHERE p.id = :postId")
+    Set<String> findTagLabelsByPostId(@Param("postId") Long postId);
 }

@@ -46,8 +46,10 @@
             <!-- User Controls -->
             <div class="flex items-center gap-2">
                 {#if $activeUser}
-                    <a href={`/user/${$activeUser}`} class="hidden sm:block text-sm hover:text-rose-900 font-medium px-3">
-                        {$activeUser}
+                    <a href={`/user/${$activeUser}`} class="hidden sm:flex items-center justify-center h-10 w-10 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+                        <span class="text-sm font-medium">
+                            {$activeUser[0].toUpperCase()}
+                        </span>
                     </a>
                     <Button 
                         on:click={handleLogout}

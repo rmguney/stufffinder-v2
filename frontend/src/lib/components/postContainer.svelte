@@ -30,7 +30,7 @@
         tags={thread.tags || []}
         imageSrc={thread.mysteryObjectImage ? `data:image/png;base64,${thread.mysteryObjectImage}` : ''}
         postedBy={thread.author}
-        postedDate={thread.createdAt}
+        createdAt={thread.createdAt}
         solved={thread.solved}
         mysteryObject={thread.mysteryObject || null}
         variant="thumb"

@@ -285,113 +285,120 @@
 </script>
 
 <div class="flex w-full py-1">
-  <Card.Root class={`w-full bg-opacity-90 hover:bg-opacity-100 relative ${selected ? 'border-4 border-teal-600 dark:border-teal-800' : ''}`}>
+  <Card.Root class={`w-full bg-opacity-90 hover:bg-opacity-100 relative ${selected ? 'border-2 border-teal-600 dark:border-teal-800' : ''}`}>
     <div class="flex flex-col w-full">
-      <Card.Header>
-        <Card.Title class="w-full flex items-center">
-          {comment || "No content"}
-          {#if selected}
-            <!-- Fix SVG viewBox attribute -->
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="ml-2 size-5 text-teal-800">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6.633 10.25c.806 0 1.533-.446 2.031-1.08a9.041 9.041 0 0 1 2.861-2.4c.723-.384 1.35-.956 1.653-1.715a4.498 4.498 0 0 0 .322-1.672V2.75a.75.75 0 0 1 .75-.75 2.25 2.25 0 0 1 2.25 2.25c0 1.152-.26 2.243-.723 3.218-.266.558.107 1.282.725 1.282m0 0h3.126c1.026 0 1.945.694 2.054 1.715.045.422.068.85.068 1.285a11.95 11.95 0 0 1-2.649 7.521c-.388.482-.987.729-1.605.729H13.48c-.483 0-.964-.078-1.423-.23l-3.114-1.04a4.501 4.501 0 0 0-1.423-.23H5.904m10.598-9.75H14.25M5.904 18.5c.083.205.173.405.27.602.197.4-.078.898-.523.898h-.908c-.889 0-1.713-.518-1.972-1.368a12 12 0 0 1-.521-3.507c0-1.553.295-3.036.831-4.398C3.387 9.953 4.167 9.5 5 9.5h1.053c.472 0 .745.556.5.96a8.958 8.958 0 0 0-1.302 4.665c0 1.194.232 2.333.654 3.375Z" />
-            </svg>
-          {/if}
-        </Card.Title>
-      </Card.Header>
-
-      <Card.Description class="flex flex-col w-full px-6">
-        <span>
-          <a href={`/user/${commentator}`} class="hover:text-rose-900 hover:underline font-bold">
+      <Card.Header class="p-4">
+        <!-- User and metadata header -->
+        <div class="flex flex-wrap items-center gap-2 text-sm text-gray-600 mb-2">
+          <a href={`/user/${commentator}`} class="font-medium hover:text-rose-900 hover:underline">
             {commentator || "Anonymous"}
           </a>
-          at {formatDate(postedDateComment)}
-        </span>
-        
+          <span>•</span>
+          <span>{formatDate(postedDateComment)}</span>
+          {#if selected}
+            <span>•</span>
+            <span class="text-teal-800 dark:text-teal-600 font-medium flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              Best Answer
+            </span>
+          {/if}
+        </div>
+
+        <!-- Comment content -->
+        <div class="text-neutral-900 dark:text-neutral-100">
+          {comment || "No content"}
+        </div>
+
         <!-- Vote buttons with counts -->
-        <div class="flex flex-row gap-4 mt-2">
+        <div class="flex items-center gap-2 mt-3">
           <button 
             on:click={() => voteOnComment(true)} 
-            class={`text-xs hover:text-rose-900 flex items-center ${userUpvoted ? 'font-bold text-green-600' : ''}`}
+            class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
+                   {userUpvoted ? 'text-teal-600' : 'text-gray-600'}"
           >
-            ⬆️ Upvote ({upvotes})
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M5 14l5-5 5 5H5z"/>
+            </svg>
           </button>
+          <span class="text-sm font-medium">{upvotes - downvotes}</span>
           <button 
             on:click={() => voteOnComment(false)} 
-            class={`text-xs hover:text-rose-900 flex items-center ${userDownvoted ? 'font-bold text-red-600' : ''}`}
+            class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
+                   {userDownvoted ? 'text-rose-600' : 'text-gray-500'}"
           >
-            ⬇️ Downvote ({downvotes})
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M5 6l5 5 5-5H5z"/>
+            </svg>
           </button>
         </div>
-        
-        <Separator class="mt-4"/>
-        <div class="flex flex-row justify-center mt-4 gap-2">
-          {#if isOwner}
-            {#if !selected}
-              <Button 
-                on:click={toggleBestAnswer} 
-                class="w-1/4 text-xs py-1 px-2 hover:bg-rose-900"
-              >
-                Mark as Best Answer
-              </Button>
-            {/if}
-          {/if}
+      </Card.Header>
 
+      <Separator />
+
+      <!-- Actions section -->
+      <div class="p-4 flex flex-wrap gap-2">
+        {#if isOwner && !selected}
           <Button 
-            on:click={toggleReplyInput} 
-            class="w-1/4 text-xs py-1 px-2 hover:bg-rose-900"
+            on:click={toggleBestAnswer} 
+            variant="outline"
+            class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
-            {replyInputVisible ? "Cancel" : "Reply"}
+            Mark as Best Answer
           </Button>
-          
-          {#if replyInputVisible}
-            <Button 
-              on:click={addReply} 
-              class="w-1/4 text-xs py-1 px-2 hover:bg-rose-900"
-            >
-              Submit
-            </Button>
-          {/if}
-        </div>
-        {#if replyInputVisible}
-          <div class="mt-2">
-            <Textarea 
-              bind:value={replyText} 
-              class="w-full p-2 border rounded-lg text-sm"
-              placeholder="Write your reply..."></Textarea>
-          </div>
         {/if}
 
-        <!-- Render Nested Replies with better debugging -->
-        {#if replies && replies.length > 0}
-          <div class="mt-4 pl-4 border-l-2 border-gray-300">
-            <div class="text-xs text-gray-500 mb-2">
-              {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+        <Button 
+          on:click={toggleReplyInput} 
+          variant="outline"
+          class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+        >
+          {replyInputVisible ? "Cancel" : "Reply"}
+        </Button>
+      </div>
+
+      <!-- Reply input -->
+      {#if replyInputVisible}
+        <div class="p-4 pt-0">
+          <Textarea 
+            bind:value={replyText} 
+            class="w-full p-2 border rounded-lg text-sm bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
+            placeholder="Write your reply..."
+          />
+          <Button 
+            on:click={addReply} 
+            class="mt-2 text-xs py-1 px-3 hover:bg-rose-900"
+          >
+            Submit Reply
+          </Button>
+        </div>
+      {/if}
+
+      <!-- Nested Replies -->
+      {#if replies && replies.length > 0}
+        <div class="pl-4 border-l-2 border-neutral-200 dark:border-neutral-700 ml-4 mb-4">
+          {#each replies as reply (reply.id)}
+            <div class="mt-2">
+              <svelte:self 
+                {threadId}
+                commentId={reply.id}
+                comment={reply.content}
+                commentator={reply.author}
+                postedDateComment={reply.createdAt}
+                selected={reply.bestAnswer || false}
+                {threadOwner}
+                replies={reply.replies || []}
+                upvotes={reply.upvotes}
+                downvotes={reply.downvotes}
+                userUpvoted={reply.userUpvoted}
+                userDownvoted={reply.userDownvoted}
+                parentCommentId={commentId}
+              />
             </div>
-            {#each replies as reply (reply.id)}
-              <div class="mb-2">
-                <svelte:self 
-                  {threadId}
-                  commentId={reply.id}
-                  comment={reply.content}
-                  commentator={reply.author}
-                  postedDateComment={reply.createdAt}
-                  selected={reply.bestAnswer || false}
-                  {threadOwner}
-                  replies={reply.replies || []}
-                  upvotes={reply.upvotes}
-                  downvotes={reply.downvotes}
-                  userUpvoted={reply.userUpvoted}
-                  userDownvoted={reply.userDownvoted}
-                  parentCommentId={commentId}
-                />
-              </div>
-            {/each}
-          </div>
-        {:else if repliesLoaded}
-          <!-- Show this when we know there are no replies -->
-          <div class="mt-2 text-xs text-gray-500">No replies yet</div>
-        {/if}
-      </Card.Description>
+          {/each}
+        </div>
+      {/if}
     </div>
   </Card.Root>
 </div>

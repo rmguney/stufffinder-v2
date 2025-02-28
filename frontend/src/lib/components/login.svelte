@@ -10,7 +10,8 @@
   import { fly } from 'svelte/transition';
   import { PUBLIC_API_URL } from "$env/static/public";
 
-  let loginBar = false;
+  // Make loginBar accessible to parent components
+  export let loginBar = false;
   let activeTab = "login";
   let tabIndicator;
   let tabsContainer;
@@ -26,6 +27,11 @@
   let loginPassword = "";
   let loginErrors = {};
   let loginLoading = false;
+
+  // Export toggle function for parent components to use
+  export function toggleLoginBar() {
+    loginBar = !loginBar;
+  }
 
   // Update the indicator position when the tab changes
   function updateIndicator(value) {
@@ -207,17 +213,11 @@
   };
 </script>
 
-<Button 
-    variant="ghost"
-    class="text-sm font-medium hover:bg-rose-900 hover:text-white" 
-    on:click={() => (loginBar = !loginBar)}
->
-    Sign In
-</Button>
+<!-- Regular and mobile login buttons are now handled in the header component -->
 
 <Sheet.Root bind:open={loginBar}>
   <Sheet.Overlay />
-  <Sheet.Content side="right" class="lg:w-96 w-full">
+  <Sheet.Content side="right" class="w-80">
     <Sheet.Header>
       <Sheet.Close />
     </Sheet.Header>

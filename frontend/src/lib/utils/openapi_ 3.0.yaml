@@ -3,7 +3,7 @@ info:
   title: SWE574 Group2 API List
   version: v0.1
 servers:
-  - url: http://localhost:8080
+  - url: ${PUBLIC_API_URL}
     description: SWE574 Group2 APIs
 paths:
   /api/posts/{postId}/markBestAnswer/{commentId}:

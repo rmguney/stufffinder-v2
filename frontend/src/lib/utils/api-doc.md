@@ -2,7 +2,7 @@
 
 **Version:** `v0.1`  
 **Servers:**  
-- **Base URL:** `http://localhost:8080` (SWE574 Group2 APIs)
+- **Base URL:** `${PUBLIC_API_URL}` (SWE574 Group2 APIs)
 
 ---
 

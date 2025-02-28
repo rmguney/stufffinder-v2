@@ -1,8 +1,9 @@
 // You can run this in the browser console to test the comment API directly
+import { PUBLIC_API_URL } from "$env/static/public";
 
 async function testCommentAPI() {
   try {
-    const response = await fetch('http://localhost:8080/api/comments/create', {
+    const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

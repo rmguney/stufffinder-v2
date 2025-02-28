@@ -1,9 +1,11 @@
+import { PUBLIC_API_URL } from "$env/static/public";
+
 const debugCommentAPI = {
   // Test getting comments for a post
   async getComments(postId) {
     try {
       console.log(`Fetching comments for post ${postId}...`);
-      const response = await fetch(`http://localhost:8080/api/comments/get/${postId}`);
+      const response = await fetch(`${PUBLIC_API_URL}/api/comments/get/${postId}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -37,7 +39,7 @@ const debugCommentAPI = {
       
       console.log('Payload:', payload);
       
-      const response = await fetch('http://localhost:8080/api/comments/create', {
+      const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

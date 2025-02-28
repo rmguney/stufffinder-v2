@@ -6,7 +6,8 @@
   import { threadStore } from '../../../threadStore';
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
-  
+  import { PUBLIC_API_URL } from "$env/static/public";
+
   // State variables
   let userId;
   let userName;
@@ -34,13 +35,13 @@
       loadingComments = true;
       
       // First get the userId from the username
-      const userResponse = await fetch(`http://localhost:8080/api/auth/username/${userName}`);
+      const userResponse = await fetch(`${PUBLIC_API_URL}/api/auth/username/${userName}`);
       if (!userResponse.ok) throw new Error('User not found');
       const userData = await userResponse.json();
       userId = userData.userId;
       
       // Fetch user's posts (threads)
-      const postsResponse = await fetch(`http://localhost:8080/api/auth/${userId}/posts`);
+      const postsResponse = await fetch(`${PUBLIC_API_URL}/api/auth/${userId}/posts`);
       if (!postsResponse.ok) throw new Error('Failed to fetch posts');
       const postsData = await postsResponse.json();
       
@@ -55,7 +56,7 @@
       threadStore.set(threads);
       
       // Fetch user's comments
-      const commentsResponse = await fetch(`http://localhost:8080/api/auth/${userId}/comments`);
+      const commentsResponse = await fetch(`${PUBLIC_API_URL}/api/auth/${userId}/comments`);
       if (!commentsResponse.ok) throw new Error('Failed to fetch comments');
       const commentsData = await commentsResponse.json();
       

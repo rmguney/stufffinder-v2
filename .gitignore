@@ -6,9 +6,6 @@ node_modules/
 # SvelteKit
 /frontend/.svelte-kit/
 /frontend/build/
-/frontend/.env
-/frontend/.env.*
-!/frontend/.env.example
 
 # Capacitor
 /frontend/android/

@@ -5,6 +5,7 @@
   import { activeUser } from "../../userStore";
   import { Button } from "$lib/components/ui/button";
   import { Separator } from "$lib/components/ui/separator";
+  import { PUBLIC_API_URL } from "$env/static/public";
 
   export let id = '';
   export let title = '';
@@ -50,7 +51,7 @@
   const toggleResolved = async () => {
     if (currentUser !== postedBy) return;
     try {
-        const response = await fetch(`http://localhost:8080/api/posts/${id}/markSolved`, {
+        const response = await fetch(`${PUBLIC_API_URL}/api/posts/${id}/markSolved`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -95,7 +96,7 @@ function handleImageError(event) {
     if (!currentUser) return; // Must be logged in to vote
     
     try {
-      const response = await fetch(`http://localhost:8080/api/posts/${isUpvote ? 'upvote' : 'downvote'}/${id}`, {
+      const response = await fetch(`${PUBLIC_API_URL}/api/posts/${isUpvote ? 'upvote' : 'downvote'}/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

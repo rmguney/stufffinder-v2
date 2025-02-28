@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { getAuthHeader } from '$lib/utils/auth';
+import { PUBLIC_API_URL } from "$env/static/public";
 
 // Create a store for notifications
 export const notifications = writable([]);
@@ -17,7 +18,7 @@ export async function fetchNotifications() {
         if (!username) return;
 
         // Get user ID from username
-        const userIdResponse = await fetch(`http://localhost:8080/api/auth/username/${username}`, {
+        const userIdResponse = await fetch(`${PUBLIC_API_URL}/api/auth/username/${username}`, {
             headers: getAuthHeader()
         });
         
@@ -29,7 +30,7 @@ export async function fetchNotifications() {
         const userId = userData.userId;
         
         // Fetch notifications for this user
-        const notificationsResponse = await fetch(`http://localhost:8080/api/notifications/${userId}`, {
+        const notificationsResponse = await fetch(`${PUBLIC_API_URL}/api/notifications/${userId}`, {
             headers: getAuthHeader()
         });
         
@@ -50,7 +51,7 @@ export async function fetchNotifications() {
 // Function to mark a notification as read
 export async function markAsRead(notificationId) {
     try {
-        const response = await fetch(`http://localhost:8080/api/notifications/${notificationId}/read`, {
+        const response = await fetch(`${PUBLIC_API_URL}/api/notifications/${notificationId}/read`, {
             method: 'PUT',
             headers: getAuthHeader()
         });

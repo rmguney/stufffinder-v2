@@ -10,6 +10,7 @@
   import { activeUser } from "../../userStore";
   import * as Popover from "$lib/components/ui/popover/index.js";
   import { goto } from "$app/navigation";
+  import { PUBLIC_API_URL } from "$env/static/public";
 
   let navbar = false;
   let loginBar = false;
@@ -157,12 +158,12 @@
   async function getNotifications() {
       try {
           // First get user ID from username
-          const userResponse = await fetch(`http://localhost:8080/api/auth/${$activeUser}`);
+          const userResponse = await fetch(`${PUBLIC_API_URL}/api/auth/${$activeUser}`);
           if (!userResponse.ok) throw new Error('Failed to fetch user');
           const userData = await userResponse.json();
           
           // Then fetch notifications for that user
-          const notifResponse = await fetch(`http://localhost:8080/api/notifications/${userData.id}`);
+          const notifResponse = await fetch(`${PUBLIC_API_URL}/api/notifications/${userData.id}`);
           if (!notifResponse.ok) throw new Error('Failed to fetch notifications');
           const notifications = await notifResponse.json();
           

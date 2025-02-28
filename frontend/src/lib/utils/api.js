@@ -1,8 +1,9 @@
 /**
  * Utility functions for making authenticated API requests
  */
+import { PUBLIC_API_URL } from "$env/static/public";
 
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = `${PUBLIC_API_URL}`;
 
 /**
  * Make an authenticated API request

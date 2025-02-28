@@ -66,19 +66,40 @@
     }
 };
 
+// More robust date formatting
 const formatDate = (isoDate) => {
-  if (!isoDate) return "";
-  const date = new Date(isoDate);
+  if (!isoDate) {
+    console.warn("Warning: Empty date value received");
+    return "";
+  }
+  
+  try {
+    // First check if this is already an ISO string
+    const date = new Date(isoDate);
+    
+    if (isNaN(date.getTime())) {
+      console.warn("Warning: Invalid date format:", isoDate);
+      return "";
+    }
 
-  const timeOptions = { hour: "numeric", minute: "numeric", hour12: false };
-  const timeString = new Intl.DateTimeFormat("en-US", timeOptions).format(date);
+    const timeOptions = { hour: "numeric", minute: "numeric", hour12: false };
+    const timeString = new Intl.DateTimeFormat("en-US", timeOptions).format(date);
 
-  const day = date.getDate();
-  const shortMonth = date.toLocaleString("en-US", { month: "short" });
-  const fullYear = date.getFullYear();
+    const day = date.getDate();
+    const shortMonth = date.toLocaleString("en-US", { month: "short" });
+    const fullYear = date.getFullYear();
 
-  return `${timeString}, ${day} ${shortMonth} ${fullYear}`;
+    return `${timeString}, ${day} ${shortMonth} ${fullYear}`;
+  } catch (error) {
+    console.error("Date formatting error:", error, "for date:", isoDate);
+    return "";
+  }
 };
+
+// Debug logs to verify the date values
+$: if (variant === "thumb") {
+  console.log(`Post component (${id}): variant=${variant}, createdAt=${createdAt}, formatted=`, formatDate(createdAt));
+}
 
 function handleImageError(event) {
   event.target.src = '/placeholder-image.png';
@@ -282,7 +303,10 @@ function handleImageError(event) {
                 {:else}
                   <span class="font-bold">Anonymous</span>
                 {/if}
-                at {formatDate(createdAt)}
+                <!-- Improved date display -->
+                {#if createdAt && createdAt !== 'undefined' && createdAt !== 'null'}
+                  <span class="ml-1">at {formatDate(createdAt)}</span>
+                {/if}
               </div>
               <div class={`${variant === "thumb" ? 'mt-1' : 'mt-1.5'}`}>
                 {#if solved}

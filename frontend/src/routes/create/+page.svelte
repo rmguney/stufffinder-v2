@@ -47,7 +47,9 @@
     let itemCondition = '';
     
     let errors = {
-        title: ''
+        title: '',
+        image: '',
+        description: ''
     };
 
     $: postedBy = $activeUser;
@@ -77,10 +79,34 @@
         return enrichedTags;
     }
     
-        let handlePost = async () => {
+    let handlePost = async () => {
+        // Reset error state
+        errors = {
+            title: '',
+            image: '',
+            description: ''
+        };
+        
+        // Validate required fields
+        let hasErrors = false;
+        
         if (!title.trim()) {
             errors.title = 'Title is required';
-            return;
+            hasErrors = true;
+        }
+        
+        if (!imageFile) {
+            errors.image = 'Image is required';
+            hasErrors = true;
+        }
+        
+        if (!description.trim()) {
+            errors.description = 'Description is required';
+            hasErrors = true;
+        }
+        
+        if (hasErrors) {
+            return; // Don't proceed if validation fails
         }
     
         try {
@@ -332,8 +358,11 @@
             </div>
 
             <div>
-                <label for="description" class="block text-sm font-medium mb-2">Description</label>
+                <label for="description" class="block text-sm font-medium mb-2">Description*</label>
                 <Textarea id="description" class="w-full p-2 mb-4 border rounded dark:border-gray-600 h-auto" bind:value={description} placeholder="You can add any additional context about your object or how you came into possession of it."/>
+                {#if errors.description}
+                    <p class="text-red-500 text-sm mt-1">{errors.description}</p>
+                {/if}
             </div>
             
             <!-- Tags -->
@@ -348,8 +377,9 @@
                 <label for="anonymous-checkbox" class="text-sm">Post anonymously</label>
             </div>
 
+            <!-- Image upload with required indicator -->
             <div class="mb-4">
-                <label for="image-upload" class="block text-sm font-medium mb-2">Upload Image</label>
+                <label for="image-upload" class="block text-sm font-medium mb-2">Upload Image*</label>
                 <input 
                     type="file" 
                     id="image-upload" 
@@ -357,7 +387,10 @@
                     on:change={handleFileChange}
                     class="w-full p-2 border rounded dark:border-gray-600"
                 />
-                <p class="text-xs text-gray-500 mt-1">Upload an image of your mystery object (optional)</p>
+                {#if errors.image}
+                    <p class="text-red-500 text-sm mt-1">{errors.image}</p>
+                {/if}
+                <p class="text-xs text-gray-500 mt-1">Upload an image of your mystery object (required)</p>
             </div>
 
             <!-- Submit Button -->

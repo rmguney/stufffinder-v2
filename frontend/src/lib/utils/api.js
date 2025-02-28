@@ -31,11 +31,11 @@ export async function apiRequest(endpoint, options = {}) {
     const responseText = await response.text();
     
     // Log response details for debugging
-    console.log(`API ${options.method || 'GET'} ${endpoint} response:`, {
+    /* console.log(`API ${options.method || 'GET'} ${endpoint} response:`, {
       status: response.status,
       ok: response.ok,
       responseText: responseText.substring(0, 100) + (responseText.length > 100 ? '...' : '')
-    });
+    }); */
     
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status} - ${responseText}`);
@@ -99,7 +99,7 @@ export function organizeComments(comments) {
   if (!comments || !Array.isArray(comments)) return [];
   
   // Log input for debugging
-  console.log("API - Organizing comments:", comments.length);
+  // console.log("API - Organizing comments:", comments.length);
   
   const commentMap = {};
   const rootComments = [];

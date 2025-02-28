@@ -24,7 +24,7 @@
   $: {
     if (thread?.comments) {
       comments = thread.comments;
-      console.log("Updated comments array:", comments);
+      // console.log("Updated comments array:", comments);
     } else {
       comments = [];
     }
@@ -37,7 +37,7 @@
   function organizeComments(comments) {
     if (!comments || !Array.isArray(comments)) return [];
     
-    console.log("Raw comments to organize:", JSON.stringify(comments, null, 2));
+    // console.log("Raw comments to organize:", JSON.stringify(comments, null, 2));
     
     // Since the API already returns comments with their replies nested,
     // we just need to ensure the structure is preserved
@@ -49,19 +49,19 @@
       })) || []
     }));
 
-    console.log("Final organized structure:", JSON.stringify(rootComments, null, 2));
+    // console.log("Final organized structure:", JSON.stringify(rootComments, null, 2));
     return rootComments;
   }
 
   onMount(async () => {
     try {
-      console.log("Thread ID from data:", data.id);
+      // console.log("Thread ID from data:", data.id);
       
       // Fetch post details
       const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostDetails/${data.id}`);
       if (!response.ok) throw new Error('Failed to fetch post details');
       const postData = await response.json();
-      console.log("Post data received:", postData);
+      // console.log("Post data received:", postData);
       
       // Update thread store with post data
       updateThread({
@@ -109,10 +109,10 @@
           comments: []
       });
 
-      console.log('Thread ownership debug:', {
+      /* console.log('Thread ownership debug:', {
         author: postData.author,
         currentUser: $activeUser
-      });
+      }); */
       
       // Load and organize comments
       await refreshComments();
@@ -120,7 +120,7 @@
       // Add event listener for comment refresh requests
       refreshCommentListener = async (event) => {
         if (event.detail?.threadId === data.id) {
-          console.log("Comment refresh event received");
+          // console.log("Comment refresh event received");
           await refreshComments();
         }
       };
@@ -150,11 +150,11 @@
       
       if (!response.ok) throw new Error('Failed to fetch comments');
       const rawComments = await response.json();
-      console.log("Raw comments received:", rawComments);
+      // console.log("Raw comments received:", rawComments);
       
       // Process comments to create a hierarchical structure
       const organizedComments = organizeComments(rawComments);
-      console.log("Organized comments structure:", organizedComments);
+      // console.log("Organized comments structure:", organizedComments);
       
       // Update the thread store with organized comments
       threadStore.update(threads => {
@@ -196,7 +196,7 @@
     error = null;
     
     try {
-      console.log("Sending comment:", comment, "to post ID:", data.id);
+      // console.log("Sending comment:", comment, "to post ID:", data.id);
       
       // Use direct API call
       const payload = {
@@ -220,7 +220,7 @@
       }
       
       const newComment = await response.json();
-      console.log("Comment submission result:", newComment);
+      // console.log("Comment submission result:", newComment);
       
       // Refresh comments to ensure we have updated data
       await refreshComments();
@@ -241,12 +241,12 @@
   // Update reactive statement to log the comment structure
   $: {
     if (thread) {
-      console.log("Current thread:", thread);
-      console.log("Thread comments:", thread.comments);
+      // console.log("Current thread:", thread);
+      // console.log("Thread comments:", thread.comments);
       
       if (comments.length > 0) {
-        console.log("Comment hierarchy:");
-        console.log(debugCommentStructure(comments));
+        // console.log("Comment hierarchy:");
+        // console.log(debugCommentStructure(comments));
       }
     }
   }

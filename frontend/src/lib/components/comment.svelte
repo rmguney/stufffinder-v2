@@ -38,32 +38,32 @@
     activeUser.subscribe((value) => {
       currentUser = value;
       isOwner = currentUser === threadOwner;
-      console.log('Auth Debug:', {
+      /* console.log('Auth Debug:', {
         currentUser,
         threadOwner,
         isOwner,
         match: currentUser === threadOwner
-      });
+      }); */
     });
   }
 
   // Add debug logging for replies
   $: {
     if (replies && replies.length > 0) {
-      console.log(`Comment ${commentId} has ${replies.length} replies:`, 
+      /* console.log(`Comment ${commentId} has ${replies.length} replies:`, 
         replies.map(r => ({
           id: r.id,
           content: r.content,
           parentId: r.parentCommentId || commentId
         }))
-      );
+      ); */
     }
   }
 
   // Debug log when replies prop changes
   $: {
     if (replies?.length > 0) {
-      console.log(`Comment ${commentId} received replies:`, replies);
+      // console.log(`Comment ${commentId} received replies:`, replies);
     }
   }
 
@@ -72,7 +72,7 @@
 
   // Set initial values on mount
   onMount(() => {
-    console.log("Comment mounted:", { commentId, comment });
+    // console.log("Comment mounted:", { commentId, comment });
     
     // Initialize vote counts if provided
     if (typeof comment === 'object' && comment !== null) {
@@ -84,15 +84,15 @@
     
     // Debug the replies
     if (replies && replies.length > 0) {
-      console.log(`Comment ${commentId} has ${replies.length} replies`);
+      // console.log(`Comment ${commentId} has ${replies.length} replies`);
       replies.forEach(reply => {
-        console.log(` - Reply ID: ${reply.id}, Content: ${reply.content}`);
+        // console.log(` - Reply ID: ${reply.id}, Content: ${reply.content}`);
       });
     }
 
     // Add debug logging for replies
     if (replies?.length > 0) {
-      console.log(`Mounting comment ${commentId} with replies:`, replies);
+      // console.log(`Mounting comment ${commentId} with replies:`, replies);
     }
 
     // Mark replies as loaded if we have them
@@ -136,7 +136,7 @@
       }
       
       const newReply = await response.json();
-      console.log("Reply created:", newReply);
+      // console.log("Reply created:", newReply);
       
       // Reset the form
       replyText = "";
@@ -206,13 +206,13 @@
   // Function to toggle the best answer status
   const toggleBestAnswer = async () => {
     try {
-      console.log('Toggle best answer debug:', {
+      /* console.log('Toggle best answer debug:', {
         currentUser,
         threadOwner,
         isOwner,
         commentId,
         threadId
-      });
+      }); */
 
       if (!isOwner) {
         console.error("Only the thread owner can mark best answers");
@@ -225,14 +225,14 @@
         return;
       }
 
-      console.log('Request details:', {
+      /* console.log('Request details:', {
         url: `${PUBLIC_API_URL}/api/posts/${threadId}/markBestAnswer/${commentId}`,
         token: token.substring(0, 10) + '...',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         }
-      });
+      }); */
 
       const response = await fetch(`${PUBLIC_API_URL}/api/posts/${threadId}/markBestAnswer/${commentId}`, {
         method: 'PUT',
@@ -242,7 +242,7 @@
         }
       });
       
-      console.log('Mark best answer response:', response.status);
+      // console.log('Mark best answer response:', response.status);
       
       if (response.status === 403) {
         console.error("You don't have permission to mark best answers");
@@ -270,7 +270,7 @@
 
   $: {
     if (replies && replies.length > 0) {
-      console.log(`Comment ${commentId} details:`, {
+      /* console.log(`Comment ${commentId} details:`, {
         id: commentId,
         content: comment,
         parentId: parentCommentId,
@@ -280,7 +280,7 @@
           content: r.content,
           parentId: r.parentCommentId
         }))
-      });
+      }); */
     }
   }
 </script>

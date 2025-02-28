@@ -4,9 +4,8 @@
   import { onMount } from 'svelte';
 
   onMount(async function () {
-    // The initialization now happens in the parent component
-    // This component just displays the current state of the store
-    // console.log("PostContainer mounted, thread count:", $threadStore.length);
+    // Debug logging to check thread structure
+    console.log("Thread data sample:", $threadStore.length > 0 ? $threadStore[0] : "No threads");
   });
 </script>
 
@@ -21,6 +20,11 @@
         imageSrc={thread.mysteryObjectImage ? `data:image/png;base64,${thread.mysteryObjectImage}` : ''}
         postedBy={thread.author}
         createdAt={thread.createdAt}
+        updatedAt={thread.updatedAt}
+        upvotes={thread.upvotes || 0}
+        downvotes={thread.downvotes || 0}
+        userUpvoted={thread.userUpvoted || false}
+        userDownvoted={thread.userDownvoted || false}
         solved={thread.solved}
         mysteryObject={thread.mysteryObject || null}
         variant="thumb"

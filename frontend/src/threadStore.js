@@ -11,25 +11,6 @@ const isClient = false;
 // Initialize store with empty array
 export const threadStore = writable([]);
 export const isLoading = writable(false);
-export const shouldRefreshThreads = writable(false); // Renamed from forceRefreshThreads
-
-// Function to normalize date formats
-const normalizeDateFormat = (dateString) => {
-    if (!dateString) return '';
-    
-    try {
-        // Try to parse the date string and ensure it's in ISO format
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-            console.warn("Invalid date encountered:", dateString);
-            return '';
-        }
-        return date.toISOString();
-    } catch (error) {
-        console.error("Error normalizing date:", error, "for:", dateString);
-        return '';
-    }
-};
 
 // Function to load initial data - will be called on app initialization
 export async function initializeThreadStore() {
@@ -64,8 +45,8 @@ function shouldRefreshCache() {
     return (now - lastUpdatedTime) > CACHE_EXPIRY_TIME;
 }
 
-// Function to fetch fresh threads from API - renamed to avoid conflict
-async function refreshThreadsData() {
+// Function to fetch fresh threads from API
+async function fetchFreshThreads() {
     try {
         const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostList?page=0&size=100`);
         
@@ -104,102 +85,26 @@ const saveToLocalStorage = (data) => {
     }
 };
 
-// Function to add a thread to the store
-export function addThread(thread) {
-    // Normalize dates
-    const normalizedThread = {
-        ...thread,
-        createdAt: normalizeDateFormat(thread.createdAt),
-        updatedAt: normalizeDateFormat(thread.updatedAt || thread.createdAt)
-    };
-
-    threadStore.update(threads => {
-        // Check if thread already exists
-        const existingThreadIndex = threads.findIndex(t => t.id === normalizedThread.id);
-        if (existingThreadIndex >= 0) {
-            // Update existing thread
-            threads[existingThreadIndex] = normalizedThread;
-            return [...threads];
-        } else {
-            // Add new thread
-            return [...threads, normalizedThread];
-        }
-    });
-}
-
 // Function to update or add a thread
 export function updateThread(newThread) {
-    // Normalize dates
-    const normalizedThread = {
-        ...newThread,
-        createdAt: normalizeDateFormat(newThread.createdAt),
-        updatedAt: normalizeDateFormat(newThread.updatedAt || newThread.createdAt)
-    };
-
     threadStore.update(threads => {
-        const index = threads.findIndex(t => t.id === normalizedThread.id);
+        const index = threads.findIndex(t => t.id === newThread.id);
         if (index !== -1) {
             // Update existing thread
             const updatedThreads = [...threads];
             updatedThreads[index] = {
                 ...updatedThreads[index],
-                ...normalizedThread
+                ...newThread
             };
             saveToLocalStorage(updatedThreads);
             return updatedThreads;
         } else {
             // Add new thread
-            const updatedThreads = [...threads, normalizedThread];
+            const updatedThreads = [...threads, newThread];
             saveToLocalStorage(updatedThreads);
             return updatedThreads;
         }
     });
-}
-
-// Function to load threads from API
-export async function loadThreads() {
-    try {
-        const response = await fetch(`${PUBLIC_API_URL}/api/posts`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch threads');
-        }
-        
-        const data = await response.json();
-        
-        // Clear existing threads and add normalized ones
-        threadStore.set([]);
-        data.forEach(thread => {
-            // Create a normalized version of each thread
-            addThread({
-                id: thread.id,
-                title: thread.title,
-                description: thread.description,
-                tags: thread.tags || [],
-                mysteryObjectImage: thread.mysteryObjectImage,
-                mysteryObject: thread.mysteryObject || null,
-                author: thread.author,
-                createdAt: thread.createdAt, // This will be normalized in addThread
-                updatedAt: thread.updatedAt, // This will be normalized in addThread
-                upvotes: thread.upvotes || 0,
-                downvotes: thread.downvotes || 0,
-                userUpvoted: thread.userUpvoted || false,
-                userDownvoted: thread.userDownvoted || false,
-                solved: thread.solved || false
-            });
-        });
-        
-        console.log("Threads loaded and normalized:", data.length);
-        return data;
-    } catch (error) {
-        console.error('Error loading threads:', error);
-        throw error;
-    }
 }
 
 // Update vote count for a thread

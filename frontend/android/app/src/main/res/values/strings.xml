@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">stufffinder</string>
-    <string name="title_activity_main">stufffinder</string>
-    <string name="package_name">com.example.app</string>
-    <string name="custom_url_scheme">com.example.app</string>
+    <string name="app_name">StuffFinder</string>
+    <string name="title_activity_main">StuffFinder</string>
+    <string name="package_name">app.vercel.stufffinder</string>
+    <string name="custom_url_scheme">app.vercel.stufffinder</string>
 </resources>

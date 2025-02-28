@@ -7,6 +7,7 @@
     import { activeUser } from '../../userStore';
     import { Input } from "$lib/components/ui/input/index.js";
     import { Textarea } from "$lib/components/ui/textarea/index.js";
+    import { PUBLIC_API_URL } from "$env/static/public";
 
     let imageFile = null;
     let title = '';
@@ -134,7 +135,7 @@
             }));
     
             // Create post first
-            const response = await fetch('http://localhost:8080/api/posts/create', {
+            const response = await fetch(`${PUBLIC_API_URL}/api/posts/create`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include'
@@ -152,7 +153,7 @@
                 const imageFormData = new FormData();
                 imageFormData.append('image', imageFile);
                 
-                const imageResponse = await fetch(`http://localhost:8080/api/mysteryObjects/${responseData.mysteryObjectId}/upload-image`, {
+                const imageResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/upload-image`, {
                     method: 'POST',
                     body: imageFormData,
                     credentials: 'include'

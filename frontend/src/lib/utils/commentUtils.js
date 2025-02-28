@@ -1,6 +1,7 @@
 /**
  * Utility functions for working with comment data
  */
+import { PUBLIC_API_URL } from "$env/static/public";
 
 /**
  * Organize flat comment list into a hierarchical structure
@@ -63,7 +64,7 @@ export function printCommentHierarchy(comments, depth = 0) {
 
 // Test function to visualize comment structure in console
 export function debugCommentStructure(threadId) {
-  fetch(`http://localhost:8080/api/comments/get/${threadId}`)
+  fetch(`${PUBLIC_API_URL}/api/comments/get/${threadId}`)
     .then(response => response.json())
     .then(comments => {
       console.log('Raw comments:', comments);

@@ -8,6 +8,7 @@
   import { activeUser } from '../../../userStore';
   import { onMount, onDestroy } from 'svelte';
   import { getAuthHeader } from '$lib/utils/auth';
+  import { PUBLIC_API_URL } from "$env/static/public";
 
   export let data;
   let comment = '';
@@ -57,7 +58,7 @@
       console.log("Thread ID from data:", data.id);
       
       // Fetch post details
-      const response = await fetch(`http://localhost:8080/api/posts/getForPostDetails/${data.id}`);
+      const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostDetails/${data.id}`);
       if (!response.ok) throw new Error('Failed to fetch post details');
       const postData = await response.json();
       console.log("Post data received:", postData);
@@ -141,7 +142,7 @@
   // Function to refresh comments
   async function refreshComments() {
     try {
-      const response = await fetch(`http://localhost:8080/api/comments/get/${data.id}`, {
+      const response = await fetch(`${PUBLIC_API_URL}/api/comments/get/${data.id}`, {
         headers: {
           ...getAuthHeader()
         }
@@ -204,7 +205,7 @@
         parentCommentId: null
       };
       
-      const response = await fetch('http://localhost:8080/api/comments/create', {
+      const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

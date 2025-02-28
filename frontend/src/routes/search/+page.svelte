@@ -2,7 +2,8 @@
     import { Input } from "$lib/components/ui/input";
     import * as Card from "$lib/components/ui/card/index.js";
     import { Separator } from "$lib/components/ui/separator";
-    
+    import { PUBLIC_API_URL } from "$env/static/public";
+
     let searchQuery = "";
     let searchResults = [];
     let loading = false;
@@ -23,7 +24,7 @@
             
             try {
                 // Use the new backend endpoint
-                const response = await fetch(`http://localhost:8080/api/posts/searchForPosts?q=${encodeURIComponent(searchQuery.trim())}`);
+                const response = await fetch(`${PUBLIC_API_URL}/api/posts/searchForPosts?q=${encodeURIComponent(searchQuery.trim())}`);
                 
                 if (!response.ok) {
                     throw new Error('Search request failed');

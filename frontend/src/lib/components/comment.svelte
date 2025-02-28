@@ -6,6 +6,7 @@
   import { Separator } from "$lib/components/ui/separator";
   import { onMount } from 'svelte';
   import { getAuthHeader } from '$lib/utils/auth';
+  import { PUBLIC_API_URL } from "$env/static/public";
 
   // Import Comment for recursion (self-import for recursive component)
   import Comment from "./comment.svelte";
@@ -120,7 +121,7 @@
         parentCommentId: commentId
       };
       
-      const response = await fetch('http://localhost:8080/api/comments/create', {
+      const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +161,7 @@
         return;
       }
       
-      const response = await fetch(`http://localhost:8080/api/comments/${isUpvote ? 'upvote' : 'downvote'}/${commentId}`, {
+      const response = await fetch(`${PUBLIC_API_URL}/api/comments/${isUpvote ? 'upvote' : 'downvote'}/${commentId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -225,7 +226,7 @@
       }
 
       console.log('Request details:', {
-        url: `http://localhost:8080/api/posts/${threadId}/markBestAnswer/${commentId}`,
+        url: `${PUBLIC_API_URL}/api/posts/${threadId}/markBestAnswer/${commentId}`,
         token: token.substring(0, 10) + '...',
         headers: {
           'Content-Type': 'application/json',
@@ -233,7 +234,7 @@
         }
       });
 
-      const response = await fetch(`http://localhost:8080/api/posts/${threadId}/markBestAnswer/${commentId}`, {
+      const response = await fetch(`${PUBLIC_API_URL}/api/posts/${threadId}/markBestAnswer/${commentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -2,10 +2,11 @@
   import Post from '$lib/components/post.svelte';
   import { threadStore } from '../../threadStore';
   import { onMount } from 'svelte';
+  import { PUBLIC_API_URL } from "$env/static/public";
 
   onMount(async function () {
     try {
-      const response = await fetch('http://localhost:8080/api/posts/getForPostList?page=0&size=100');
+      const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostList?page=0&size=100`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

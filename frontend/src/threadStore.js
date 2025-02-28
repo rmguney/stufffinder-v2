@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+import { PUBLIC_API_URL } from "$env/static/public";
 
 const LOCAL_STORAGE_KEY = 'threadStoreData';
 
@@ -50,7 +51,7 @@ export function updateThread(newThread) {
 
 // Update vote count for a thread
 export async function updateThreadVote(threadId, isUpvote) {
-    const endpoint = `http://localhost:8080/api/posts/${isUpvote ? 'upvote' : 'downvote'}/${threadId}`;
+    const endpoint = `${PUBLIC_API_URL}/api/posts/${isUpvote ? 'upvote' : 'downvote'}/${threadId}`;
     try {
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -89,7 +90,7 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
         console.log("Adding comment with payload:", payload);
 
         const authToken = localStorage.getItem('authToken');
-        const response = await fetch('http://localhost:8080/api/comments/create', {
+        const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -148,7 +149,7 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
 
 // Update vote count for a comment
 export async function updateCommentVote(commentId, isUpvote) {
-    const endpoint = `http://localhost:8080/api/comments/${isUpvote ? 'upvote' : 'downvote'}/${commentId}`;
+    const endpoint = `${PUBLIC_API_URL}/api/comments/${isUpvote ? 'upvote' : 'downvote'}/${commentId}`;
     try {
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -188,7 +189,7 @@ export async function updateCommentVote(commentId, isUpvote) {
 // Mark a comment as the best answer
 export async function markBestAnswer(postId, commentId) {
     try {
-        const response = await fetch(`http://localhost:8080/api/posts/${postId}/markBestAnswer/${commentId}`, {
+        const response = await fetch(`${PUBLIC_API_URL}/api/posts/${postId}/markBestAnswer/${commentId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -225,7 +226,7 @@ export async function loadCommentsForThread(threadId) {
     try {
         console.log(`Loading comments for thread ${threadId}`);
         
-        const response = await fetch(`http://localhost:8080/api/comments/get/${threadId}`);
+        const response = await fetch(`${PUBLIC_API_URL}/api/comments/get/${threadId}`);
         if (!response.ok) throw new Error('Failed to fetch comments');
         
         const rawComments = await response.json();

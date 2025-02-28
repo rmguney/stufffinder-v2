@@ -1,23 +1,12 @@
 <script>
   import Post from '$lib/components/post.svelte';
-  import { threadStore } from '../../threadStore';
+  import { threadStore, forceRefreshThreads } from '../../threadStore';
   import { onMount } from 'svelte';
-  import { PUBLIC_API_URL } from "$env/static/public";
 
   onMount(async function () {
-    try {
-      const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostList?page=0&size=100`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json(); 
-      console.log('Raw API response:', data); // Debug log
-      threadStore.set(data.content);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
+    // The initialization now happens in the parent component
+    // This component just displays the current state of the store
+    // console.log("PostContainer mounted, thread count:", $threadStore.length);
   });
 </script>
 
@@ -27,7 +16,7 @@
       <Post
         id={thread.id}
         title={thread.title}
-        description={thread.description}
+        description=" "
         tags={thread.tags || []}
         imageSrc={thread.mysteryObjectImage ? `data:image/png;base64,${thread.mysteryObjectImage}` : ''}
         postedBy={thread.author}
@@ -37,5 +26,9 @@
         variant="thumb"
       />
     </a>
+  </div>
+{:else}
+  <div class="w-full text-center py-8">
+    <p>No posts found. Check back later!</p>
   </div>
 {/each}

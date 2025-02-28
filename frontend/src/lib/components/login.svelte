@@ -45,10 +45,36 @@
     }
   }
 
+  function isTokenExpired(token) {
+    if (!token) return true;
+    
+    try {
+      const payload = token.split('.')[1];
+      if (!payload) return true;
+      
+      const decodedPayload = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+      
+      if (!decodedPayload.exp) return true;
+      
+      const expirationTime = decodedPayload.exp * 1000; 
+      return Date.now() >= expirationTime;
+    } catch (error) {
+      console.error('Error parsing token:', error);
+      return true; 
+    }
+  }
+
   onMount(() => {
-    // Initialize the indicator position
     updateIndicator(activeTab);
+    
+    const token = localStorage.getItem('tokenKey');
+    if (token && isTokenExpired(token)) {
+      console.log('Token expired, removing from storage');
+      localStorage.removeItem('tokenKey');
+      activeUser.set(null);
+    }
   });
+
 
   let handleRegister = async () => {
     registerErrors = {};
@@ -56,7 +82,7 @@
     registerLoading = true;
     
     try {
-      console.log('Starting registration with username:', registerUsername);
+      // console.log('Starting registration with username:', registerUsername);
 
       // Validate required fields
       if (!registerUsername) {

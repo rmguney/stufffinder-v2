@@ -46,7 +46,7 @@
                     await fetchTagLabels(Array.from(tagIds));
                 }
                 
-                console.log("Search results:", searchResults);
+                // console.log("Search results:", searchResults);
             } catch (error) {
                 console.error("Error searching posts:", error);
                 searchResults = [];

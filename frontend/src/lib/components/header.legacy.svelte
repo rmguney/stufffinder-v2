@@ -168,7 +168,7 @@
           const notifications = await notifResponse.json();
           
           // Handle notifications as needed
-          console.log(notifications);
+          // console.log(notifications);
           return notifications;
       } catch (error) {
           console.error('Error fetching notifications:', error);

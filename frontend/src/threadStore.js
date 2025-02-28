@@ -2,33 +2,88 @@ import { writable } from 'svelte/store';
 import { PUBLIC_API_URL } from "$env/static/public";
 
 const LOCAL_STORAGE_KEY = 'threadStoreData';
+const LAST_UPDATED_KEY = 'threadStoreLastUpdated';
+const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 // Utility function to safely check for localStorage
-const isClient = typeof window !== 'undefined';
+const isClient = false;
 
-// Load initial data from localStorage (client-only)
+// Initialize store with empty array
+export const threadStore = writable([]);
+export const isLoading = writable(false);
+
+// Function to load initial data - will be called on app initialization
+export async function initializeThreadStore() {
+    //if (!isClient) return; // Skip during SSR
+
+    isLoading.set(true);
+    
+    try {
+        // Check if we should use cache or fetch fresh data        
+        await fetchFreshThreads();
+    } catch (error) {
+        console.error('Thread store initialization error:', error);
+        // Fall back to cache if fetch fails
+        const cachedData = loadFromLocalStorage();
+        threadStore.set(cachedData);
+    } finally {
+        isLoading.set(false);
+    }
+}
+
+// Function to determine if we should refresh the cache
+function shouldRefreshCache() {
+    if (!isClient) return true;
+    
+    const lastUpdated = localStorage.getItem(LAST_UPDATED_KEY);
+    if (!lastUpdated) return true;
+    
+    const now = Date.now();
+    const lastUpdatedTime = parseInt(lastUpdated, 10);
+    
+    // Check if cache is older than expiry time
+    return (now - lastUpdatedTime) > CACHE_EXPIRY_TIME;
+}
+
+// Function to fetch fresh threads from API
+async function fetchFreshThreads() {
+    try {
+        const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostList?page=0&size=100`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const threads = data.content || [];
+        
+        // Update the store with fresh data
+        threadStore.set(threads);
+        
+        // Save to localStorage with timestamp
+        saveToLocalStorage(threads);
+        localStorage.setItem(LAST_UPDATED_KEY, Date.now().toString());
+        
+        return threads;
+    } catch (error) {
+        console.error('Error fetching fresh threads:', error);
+        throw error;
+    }
+}
+
+// Load data from localStorage
 const loadFromLocalStorage = () => {
     if (!isClient) return []; // Return an empty array during SSR
     const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
     return storedData ? JSON.parse(storedData) : [];
 };
 
-// Save data to localStorage (client-only)
+// Save data to localStorage
 const saveToLocalStorage = (data) => {
     if (isClient) {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
     }
 };
-
-// Initialize the store with client-side data only
-export const threadStore = writable(loadFromLocalStorage());
-
-// Subscribe to save updates to localStorage (client-only)
-if (isClient) {
-    threadStore.subscribe((threads) => {
-        saveToLocalStorage(threads);
-    });
-}
 
 // Function to update or add a thread
 export function updateThread(newThread) {
@@ -41,10 +96,13 @@ export function updateThread(newThread) {
                 ...updatedThreads[index],
                 ...newThread
             };
+            saveToLocalStorage(updatedThreads);
             return updatedThreads;
         } else {
             // Add new thread
-            return [...threads, newThread];
+            const updatedThreads = [...threads, newThread];
+            saveToLocalStorage(updatedThreads);
+            return updatedThreads;
         }
     });
 }
@@ -62,8 +120,8 @@ export async function updateThreadVote(threadId, isUpvote) {
         if (!response.ok) throw new Error('Vote update failed');
         const data = await response.json();
         
-        threadStore.update(threads =>
-            threads.map(thread =>
+        threadStore.update(threads => {
+            const updatedThreads = threads.map(thread =>
                 thread.id === threadId ? { 
                     ...thread, 
                     upvotes: data.upvotes,
@@ -71,8 +129,10 @@ export async function updateThreadVote(threadId, isUpvote) {
                     userUpvoted: isUpvote,
                     userDownvoted: !isUpvote
                 } : thread
-            )
-        );
+            );
+            saveToLocalStorage(updatedThreads);
+            return updatedThreads;
+        });
     } catch (error) {
         console.error('Error updating vote:', error);
     }
@@ -87,9 +147,9 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
             parentCommentId: parentCommentId
         };
 
-        console.log("Adding comment with payload:", payload);
+        // console.log("Adding comment with payload:", payload);
 
-        const authToken = localStorage.getItem('authToken');
+        const authToken = localStorage.getItem('tokenKey');
         const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
             method: 'POST',
             headers: {
@@ -105,11 +165,11 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
         }
         
         const newComment = await response.json();
-        console.log("New comment response:", newComment);
+        // console.log("New comment response:", newComment);
 
         // Update store with new comment
         threadStore.update(threads => {
-            return threads.map(thread => {
+            const updatedThreads = threads.map(thread => {
                 if (thread.id === parseInt(threadId)) {
                     const updatedComments = [...(thread.comments || [])];
                     // If this is a reply, find the parent comment and add to its replies
@@ -138,6 +198,8 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
                 }
                 return thread;
             });
+            saveToLocalStorage(updatedThreads);
+            return updatedThreads;
         });
         
         return newComment;
@@ -161,9 +223,8 @@ export async function updateCommentVote(commentId, isUpvote) {
         const data = await response.json();
         
         // Update the comment vote count in the thread store
-        threadStore.update(threads =>
-            threads.map(thread => ({
-
+        threadStore.update(threads => {
+            const updatedThreads = threads.map(thread => ({
                 ...thread,
                 comments: thread.comments?.map(comment =>
                     comment.id === commentId
@@ -176,8 +237,10 @@ export async function updateCommentVote(commentId, isUpvote) {
                         } 
                         : comment
                 ) || []
-            }))
-        );
+            }));
+            saveToLocalStorage(updatedThreads);
+            return updatedThreads;
+        });
         
         return data;
     } catch (error) {
@@ -200,8 +263,8 @@ export async function markBestAnswer(postId, commentId) {
         const data = await response.json();
         
         // Update the comment's bestAnswer status in the thread store
-        threadStore.update(threads =>
-            threads.map(thread => 
+        threadStore.update(threads => {
+            const updatedThreads = threads.map(thread => 
                 thread.id === postId
                     ? {
                         ...thread,
@@ -211,8 +274,10 @@ export async function markBestAnswer(postId, commentId) {
                         })) || []
                       }
                     : thread
-            )
-        );
+            );
+            saveToLocalStorage(updatedThreads);
+            return updatedThreads;
+        });
         
         return data;
     } catch (error) {
@@ -224,13 +289,13 @@ export async function markBestAnswer(postId, commentId) {
 // Load comments for a specific thread
 export async function loadCommentsForThread(threadId) {
     try {
-        console.log(`Loading comments for thread ${threadId}`);
+        // console.log(`Loading comments for thread ${threadId}`);
         
         const response = await fetch(`${PUBLIC_API_URL}/api/comments/get/${threadId}`);
         if (!response.ok) throw new Error('Failed to fetch comments');
         
         const rawComments = await response.json();
-        console.log("Raw comments received:", rawComments);
+        // console.log("Raw comments received:", rawComments);
 
         // Process comments to build hierarchy
         const processComments = (comments) => {
@@ -267,7 +332,7 @@ export async function loadCommentsForThread(threadId) {
         
         // Update thread store
         threadStore.update(threads => {
-            return threads.map(thread => {
+            const updatedThreads = threads.map(thread => {
                 if (parseInt(thread.id) === parseInt(threadId)) {
                     return { 
                         ...thread, 
@@ -276,6 +341,8 @@ export async function loadCommentsForThread(threadId) {
                 }
                 return thread;
             });
+            saveToLocalStorage(updatedThreads);
+            return updatedThreads;
         });
         
         return organizedComments;
@@ -283,4 +350,9 @@ export async function loadCommentsForThread(threadId) {
         console.error('Error loading comments:', error);
         throw error;
     }
+}
+
+// Force refresh all threads - can be called from anywhere in the app
+export function forceRefreshThreads() {
+    return fetchFreshThreads();
 }

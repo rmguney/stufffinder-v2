@@ -17,7 +17,7 @@ async function testCommentAPI() {
     });
     
     const data = await response.json();
-    console.log('API test result:', data);
+    // console.log('API test result:', data);
   } catch (error) {
     console.error('API test error:', error);
   }

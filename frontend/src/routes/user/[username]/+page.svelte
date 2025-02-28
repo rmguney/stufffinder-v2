@@ -21,11 +21,29 @@
   
   // Format date in the same style as the Angular implementation
   function formatDate(date) {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    if (!date) return 'Unknown date';
+    try {
+      return new Date(date).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return 'Unknown date';
+    }
+  }
+  
+  // Process thread data to ensure all expected fields exist
+  function processThreadData(thread) {
+    return {
+      ...thread,
+      title: thread.title || 'Untitled Post',
+      description: thread.description || thread.content || '',
+      createdAt: thread.createdAt || thread.created || thread.date || null,
+      tags: Array.isArray(thread.tags) ? thread.tags : 
+            (thread.categories ? thread.categories : [])
+    };
   }
   
   // Fetch user data, threads and comments
@@ -45,8 +63,11 @@
       if (!postsResponse.ok) throw new Error('Failed to fetch posts');
       const postsData = await postsResponse.json();
       
-      // Sort posts by most recent first, handling potential undefined dates
-      threads = postsData.sort((a, b) => {
+      // Process each thread to ensure consistent data structure
+      const processedThreads = postsData.map(processThreadData);
+      
+      // Sort posts by most recent first
+      threads = processedThreads.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return dateB - dateA;
@@ -62,7 +83,7 @@
       
       // Sort comments by most recent first
       comments = commentsData.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
       );
       
     } catch (error) {

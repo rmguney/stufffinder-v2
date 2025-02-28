@@ -4,7 +4,7 @@ const debugCommentAPI = {
   // Test getting comments for a post
   async getComments(postId) {
     try {
-      console.log(`Fetching comments for post ${postId}...`);
+      // console.log(`Fetching comments for post ${postId}...`);
       const response = await fetch(`${PUBLIC_API_URL}/api/comments/get/${postId}`);
       
       if (!response.ok) {
@@ -12,12 +12,12 @@ const debugCommentAPI = {
       }
       
       const data = await response.json();
-      console.log('Comments received:', data);
+      // console.log('Comments received:', data);
       
       // Verify comment structure
       if (data.length > 0) {
-        console.log('First comment structure:', Object.keys(data[0]));
-        console.log('Sample comment:', data[0]);
+        // console.log('First comment structure:', Object.keys(data[0]));
+        // console.log('Sample comment:', data[0]);
       }
       
       return data;
@@ -30,14 +30,14 @@ const debugCommentAPI = {
   // Test creating a new comment
   async createComment(postId, content, parentCommentId = null) {
     try {
-      console.log(`Creating comment for post ${postId}...`);
+      // console.log(`Creating comment for post ${postId}...`);
       const payload = {
         content,
         postId,
         parentCommentId
       };
       
-      console.log('Payload:', payload);
+      // console.log('Payload:', payload);
       
       const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
         method: 'POST',
@@ -48,7 +48,7 @@ const debugCommentAPI = {
       });
       
       const responseText = await response.text();
-      console.log(`Response status: ${response.status}, text:`, responseText);
+      // console.log(`Response status: ${response.status}, text:`, responseText);
       
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}, Response: ${responseText}`);
@@ -57,10 +57,10 @@ const debugCommentAPI = {
       // Try to parse if it's JSON
       try {
         const data = JSON.parse(responseText);
-        console.log('Comment created:', data);
+        // console.log('Comment created:', data);
         return data;
       } catch (e) {
-        console.log('Response is not JSON:', responseText);
+        // console.log('Response is not JSON:', responseText);
         return responseText;
       }
     } catch (error) {

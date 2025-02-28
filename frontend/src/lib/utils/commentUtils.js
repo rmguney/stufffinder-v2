@@ -51,12 +51,12 @@ export function printCommentHierarchy(comments, depth = 0) {
   if (!comments) return;
   
   comments.forEach(comment => {
-    console.log(
+    /* console.log(
       `${' '.repeat(depth * 2)}Comment ID: ${comment.id}, Content: ${comment.content}, Author: ${comment.author}`
-    );
+    ); */
     
     if (comment.replies && comment.replies.length > 0) {
-      console.log(`${' '.repeat(depth * 2)}Replies:`);
+      // console.log(`${' '.repeat(depth * 2)}Replies:`);
       printCommentHierarchy(comment.replies, depth + 1);
     }
   });
@@ -67,9 +67,9 @@ export function debugCommentStructure(threadId) {
   fetch(`${PUBLIC_API_URL}/api/comments/get/${threadId}`)
     .then(response => response.json())
     .then(comments => {
-      console.log('Raw comments:', comments);
+      // console.log('Raw comments:', comments);
       const organized = organizeComments(comments);
-      console.log('Organized comments:');
+      // console.log('Organized comments:');
       printCommentHierarchy(organized);
       return organized;
     })

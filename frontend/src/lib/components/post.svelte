@@ -120,7 +120,7 @@ function handleImageError(event) {
   // Add a debug log when postedBy changes
   $: {
     if (variant === 'thread') {
-      console.log('Posted by:', postedBy);
+      // console.log('Posted by:', postedBy);
     }
   }
 </script>

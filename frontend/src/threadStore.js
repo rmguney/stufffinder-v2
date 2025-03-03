@@ -5,41 +5,68 @@ const LOCAL_STORAGE_KEY = 'threadStoreData';
 const LAST_UPDATED_KEY = 'threadStoreLastUpdated';
 const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
 
-// Utility function to safely check for localStorage
-const isClient = false;
+// Properly detect client environment
+const isClient = typeof window !== 'undefined';
 
 // Initialize store with empty array
 export const threadStore = writable([]);
 export const isLoading = writable(false);
-export const shouldRefreshThreads = writable(false); // Renamed from forceRefreshThreads
+export const currentPage = writable(0);
+export const hasMorePages = writable(true);
+const PAGE_SIZE = 20; // Reduced from 100 to improve performance
 
-// Function to normalize date formats
-const normalizeDateFormat = (dateString) => {
-    if (!dateString) return '';
-    
+// Comment cache to avoid rebuilding hierarchies
+const commentCache = new Map();
+
+// Debounce function to limit localStorage writes
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+// Load data from localStorage
+const loadFromLocalStorage = () => {
+    if (!isClient) return []; 
     try {
-        // Try to parse the date string and ensure it's in ISO format
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-            console.warn("Invalid date encountered:", dateString);
-            return '';
-        }
-        return date.toISOString();
+        const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        return storedData ? JSON.parse(storedData) : [];
     } catch (error) {
-        console.error("Error normalizing date:", error, "for:", dateString);
-        return '';
+        console.error('Error loading from localStorage:', error);
+        return [];
     }
 };
 
-// Function to load initial data - will be called on app initialization
+// Save data to localStorage
+const saveToLocalStorage = (data) => {
+    if (isClient) {
+        try {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+        } catch (error) {
+            console.error('Error saving to localStorage:', error);
+        }
+    }
+};
+
+// Debounced version of saveToLocalStorage to reduce writes
+const debouncedSaveToLocalStorage = debounce(saveToLocalStorage, 500);
+
+// Function to initialize store
 export async function initializeThreadStore() {
-    //if (!isClient) return; // Skip during SSR
+    if (!isClient) return; // Skip during SSR
 
     isLoading.set(true);
     
     try {
-        // Check if we should use cache or fetch fresh data        
-        await fetchFreshThreads();
+        if (shouldRefreshCache()) {
+            await fetchThreadsPage(0);
+        } else {
+            // Use cached data
+            const cachedData = loadFromLocalStorage();
+            threadStore.set(cachedData);
+        }
     } catch (error) {
         console.error('Thread store initialization error:', error);
         // Fall back to cache if fetch fails
@@ -64,142 +91,88 @@ function shouldRefreshCache() {
     return (now - lastUpdatedTime) > CACHE_EXPIRY_TIME;
 }
 
-// Function to fetch fresh threads from API - renamed to avoid conflict
-async function refreshThreadsData() {
+// Function to fetch threads with pagination
+export async function fetchThreadsPage(page = 0) {
     try {
-        const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostList?page=0&size=100`);
+        isLoading.set(true);
+        const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostList?page=${page}&size=${PAGE_SIZE}`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-        const threads = data.content || [];
+        const newThreads = data.content || [];
         
-        // Update the store with fresh data
-        threadStore.set(threads);
+        // Check if we have more pages
+        hasMorePages.set(!data.last);
         
-        // Save to localStorage with timestamp
-        saveToLocalStorage(threads);
-        localStorage.setItem(LAST_UPDATED_KEY, Date.now().toString());
+        // Update the store
+        if (page === 0) {
+            // First page, replace data
+            threadStore.set(newThreads);
+        } else {
+            // Subsequent pages, append data
+            threadStore.update(threads => [...threads, ...newThreads]);
+        }
         
-        return threads;
+        // Save to localStorage with timestamp (use current store value)
+        threadStore.subscribe(value => {
+            debouncedSaveToLocalStorage(value);
+            if (isClient) {
+                localStorage.setItem(LAST_UPDATED_KEY, Date.now().toString());
+            }
+        })();
+        
+        currentPage.set(page);
+        return newThreads;
     } catch (error) {
-        console.error('Error fetching fresh threads:', error);
+        console.error('Error fetching threads:', error);
         throw error;
+    } finally {
+        isLoading.set(false);
     }
 }
 
-// Load data from localStorage
-const loadFromLocalStorage = () => {
-    if (!isClient) return []; // Return an empty array during SSR
-    const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return storedData ? JSON.parse(storedData) : [];
-};
+// Load next page of threads
+export function loadMoreThreads() {
+    let pageValue;
+    currentPage.subscribe(value => {
+        pageValue = value;
+    })();
+    
+    return fetchThreadsPage(pageValue + 1);
+}
 
-// Save data to localStorage
-const saveToLocalStorage = (data) => {
-    if (isClient) {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
-    }
-};
-
-// Function to add a thread to the store
-export function addThread(thread) {
-    // Normalize dates
-    const normalizedThread = {
-        ...thread,
-        createdAt: normalizeDateFormat(thread.createdAt),
-        updatedAt: normalizeDateFormat(thread.updatedAt || thread.createdAt)
-    };
-
-    threadStore.update(threads => {
-        // Check if thread already exists
-        const existingThreadIndex = threads.findIndex(t => t.id === normalizedThread.id);
-        if (existingThreadIndex >= 0) {
-            // Update existing thread
-            threads[existingThreadIndex] = normalizedThread;
-            return [...threads];
-        } else {
-            // Add new thread
-            return [...threads, normalizedThread];
-        }
-    });
+// Force refresh all threads - now uses pagination
+export function forceRefreshThreads() {
+    // Reset cache
+    commentCache.clear();
+    return fetchThreadsPage(0);
 }
 
 // Function to update or add a thread
 export function updateThread(newThread) {
-    // Normalize dates
-    const normalizedThread = {
-        ...newThread,
-        createdAt: normalizeDateFormat(newThread.createdAt),
-        updatedAt: normalizeDateFormat(newThread.updatedAt || newThread.createdAt)
-    };
-
     threadStore.update(threads => {
-        const index = threads.findIndex(t => t.id === normalizedThread.id);
+        const index = threads.findIndex(t => t.id === newThread.id);
+        let updatedThreads;
+        
         if (index !== -1) {
             // Update existing thread
-            const updatedThreads = [...threads];
+            updatedThreads = [...threads];
             updatedThreads[index] = {
                 ...updatedThreads[index],
-                ...normalizedThread
+                ...newThread
             };
-            saveToLocalStorage(updatedThreads);
-            return updatedThreads;
         } else {
             // Add new thread
-            const updatedThreads = [...threads, normalizedThread];
-            saveToLocalStorage(updatedThreads);
-            return updatedThreads;
+            updatedThreads = [...threads, newThread];
         }
+        
+        // Use debounced save
+        debouncedSaveToLocalStorage(updatedThreads);
+        return updatedThreads;
     });
-}
-
-// Function to load threads from API
-export async function loadThreads() {
-    try {
-        const response = await fetch(`${PUBLIC_API_URL}/api/posts`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch threads');
-        }
-        
-        const data = await response.json();
-        
-        // Clear existing threads and add normalized ones
-        threadStore.set([]);
-        data.forEach(thread => {
-            // Create a normalized version of each thread
-            addThread({
-                id: thread.id,
-                title: thread.title,
-                description: thread.description,
-                tags: thread.tags || [],
-                mysteryObjectImage: thread.mysteryObjectImage,
-                mysteryObject: thread.mysteryObject || null,
-                author: thread.author,
-                createdAt: thread.createdAt, // This will be normalized in addThread
-                updatedAt: thread.updatedAt, // This will be normalized in addThread
-                upvotes: thread.upvotes || 0,
-                downvotes: thread.downvotes || 0,
-                userUpvoted: thread.userUpvoted || false,
-                userDownvoted: thread.userDownvoted || false,
-                solved: thread.solved || false
-            });
-        });
-        
-        console.log("Threads loaded and normalized:", data.length);
-        return data;
-    } catch (error) {
-        console.error('Error loading threads:', error);
-        throw error;
-    }
 }
 
 // Update vote count for a thread
@@ -225,7 +198,7 @@ export async function updateThreadVote(threadId, isUpvote) {
                     userDownvoted: !isUpvote
                 } : thread
             );
-            saveToLocalStorage(updatedThreads);
+            debouncedSaveToLocalStorage(updatedThreads);
             return updatedThreads;
         });
     } catch (error) {
@@ -233,7 +206,7 @@ export async function updateThreadVote(threadId, isUpvote) {
     }
 }
 
-// Add a comment to a thread - updated for new API
+// Add a comment to a thread - optimized
 export async function addCommentToThread(threadId, content, parentCommentId = null) {
     try {
         const payload = {
@@ -242,9 +215,7 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
             parentCommentId: parentCommentId
         };
 
-        // console.log("Adding comment with payload:", payload);
-
-        const authToken = localStorage.getItem('tokenKey');
+        const authToken = isClient ? localStorage.getItem('tokenKey') : null;
         const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
             method: 'POST',
             headers: {
@@ -260,30 +231,35 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
         }
         
         const newComment = await response.json();
-        // console.log("New comment response:", newComment);
-
+        
+        // Invalidate comment cache for this thread
+        commentCache.delete(threadId);
+        
         // Update store with new comment
         threadStore.update(threads => {
             const updatedThreads = threads.map(thread => {
                 if (thread.id === parseInt(threadId)) {
+                    // Only clone the affected thread
                     const updatedComments = [...(thread.comments || [])];
-                    // If this is a reply, find the parent comment and add to its replies
+                    
                     if (parentCommentId) {
                         const findAndAddReply = (comments) => {
-                            for (let comment of comments) {
-                                if (comment.id === parentCommentId) {
-                                    comment.replies = [...(comment.replies || []), newComment];
+                            for (let i = 0; i < comments.length; i++) {
+                                if (comments[i].id === parentCommentId) {
+                                    comments[i] = {
+                                        ...comments[i],
+                                        replies: [...(comments[i].replies || []), newComment]
+                                    };
                                     return true;
                                 }
-                                if (comment.replies && comment.replies.length > 0) {
-                                    if (findAndAddReply(comment.replies)) return true;
+                                if (comments[i].replies && comments[i].replies.length > 0) {
+                                    if (findAndAddReply(comments[i].replies)) return true;
                                 }
                             }
                             return false;
                         };
                         findAndAddReply(updatedComments);
                     } else {
-                        // Add as a root comment
                         updatedComments.push({
                             ...newComment,
                             replies: []
@@ -293,7 +269,7 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
                 }
                 return thread;
             });
-            saveToLocalStorage(updatedThreads);
+            debouncedSaveToLocalStorage(updatedThreads);
             return updatedThreads;
         });
         
@@ -302,6 +278,22 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
         console.error('Error adding comment:', error);
         throw error;
     }
+}
+
+// Optimized recursive comment update function
+function updateCommentRecursively(comments, commentId, updateFn) {
+    return comments.map(comment => {
+        if (comment.id === commentId) {
+            return updateFn(comment);
+        }
+        if (comment.replies && comment.replies.length) {
+            return {
+                ...comment,
+                replies: updateCommentRecursively(comment.replies, commentId, updateFn)
+            };
+        }
+        return comment;
+    });
 }
 
 // Update vote count for a comment
@@ -317,23 +309,27 @@ export async function updateCommentVote(commentId, isUpvote) {
         if (!response.ok) throw new Error('Comment vote update failed');
         const data = await response.json();
         
-        // Update the comment vote count in the thread store
         threadStore.update(threads => {
-            const updatedThreads = threads.map(thread => ({
-                ...thread,
-                comments: thread.comments?.map(comment =>
-                    comment.id === commentId
-                        ? { 
-                            ...comment, 
+            const updatedThreads = threads.map(thread => {
+                if (!thread.comments) return thread;
+                
+                return {
+                    ...thread,
+                    comments: updateCommentRecursively(
+                        thread.comments,
+                        commentId,
+                        comment => ({
+                            ...comment,
                             upvotes: data.upvotes,
                             downvotes: data.downvotes,
                             userUpvoted: isUpvote,
                             userDownvoted: !isUpvote
-                        } 
-                        : comment
-                ) || []
-            }));
-            saveToLocalStorage(updatedThreads);
+                        })
+                    )
+                };
+            });
+            
+            debouncedSaveToLocalStorage(updatedThreads);
             return updatedThreads;
         });
         
@@ -357,7 +353,9 @@ export async function markBestAnswer(postId, commentId) {
         if (!response.ok) throw new Error('Failed to mark best answer');
         const data = await response.json();
         
-        // Update the comment's bestAnswer status in the thread store
+        // Clear cache for this thread
+        commentCache.delete(postId);
+        
         threadStore.update(threads => {
             const updatedThreads = threads.map(thread => 
                 thread.id === postId
@@ -370,7 +368,7 @@ export async function markBestAnswer(postId, commentId) {
                       }
                     : thread
             );
-            saveToLocalStorage(updatedThreads);
+            debouncedSaveToLocalStorage(updatedThreads);
             return updatedThreads;
         });
         
@@ -381,23 +379,25 @@ export async function markBestAnswer(postId, commentId) {
     }
 }
 
-// Load comments for a specific thread
+// Load comments for a specific thread - with caching
 export async function loadCommentsForThread(threadId) {
     try {
-        // console.log(`Loading comments for thread ${threadId}`);
+        // Check cache first
+        if (commentCache.has(threadId)) {
+            return commentCache.get(threadId);
+        }
         
         const response = await fetch(`${PUBLIC_API_URL}/api/comments/get/${threadId}`);
         if (!response.ok) throw new Error('Failed to fetch comments');
         
         const rawComments = await response.json();
-        // console.log("Raw comments received:", rawComments);
 
-        // Process comments to build hierarchy
+        // More efficient comment hierarchy building
         const processComments = (comments) => {
             const commentMap = new Map();
             const rootComments = [];
             
-            // First pass: Initialize all comments
+            // First pass - build map
             comments.forEach(comment => {
                 commentMap.set(comment.id, {
                     ...comment,
@@ -405,18 +405,19 @@ export async function loadCommentsForThread(threadId) {
                 });
             });
             
-            // Second pass: Build hierarchy
+            // Second pass - build tree in one go
             comments.forEach(comment => {
-                const currentComment = commentMap.get(comment.id);
+                const processedComment = commentMap.get(comment.id);
+                
                 if (comment.parentCommentId) {
-                    const parentComment = commentMap.get(comment.parentCommentId);
-                    if (parentComment) {
-                        parentComment.replies.push(currentComment);
+                    const parent = commentMap.get(comment.parentCommentId);
+                    if (parent) {
+                        parent.replies.push(processedComment);
                     } else {
-                        rootComments.push(currentComment);
+                        rootComments.push(processedComment);
                     }
                 } else {
-                    rootComments.push(currentComment);
+                    rootComments.push(processedComment);
                 }
             });
             
@@ -424,6 +425,9 @@ export async function loadCommentsForThread(threadId) {
         };
 
         const organizedComments = processComments(rawComments);
+        
+        // Cache the processed comments
+        commentCache.set(threadId, organizedComments);
         
         // Update thread store
         threadStore.update(threads => {
@@ -436,7 +440,7 @@ export async function loadCommentsForThread(threadId) {
                 }
                 return thread;
             });
-            saveToLocalStorage(updatedThreads);
+            debouncedSaveToLocalStorage(updatedThreads);
             return updatedThreads;
         });
         
@@ -445,9 +449,4 @@ export async function loadCommentsForThread(threadId) {
         console.error('Error loading comments:', error);
         throw error;
     }
-}
-
-// Force refresh all threads - can be called from anywhere in the app
-export function forceRefreshThreads() {
-    return fetchFreshThreads();
 }

@@ -203,6 +203,14 @@ export async function updateThreadVote(threadId, isUpvote) {
     }
 }
 
+function getCookie(name) {
+    if (!isClient) return null;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
 // Add a comment to a thread - optimized
 export async function addCommentToThread(threadId, content, parentCommentId = null) {
     try {
@@ -212,7 +220,7 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
             parentCommentId: parentCommentId
         };
 
-        const authToken = isClient ? localStorage.getItem('tokenKey') : null;
+        const authToken = getCookie('tokenKey');
         const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
             method: 'POST',
             headers: {

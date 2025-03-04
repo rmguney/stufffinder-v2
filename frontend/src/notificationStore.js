@@ -1,20 +1,34 @@
 import { writable } from 'svelte/store';
 import { getAuthHeader } from '$lib/utils/auth';
 import { PUBLIC_API_URL } from "$env/static/public";
+import { activeUser } from "./userStore";
 
 // Create a store for notifications
 export const notifications = writable([]);
 export const unreadCount = writable(0);
 export const showNotifications = writable(false);
 
+let currentUser = '';
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
 // Function to fetch notifications for the current user
 export async function fetchNotifications() {
     try {
         // First get the current user's ID
-        const token = localStorage.getItem('tokenKey');
+        const token = getCookie('tokenKey');
         if (!token) return;
 
-        const username = localStorage.getItem('currentUser');
+        activeUser.subscribe((value) => {
+            currentUser = value;
+          });
+
+        const username = currentUser;
         if (!username) return;
 
         // Get user ID from username

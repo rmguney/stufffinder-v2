@@ -1,5 +1,5 @@
 export const getAuthToken = () => {
-    const token = localStorage.getItem('tokenKey');
+    const token = getCookie('tokenKey');
     if (!token) return null;
     return token;
 };
@@ -12,3 +12,10 @@ export const getAuthHeader = () => {
         'Content-Type': 'application/json'
     };
 };
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}

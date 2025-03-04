@@ -33,6 +33,13 @@
   // Add debug variable
   let isOwner = false;
 
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+
   // Subscribe to the active user
   $: {
     activeUser.subscribe((value) => {
@@ -219,7 +226,7 @@
         return;
       }
 
-      const token = localStorage.getItem('tokenKey');
+      const token = getCookie('tokenKey');
       if (!token) {
         console.error("No auth token found");
         return;

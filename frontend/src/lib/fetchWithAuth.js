@@ -9,7 +9,7 @@ if (typeof window !== 'undefined') {
       if (request.url.startsWith('https://www.wikidata.org')) {
         return originalFetch(request);
       }
-      const token = localStorage.getItem('tokenKey');
+      const token = getCookie('tokenKey');
       const modifiedHeaders = new Headers(request.headers);
       if (token) {
         modifiedHeaders.set('Authorization', `Bearer ${token}`);
@@ -26,7 +26,7 @@ if (typeof window !== 'undefined') {
       return originalFetch(resource, config);
     }
     
-    const token = localStorage.getItem('tokenKey');
+    const token = getCookie('tokenKey');
     config.headers = config.headers || {};
     // Ensure headers is a plain object
     if (token) {
@@ -38,4 +38,11 @@ if (typeof window !== 'undefined') {
     }
     return originalFetch(resource, config);
   };
+}
+
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
 }

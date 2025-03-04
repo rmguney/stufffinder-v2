@@ -7,11 +7,18 @@ export const notifications = writable([]);
 export const unreadCount = writable(0);
 export const showNotifications = writable(false);
 
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
 // Function to fetch notifications for the current user
 export async function fetchNotifications() {
     try {
         // First get the current user's ID
-        const token = localStorage.getItem('tokenKey');
+        const token = getCookie('tokenKey');
         if (!token) return;
 
         const username = localStorage.getItem('currentUser');

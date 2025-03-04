@@ -51,6 +51,22 @@
     }
   }
 
+  function setCookie(name, value) {
+    // Session cookie (no expires parameter = deleted when browser is closed)
+    document.cookie = `${name}=${value}; path=/; SameSite=Strict`;
+  }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+
+  function deleteCookie(name) {
+    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT`;
+  }
+
   function isTokenExpired(token) {
     if (!token) return true;
     
@@ -72,13 +88,6 @@
 
   onMount(() => {
     updateIndicator(activeTab);
-    
-    const token = localStorage.getItem('tokenKey');
-    if (token && isTokenExpired(token)) {
-      console.log('Token expired, removing from storage');
-      localStorage.removeItem('tokenKey');
-      activeUser.set(null);
-    }
   });
 
 
@@ -195,7 +204,7 @@
 
       // Save auth token to localStorage
       if (data.token) {
-        localStorage.setItem('tokenKey', data.token);
+        setCookie('tokenKey', data.token);
       }
 
       // Store user data

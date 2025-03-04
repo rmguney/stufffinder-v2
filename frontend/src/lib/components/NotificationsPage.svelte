@@ -21,7 +21,7 @@
             return;
         }
         
-        await fetchNotifications();
+        //await fetchNotifications();
         loading = false;
     });
 

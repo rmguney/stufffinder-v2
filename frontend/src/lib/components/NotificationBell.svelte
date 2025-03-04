@@ -82,7 +82,7 @@
 
     onMount(() => {
         if ($activeUser) {
-            fetchNotifications();
+            //fetchNotifications();
         }
     });
 

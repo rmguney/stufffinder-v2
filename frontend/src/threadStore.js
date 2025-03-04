@@ -1,12 +1,13 @@
 import { writable } from 'svelte/store';
 import { PUBLIC_API_URL } from "$env/static/public";
+import { browser } from '$app/environment';
 
 const LOCAL_STORAGE_KEY = 'threadStoreData';
 const LAST_UPDATED_KEY = 'threadStoreLastUpdated';
 const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 // Properly detect client environment
-const isClient = typeof window !== 'undefined';
+const isClient = browser;
 
 // Initialize store with empty array
 export const threadStore = writable([]);
@@ -21,10 +22,18 @@ const commentCache = new Map();
 // Debounce function to limit localStorage writes
 function debounce(func, wait) {
     let timeout;
-    return function(...args) {
+    const debouncedFn = function(...args) {
+        const context = this;
         clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
+        timeout = setTimeout(() => func.apply(context, args), wait);
     };
+    
+    // Add a cancel method to clear the timeout
+    debouncedFn.cancel = function() {
+        clearTimeout(timeout);
+    };
+    
+    return debouncedFn;
 }
 
 // Load data from localStorage
@@ -55,40 +64,21 @@ const debouncedSaveToLocalStorage = debounce(saveToLocalStorage, 500);
 
 // Function to initialize store
 export async function initializeThreadStore() {
-    if (!isClient) return; // Skip during SSR
-
     isLoading.set(true);
-    
+
     try {
-        if (shouldRefreshCache()) {
-            await fetchThreadsPage(0);
-        } else {
-            // Use cached data
-            const cachedData = loadFromLocalStorage();
-            threadStore.set(cachedData);
-        }
+        await fetchThreadsPage(0);
     } catch (error) {
         console.error('Thread store initialization error:', error);
-        // Fall back to cache if fetch fails
-        const cachedData = loadFromLocalStorage();
-        threadStore.set(cachedData);
     } finally {
         isLoading.set(false);
     }
 }
 
+
 // Function to determine if we should refresh the cache
 function shouldRefreshCache() {
-    if (!isClient) return true;
-    
-    const lastUpdated = localStorage.getItem(LAST_UPDATED_KEY);
-    if (!lastUpdated) return true;
-    
-    const now = Date.now();
-    const lastUpdatedTime = parseInt(lastUpdated, 10);
-    
-    // Check if cache is older than expiry time
-    return (now - lastUpdatedTime) > CACHE_EXPIRY_TIME;
+    return true;
 }
 
 // Function to fetch threads with pagination
@@ -116,13 +106,18 @@ export async function fetchThreadsPage(page = 0) {
             threadStore.update(threads => [...threads, ...newThreads]);
         }
         
-        // Save to localStorage with timestamp (use current store value)
-        threadStore.subscribe(value => {
-            debouncedSaveToLocalStorage(value);
-            if (isClient) {
-                localStorage.setItem(LAST_UPDATED_KEY, Date.now().toString());
-            }
-        })();
+        // Get the current value PROPERLY without creating a persistent subscription
+        let currentThreads;
+        const unsubscribe = threadStore.subscribe(value => {
+            currentThreads = value;
+        });
+        unsubscribe(); // Properly unsubscribe
+        
+        // Save to localStorage with timestamp
+        //debouncedSaveToLocalStorage(currentThreads);
+        /* if (isClient) {
+            localStorage.setItem(LAST_UPDATED_KEY, Date.now().toString());
+        } */
         
         currentPage.set(page);
         return newThreads;
@@ -137,12 +132,14 @@ export async function fetchThreadsPage(page = 0) {
 // Load next page of threads
 export function loadMoreThreads() {
     let pageValue;
-    currentPage.subscribe(value => {
+    const unsubscribe = currentPage.subscribe(value => {
         pageValue = value;
-    })();
+    });
+    unsubscribe(); // Properly unsubscribe
     
     return fetchThreadsPage(pageValue + 1);
 }
+
 
 // Force refresh all threads - now uses pagination
 export function forceRefreshThreads() {
@@ -170,7 +167,7 @@ export function updateThread(newThread) {
         }
         
         // Use debounced save
-        debouncedSaveToLocalStorage(updatedThreads);
+        //debouncedSaveToLocalStorage(updatedThreads);
         return updatedThreads;
     });
 }
@@ -198,7 +195,7 @@ export async function updateThreadVote(threadId, isUpvote) {
                     userDownvoted: !isUpvote
                 } : thread
             );
-            debouncedSaveToLocalStorage(updatedThreads);
+            //debouncedSaveToLocalStorage(updatedThreads);
             return updatedThreads;
         });
     } catch (error) {
@@ -269,7 +266,7 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
                 }
                 return thread;
             });
-            debouncedSaveToLocalStorage(updatedThreads);
+            //debouncedSaveToLocalStorage(updatedThreads);
             return updatedThreads;
         });
         
@@ -329,7 +326,7 @@ export async function updateCommentVote(commentId, isUpvote) {
                 };
             });
             
-            debouncedSaveToLocalStorage(updatedThreads);
+            //debouncedSaveToLocalStorage(updatedThreads);
             return updatedThreads;
         });
         
@@ -368,7 +365,7 @@ export async function markBestAnswer(postId, commentId) {
                       }
                     : thread
             );
-            debouncedSaveToLocalStorage(updatedThreads);
+            //debouncedSaveToLocalStorage(updatedThreads);
             return updatedThreads;
         });
         
@@ -440,7 +437,7 @@ export async function loadCommentsForThread(threadId) {
                 }
                 return thread;
             });
-            debouncedSaveToLocalStorage(updatedThreads);
+            //debouncedSaveToLocalStorage(updatedThreads);
             return updatedThreads;
         });
         

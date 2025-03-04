@@ -16,19 +16,21 @@
     // Listen for page changes to refresh notifications and threads
     $: if ($page.url.pathname !== currentPath) {
         currentPath = $page.url.pathname;
+        console.log("currentpath" + currentPath)
         
         // Don't refetch on the notifications page itself to avoid duplicate calls
         if (currentPath !== '/notifications') {
             // console.log('Page changed, fetching notifications');
             if ($activeUser) {
                 fetchNotifications();
+                console.log("notif called from layout")
             }
         }
         
         // If navigating to home, force refresh threads
         if (currentPath === '/' && !initialLoad) {
             // console.log('Navigated to home, refreshing threads');
-            forceRefreshThreads();
+            //forceRefreshThreads();
         }
         
         initialLoad = false;

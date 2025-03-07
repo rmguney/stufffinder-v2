@@ -68,6 +68,7 @@
 
 // More robust date formatting
 const formatDate = (isoDate) => {
+  console.log('isoDate: ', isoDate);
   if (!isoDate) {
     console.warn("Warning: Empty date value received");
     return "";

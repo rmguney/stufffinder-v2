@@ -81,6 +81,8 @@
       const postsResponse = await fetch(`${PUBLIC_API_URL}/api/auth/${userId}/posts`);
       if (!postsResponse.ok) throw new Error('Failed to fetch posts');
       const postsData = await postsResponse.json();
+
+      console.log("User's posts data:", postsData);
       
       // Process each thread to ensure consistent data structure
       const processedThreads = postsData.map(processThreadData);

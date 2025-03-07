@@ -261,6 +261,7 @@ public class PostService {
                     PostListDto postListDto = new PostListDto(post.getId(), post.getUser().getUsername(),
                             post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
                     postListDto.setTags(tags);
+                    postListDto.setCreatedAt(post.getCreatedAt());
                     return postListDto;
                 })
                 .collect(Collectors.toList());

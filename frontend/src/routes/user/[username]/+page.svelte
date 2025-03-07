@@ -7,6 +7,7 @@
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { PUBLIC_API_URL } from "$env/static/public";
+  import { fetchTagLabels, tagMap } from "$lib/utils/fetchTags.js";
 
   // State variables
   let userId;
@@ -15,6 +16,7 @@
   let comments = [];
   let loadingThreads = true;
   let loadingComments = true;
+  let tagsLoaded = false;
   
   // Get username from URL params
   $: userName = $page.params.username;
@@ -36,14 +38,31 @@
   
   // Process thread data to ensure all expected fields exist
   function processThreadData(thread) {
-    return {
-      ...thread,
-      title: thread.title || 'Untitled Post',
-      description: thread.description || thread.content || '',
-      createdAt: thread.createdAt || thread.created || thread.date || null,
-      tags: Array.isArray(thread.tags) ? thread.tags : 
-            (thread.categories ? thread.categories : [])
-    };
+        return {
+            ...thread,
+            title: thread.title || "Untitled Post",
+            description: thread.description || thread.content || "",
+            createdAt: thread.createdAt || thread.created || thread.date || null,
+            tags: Array.isArray(thread.tags) ? thread.tags : 
+                  (thread.categories ? thread.categories : []),
+            resolvedTags: thread.tags?.map(qcode => tagMap.get(qcode) || "Loading...") || [] // Q kodlarını geçici olarak göster
+        };
+  }
+
+  // Fetches all q codes and updates tags inside the thread
+  async function updateTags() {
+        const allQcodes = threads.flatMap(thread => thread.tags).filter(qcode => qcode);
+
+        if (allQcodes.length > 0) {
+            await fetchTagLabels(allQcodes);
+            tagsLoaded = true;
+
+            // Update tags inside threads
+            threads = threads.map(thread => ({
+                ...thread,
+                resolvedTags: thread.tags.map(qcode => tagMap.get(qcode) || qcode)
+            }));
+        }
   }
   
   // Fetch user data, threads and comments
@@ -75,6 +94,8 @@
       
       // Update the thread store
       threadStore.set(threads);
+
+      await updateTags();
       
       // Fetch user's comments
       const commentsResponse = await fetch(`${PUBLIC_API_URL}/api/auth/${userId}/comments`);
@@ -163,7 +184,7 @@
                   
                   {#if thread.tags && thread.tags.length > 0}
                     <div class="flex flex-wrap gap-2 mt-3">
-                      {#each thread.tags as tag}
+                      {#each thread.resolvedTags as tag}
                         <span class="px-3 py-1 text-xs font-medium rounded-full bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-300 transition-colors">
                           {tag}
                         </span>

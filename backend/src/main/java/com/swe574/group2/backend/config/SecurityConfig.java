@@ -58,6 +58,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/register",
                                 "/api/auth/login",
+                                "/api/auth/**",
                                 "api/posts/getForPostList",
                                 "api/posts/getForPostDetails/**",
                                 "api/comments/get/**",

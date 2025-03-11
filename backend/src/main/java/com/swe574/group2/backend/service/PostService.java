@@ -8,6 +8,7 @@ import com.swe574.group2.backend.dao.UserRepository;
 import com.swe574.group2.backend.dto.PostCreationDto;
 import com.swe574.group2.backend.dto.PostDetailsDto;
 import com.swe574.group2.backend.dto.PostListDto;
+import com.swe574.group2.backend.dto.SearchResultDto;
 import com.swe574.group2.backend.entity.Comment;
 import com.swe574.group2.backend.entity.MysteryObject;
 import com.swe574.group2.backend.entity.Post;
@@ -214,14 +215,14 @@ public class PostService {
         return true;
     }
 
-    public Page<PostListDto> searchPosts(String keyword, Pageable pageable) {
+    public Page<SearchResultDto> searchPosts(String keyword, Pageable pageable) {
         Page<Post> postsPage = postRepository.searchPosts(keyword, pageable);
         return postsPage.map(post -> {
             Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
-            PostListDto postListDto = new PostListDto(post.getId(), post.getUser().getUsername(),
-                    post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
-            postListDto.setTags(tags);
-            return postListDto;
+            SearchResultDto searchResultDto = new SearchResultDto(post.getId(), post.getUser().getUsername(),
+                    post.getTitle(), post.getDescription(), post.getMysteryObject(), post.isSolved());
+                    searchResultDto.setTags(tags);
+            return searchResultDto;
         });
     }
 

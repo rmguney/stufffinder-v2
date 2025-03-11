@@ -426,11 +426,13 @@
     // FIXED: Improved updateVisibleExpansions to prevent unnecessary updates
     function updateVisibleExpansions() {
         // Create a copy to avoid direct reactivity
-        const newVisibleExpansions = [...semanticExpansions];
+        const newVisibleExpansions = [...semanticExpansions]
+            .filter(exp => !exp.label.match(/^Q\d+$/)); // Filter out raw Q-IDs
         
         // Add selected expansions not already in the list
         selectedExpansions.forEach(selected => {
-            if (!newVisibleExpansions.some(exp => exp.id === selected.id)) {
+            if (!newVisibleExpansions.some(exp => exp.id === selected.id) && 
+                !selected.label.match(/^Q\d+$/)) { // Only add if not a raw Q-ID
                 newVisibleExpansions.push({
                     ...selected,
                     fromPreviousSearch: true
@@ -634,7 +636,7 @@
             <Card.Title class="p-4 text-2xl mt-6 text-center">
                 Enhanced Semantic Search
                 <small class="block text-sm mt-2 font-normal opacity-75">
-                    Discover objects using AI-powered semantic search with Wikidata
+                    Discover objects while leveraging semantic search with Wikidata
                 </small>
             </Card.Title>
             
@@ -665,13 +667,16 @@
                         <!-- Group by relation type for better organization -->
                         {#if allVisibleExpansions.length > 0}
                             <!-- Get unique relation types -->
-                            {@const relationTypes = [...new Set(allVisibleExpansions.map(exp => exp.relation))]}
+                            {@const relationTypes = [...new Set(allVisibleExpansions
+                                .filter(exp => !exp.label.match(/^Q\d+$/))
+                                .map(exp => exp.relation))]}
                             
                             {#each relationTypes as relationType}
                                 <div class="mb-3">
                                     <h4 class="text-xs text-neutral-500 mb-1 capitalize">{relationType}:</h4>
                                     <div class="flex flex-wrap gap-2">
-                                        {#each allVisibleExpansions.filter(exp => exp.relation === relationType) as expansion (expansion.id)}
+                                        {#each allVisibleExpansions
+                                        .filter(exp => exp.relation === relationType && !exp.label.match(/^Q\d+$/)) as expansion (expansion.id)}
                                             <div class="flex items-center">
                                                 <label class="flex items-center space-x-2 px-2 py-1 bg-white dark:bg-neutral-800 rounded border border-neutral-200 dark:border-neutral-700 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700"
                                                        class:border-rose-500={expansion.fromPreviousSearch}

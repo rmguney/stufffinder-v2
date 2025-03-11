@@ -69,6 +69,7 @@
           ...postData,
           mysteryObject: postData.mysteryObject ? {
               description: postData.mysteryObject.description,
+              material: postData.mysteryObject.material,
               writtenText: postData.mysteryObject.writtenText,
               color: postData.mysteryObject.color,
               shape: postData.mysteryObject.shape,

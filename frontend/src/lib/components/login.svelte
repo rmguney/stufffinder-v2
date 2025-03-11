@@ -149,7 +149,7 @@
       registerSuccess = "Registration successful! Logging you in...";
       
       // Success - try to log in automatically
-      await handleLogin(`${registerUsername}@example.com`, registerPassword);
+      await handleLogin(registerUsername, registerPassword);
       loginBar = false;
       registerUsername = "";
       registerPassword = "";

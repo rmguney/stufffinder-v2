@@ -16,6 +16,9 @@ public class MysteryObject {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "material")
+    private String material;
+
     @Column(name = "written_text")
     private String writtenText;
 

@@ -15,36 +15,83 @@
     let labels = [];
     let postedBy;
     let description = '';
-    let material = '';
-    // Replace size with dimensional measurements
-    let sizeX = '';
-    let sizeY = '';
-    let sizeZ = '';
-    let shape = '';
-    let color = '';
-    let texture = '';
-    let weight = '';
-    let smell = '';
-    let taste = '';
-    let marking = '';
-    let functionality = '';
-    let period = '';
-    let location = '';
     let anonymous = false; 
     let resolved = false;
-    // Additional fields from MysteryObject entity
-    let writtenText = '';
-    let descriptionOfParts = '';
-    let hardness = '';
-    let value = '';
-    let originOfAcquisition = '';
-    let pattern = '';
-    let brand = '';
-    let print = '';
-    let imageLicenses = '';
-    let handmade = false;
-    let oneOfAKind = false;
-    let itemCondition = '';
+    
+    // Store all attribute values in a single object
+    let attributeValues = {
+        material: '',
+        shape: '',
+        color: '',
+        texture: '',
+        weight: '',
+        smell: '',
+        taste: '',
+        marking: '',
+        functionality: '',
+        period: '',
+        location: '',
+        writtenText: '',
+        descriptionOfParts: '',
+        hardness: '',
+        value: '',
+        originOfAcquisition: '',
+        pattern: '',
+        brand: '',
+        print: '',
+        imageLicenses: '',
+        sizeX: '',
+        sizeY: '',
+        sizeZ: '',
+        itemCondition: '',
+        handmade: false,
+        oneOfAKind: false
+    };
+    
+    // Track which attributes are currently shown
+    let activeAttributes = [];
+    
+    // Whether attribute selector dropdown is open
+    let showAttributeSelector = false;
+    
+    // Define all available attributes with their metadata
+    const availableAttributes = [
+        { id: "material", label: "Material", placeholder: "E.g., wood, metal, plastic, fabric" },
+        { id: "shape", label: "Shape", placeholder: "E.g., round, square or something more elaborate" },
+        { id: "color", label: "Color", placeholder: "E.g., red, blue, yellow, transparent" },
+        { id: "texture", label: "Texture", placeholder: "E.g., smooth, rough, bumpy" },
+        { id: "marking", label: "Markings", placeholder: "Does it have logo, text, engravings etc?" },
+        { id: "smell", label: "Smell", placeholder: "E.g., sweet, odorless, pungent" },
+        { id: "functionality", label: "Functionality", placeholder: "E.g., cutting, writing, art" },
+        { id: "period", label: "Time Period", placeholder: "E.g., 1800s, 1900s, 2000s" },
+        { id: "location", label: "Location", placeholder: "Where is it typically found? E.g., Europe, Asia" },
+        { id: "writtenText", label: "Written Text", placeholder: "Any writing on the object" },
+        { id: "hardness", label: "Hardness", placeholder: "E.g., soft, hard, flexible" },
+        { id: "value", label: "Price ($)", placeholder: "Estimated value in dollars", type: "number" },
+        { id: "originOfAcquisition", label: "Origin of Acquisition", placeholder: "Where/how you got it" },
+        { id: "pattern", label: "Pattern", placeholder: "E.g., striped, checkered, floral" },
+        { id: "print", label: "Print", placeholder: "Any printed design or imagery" },
+        { id: "dimensions", label: "Dimensions", placeholder: "Size measurements", type: "dimensions" },
+        { id: "weight", label: "Weight (grams)", placeholder: "Weight in grams", type: "number" },
+        { id: "handmade", label: "Handmade", placeholder: "", type: "checkbox" },
+        { id: "oneOfAKind", label: "One of a Kind", placeholder: "", type: "checkbox" }
+    ];
+    
+    // Function to add an attribute to the form
+    function addAttribute(attrId) {
+        if (!activeAttributes.includes(attrId)) {
+            activeAttributes = [...activeAttributes, attrId];
+        }
+        showAttributeSelector = false;
+    }
+    
+    // Function to remove an attribute from the form
+    function removeAttribute(attrId) {
+        activeAttributes = activeAttributes.filter(attr => attr !== attrId);
+    }
+    
+    // Get available (not yet added) attributes
+    $: availableToAdd = availableAttributes.filter(attr => !activeAttributes.includes(attr.id));
     
     let errors = {
         title: '',
@@ -112,34 +159,35 @@
         try {
             const enrichedTags = await enrichTagsWithLabels(tags);
             
-            // Create mysteryObject matching backend entity structure
+            // Create mysteryObject using attributeValues
             const mysteryObject = {
                 description,
-                color,
-                shape,
-                location,
-                smell,
-                taste: taste || smell,
-                texture,
-                functionality,
-                markings: marking,
-                handmade: handmade || false,
-                oneOfAKind: oneOfAKind || false,
-                weight: parseFloat(weight) || null,
-                timePeriod: period,
-                writtenText,
-                descriptionOfParts,
-                hardness,
-                value: parseFloat(value) || null,
-                originOfAcquisition,
-                pattern,
-                brand,
-                print,
-                imageLicenses,
-                sizeX: parseFloat(sizeX) || null,
-                sizeY: parseFloat(sizeY) || null,
-                sizeZ: parseFloat(sizeZ) || null,
-                item_condition: itemCondition || null
+                material: attributeValues.material,
+                color: attributeValues.color,
+                shape: attributeValues.shape,
+                location: attributeValues.location,
+                smell: attributeValues.smell,
+                taste: attributeValues.taste || attributeValues.smell,
+                texture: attributeValues.texture,
+                functionality: attributeValues.functionality,
+                markings: attributeValues.marking,
+                handmade: attributeValues.handmade || false,
+                oneOfAKind: attributeValues.oneOfAKind || false,
+                weight: parseFloat(attributeValues.weight) || null,
+                timePeriod: attributeValues.period,
+                writtenText: attributeValues.writtenText,
+                descriptionOfParts: attributeValues.descriptionOfParts,
+                hardness: attributeValues.hardness,
+                value: parseFloat(attributeValues.value) || null,
+                originOfAcquisition: attributeValues.originOfAcquisition,
+                pattern: attributeValues.pattern,
+                brand: attributeValues.brand,
+                print: attributeValues.print,
+                imageLicenses: attributeValues.imageLicenses,
+                sizeX: parseFloat(attributeValues.sizeX) || null,
+                sizeY: parseFloat(attributeValues.sizeY) || null,
+                sizeZ: parseFloat(attributeValues.sizeZ) || null,
+                item_condition: attributeValues.itemCondition || null
             };
             
             // Create FormData for multipart request
@@ -217,7 +265,7 @@
             </Card.Title>
         <div class="bg-opacity-95 rounded-lg shadow-lg p-6">
 
-            <!-- Title - Keep as is -->
+            <!-- Title -->
             <div class="mb-4">
                 <label for="title" class="block text-sm font-medium mb-2">Title*</label>
                 <Textarea id="title" class="w-full p-2 border rounded dark:border-gray-600 h-auto" bind:value={title} placeholder="This is what people will see on their homepage so try to make it interesting" />
@@ -226,137 +274,113 @@
                 {/if}
             </div>
 
-            <!-- Object Details -->
-            <div class="mb-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <!-- Keep existing fields -->
-                <div>
-                    <label for="material" class="block text-sm font-medium mb-2">Material</label>
-                    <Input id="material" class="w-full p-2 border rounded dark:border-gray-600" bind:value={material} placeholder="E.g., wood, metal, plastic, fabric" />
-                </div>
-                <div>
-                    <label for="shape" class="block text-sm font-medium mb-2">Shape</label>
-                    <Input id="shape" class="w-full p-2 border rounded dark:border-gray-600" bind:value={shape} placeholder="E.g., round, square or something more elaborate" />
-                </div>
-                <div>
-                    <label for="color" class="block text-sm font-medium mb-2">Color</label>
-                    <Input id="color" class="w-full p-2 border rounded dark:border-gray-600" bind:value={color} placeholder="E.g., red, blue, yellow, transparent" />
-                </div>
-                <div>
-                    <label for="texture" class="block text-sm font-medium mb-2">Texture</label>
-                    <Input id="texture" class="w-full p-2 border rounded dark:border-gray-600" bind:value={texture} placeholder="E.g., smooth, rough, bumpy" />
-                </div>
-                <div>
-                    <label for="marking" class="block text-sm font-medium mb-2">Markings</label>
-                    <Input id="marking" class="w-full p-2 border rounded dark:border-gray-600" bind:value={marking} placeholder="Does it have logo, text, engravings etc?" />
-                </div>
-                <div>
-                    <label for="smell" class="block text-sm font-medium mb-2">Smell</label>
-                    <Input id="smell" class="w-full p-2 border rounded dark:border-gray-600" bind:value={smell} placeholder="E.g., sweet, odorless, pungent" />
-                </div>
-                <div>
-                    <label for="taste" class="block text-sm font-medium mb-2">Taste</label>
-                    <Input id="taste" class="w-full p-2 border rounded dark:border-gray-600" bind:value={taste} placeholder="Don't lick weird stuff" />
-                </div>
-                <div>
-                    <label for="functionality" class="block text-sm font-medium mb-2">Functionality</label>
-                    <Input id="functionality" class="w-full p-2 border rounded dark:border-gray-600" bind:value={functionality} placeholder="E.g., cutting, writing, art" />
-                </div>
-                <div>
-                    <label for="period" class="block text-sm font-medium mb-2">Time Period</label>
-                    <Input id="period" class="w-full p-2 border rounded dark:border-gray-600" bind:value={period} placeholder="E.g., 1800s, 1900s, 2000s" />
-                </div>
-                <div>
-                    <label for="location" class="block text-sm font-medium mb-2">Location</label>
-                    <Input id="location" class="w-full p-2 border rounded dark:border-gray-600" bind:value={location} placeholder="Where is it typically found? E.g., Europe, Asia" />
-                </div>
-                <div>
-                    <label for="brand" class="block text-sm font-medium mb-2">Brand</label>
-                    <Input id="brand" class="w-full p-2 border rounded dark:border-gray-600" bind:value={brand} placeholder="Brand name if applicable" />
-                </div>
+            <!-- Object Attributes Section -->
+            <div class="mb-4">
+                <h3 class="text-lg font-medium mb-2">Object Attributes</h3>
                 
-                <!-- Add missing fields -->
-                <div>
-                    <label for="writtenText" class="block text-sm font-medium mb-2">Written Text</label>
-                    <Input id="writtenText" class="w-full p-2 border rounded dark:border-gray-600" bind:value={writtenText} placeholder="Any writing on the object" />
-                </div>
-                <div>
-                    <label for="descriptionOfParts" class="block text-sm font-medium mb-2">Parts Description</label>
-                    <Input id="descriptionOfParts" class="w-full p-2 border rounded dark:border-gray-600" bind:value={descriptionOfParts} placeholder="Description of individual parts" />
-                </div>
-                <div>
-                    <label for="hardness" class="block text-sm font-medium mb-2">Hardness</label>
-                    <Input id="hardness" class="w-full p-2 border rounded dark:border-gray-600" bind:value={hardness} placeholder="E.g., soft, hard, flexible" />
-                </div>
-                <div>
-                    <label for="value" class="block text-sm font-medium mb-2">Value ($)</label>
-                    <Input type="number" id="value" class="w-full p-2 border rounded dark:border-gray-600" bind:value={value} placeholder="Estimated value in dollars" />
-                </div>
-                <div>
-                    <label for="originOfAcquisition" class="block text-sm font-medium mb-2">Origin of Acquisition</label>
-                    <Input id="originOfAcquisition" class="w-full p-2 border rounded dark:border-gray-600" bind:value={originOfAcquisition} placeholder="Where/how you got it" />
-                </div>
-                <div>
-                    <label for="pattern" class="block text-sm font-medium mb-2">Pattern</label>
-                    <Input id="pattern" class="w-full p-2 border rounded dark:border-gray-600" bind:value={pattern} placeholder="E.g., striped, checkered, floral" />
-                </div>
-                <div>
-                    <label for="print" class="block text-sm font-medium mb-2">Print</label>
-                    <Input id="print" class="w-full p-2 border rounded dark:border-gray-600" bind:value={print} placeholder="Any printed design or imagery" />
-                </div>
-                <div>
-                    <label for="imageLicenses" class="block text-sm font-medium mb-2">Image Licenses</label>
-                    <Input id="imageLicenses" class="w-full p-2 border rounded dark:border-gray-600" bind:value={imageLicenses} placeholder="Licenses for included images" />
-                </div>
-                <div>
-                    <label for="condition" class="block text-sm font-medium mb-2">Condition</label>
-                    <select id="condition" bind:value={itemCondition} class="w-full p-2 rounded border dark:border-gray-600 dark:bg-neutral-950 text-sm">
-                        <option value="" selected>Select condition (optional)</option>
-                        <option value="NEW">New</option>
-                        <option value="LIKE_NEW">Like New</option>
-                        <option value="USED">Used</option>
-                        <option value="DAMAGED">Damaged</option>
-                        <option value="ANTIQUE">Antique</option>
-                    </select>
+                <!-- Add Attribute Button -->
+                <Button 
+                    variant="outline" 
+                    on:click={() => showAttributeSelector = !showAttributeSelector} 
+                    class="w-full p-2 border rounded mb-4">
+                    Add Attribute
+                </Button>
+                
+                <!-- Attribute Selector Dropdown -->
+                {#if showAttributeSelector}
+                    <div class="mt-2 p-2 border rounded bg-white dark:bg-neutral-800 shadow-lg max-h-60 overflow-y-auto mb-4">
+                        {#each availableToAdd as attribute}
+                            <button 
+                                class="block w-full text-left p-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded"
+                                on:click={() => addAttribute(attribute.id)}>
+                                {attribute.label}
+                            </button>
+                        {/each}
+                        {#if availableToAdd.length === 0}
+                            <p class="p-2 text-gray-500">All attributes have been added</p>
+                        {/if}
+                    </div>
+                {/if}
+                
+                <!-- Display Active Attributes -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {#each activeAttributes as attrId}
+                        {@const attr = availableAttributes.find(a => a.id === attrId)}
+                        
+                        {#if attr.type === "select"}
+                            <div class="relative">
+                                <label for={attrId} class="block text-sm font-medium mb-2">
+                                    {attr.label}
+                                    <button type="button" class="ml-2 text-red-500" on:click={() => removeAttribute(attrId)} title="Remove attribute">×</button>
+                                </label>
+                                <select 
+                                    id={attrId} 
+                                    bind:value={attributeValues[attrId]} 
+                                    class="w-full p-2 rounded border dark:border-gray-600 dark:bg-neutral-950 text-sm">
+                                    {#each attr.options as option}
+                                        <option value={option.value}>{option.label}</option>
+                                    {/each}
+                                </select>
+                            </div>
+                        
+                        {:else if attr.type === "dimensions"}
+                            <div class="relative col-span-2">
+                                <div id="dimensions-label" class="block text-sm font-medium mb-2">
+                                    Dimensions (cm)
+                                    <button type="button" class="ml-2 text-red-500" on:click={() => removeAttribute(attrId)} title="Remove attribute">×</button>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2" role="group" aria-labelledby="dimensions-label">
+                                    <div>
+                                        <label for="sizeX" class="block text-xs font-medium mb-1">Length</label>
+                                        <Input type="number" id="sizeX" class="w-full p-2 border rounded dark:border-gray-600" bind:value={attributeValues.sizeX} placeholder="Length (cm)" />
+                                    </div>
+                                    <div>
+                                        <label for="sizeY" class="block text-xs font-medium mb-1">Width</label>
+                                        <Input type="number" id="sizeY" class="w-full p-2 border rounded dark:border-gray-600" bind:value={attributeValues.sizeY} placeholder="Width (cm)" />
+                                    </div>
+                                    <div>
+                                        <label for="sizeZ" class="block text-xs font-medium mb-1">Height</label>
+                                        <Input type="number" id="sizeZ" class="w-full p-2 border rounded dark:border-gray-600" bind:value={attributeValues.sizeZ} placeholder="Height (cm)" />
+                                    </div>
+                                </div>
+                            </div>
+                        
+                        {:else if attr.type === "checkbox"}
+                            <div class="relative">
+                                <div class="flex items-center">
+                                    <input 
+                                        type="checkbox" 
+                                        bind:checked={attributeValues[attrId]} 
+                                        id={`${attrId}-checkbox`} 
+                                        class="mr-2" 
+                                    />
+                                    <label for={`${attrId}-checkbox`} class="text-sm">
+                                        {attr.label}
+                                        <button type="button" class="ml-2 text-red-500" on:click={() => removeAttribute(attrId)} title="Remove attribute">×</button>
+                                    </label>
+                                </div>
+                            </div>
+                        
+                        {:else}
+                            <div class="relative">
+                                <label for={attrId} class="block text-sm font-medium mb-2">
+                                    {attr.label}
+                                    <button type="button" class="ml-2 text-red-500" on:click={() => removeAttribute(attrId)} title="Remove attribute">×</button>
+                                </label>
+                                <Input 
+                                    type={attr.type || "text"} 
+                                    id={attrId} 
+                                    class="w-full p-2 border rounded dark:border-gray-600" 
+                                    bind:value={attributeValues[attrId]} 
+                                    placeholder={attr.placeholder || ""}
+                                />
+                            </div>
+                        {/if}
+                    {/each}
                 </div>
             </div>
 
-            <!-- Replace size dropdown with dimensional measurements -->
-            <div class="mb-4">
-                <div id="dimensions-label" class="block text-sm font-medium mb-2">Dimensions (cm)</div>
-                <div class="grid grid-cols-3 gap-2" role="group" aria-labelledby="dimensions-label">
-                    <div>
-                        <label for="sizeX" class="block text-xs font-medium mb-1">Length</label>
-                        <Input type="number" id="sizeX" class="w-full p-2 border rounded dark:border-gray-600" bind:value={sizeX} placeholder="Length (cm)" />
-                    </div>
-                    <div>
-                        <label for="sizeY" class="block text-xs font-medium mb-1">Width</label>
-                        <Input type="number" id="sizeY" class="w-full p-2 border rounded dark:border-gray-600" bind:value={sizeY} placeholder="Width (cm)" />
-                    </div>
-                    <div>
-                        <label for="sizeZ" class="block text-xs font-medium mb-1">Height</label>
-                        <Input type="number" id="sizeZ" class="w-full p-2 border rounded dark:border-gray-600" bind:value={sizeZ} placeholder="Height (cm)" />
-                    </div>
-                </div>
-            </div>
-
-            <!-- Replace weight dropdown with numeric input -->
-            <div class="mb-4">
-                <label for="weight" class="block text-sm font-medium mb-2">Weight (grams)</label>
-                <Input type="number" id="weight" class="w-full p-2 border rounded dark:border-gray-600" bind:value={weight} placeholder="Weight in grams" />
-            </div>
-            
-            <!-- Additional Options -->
-            <div class="mb-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div class="flex items-center">
-                    <input type="checkbox" bind:checked={handmade} id="handmade-checkbox" class="mr-2" />
-                    <label for="handmade-checkbox" class="text-sm">Handmade</label>
-                </div>
-                <div class="flex items-center">
-                    <input type="checkbox" bind:checked={oneOfAKind} id="oneofakind-checkbox" class="mr-2" />
-                    <label for="oneofakind-checkbox" class="text-sm">One of a kind</label>
-                </div>
-            </div>
-
+            <!-- Description -->
             <div>
                 <label for="description" class="block text-sm font-medium mb-2">Description*</label>
                 <Textarea id="description" class="w-full p-2 mb-4 border rounded dark:border-gray-600 h-auto" bind:value={description} placeholder="You can add any additional context about your object or how you came into possession of it."/>

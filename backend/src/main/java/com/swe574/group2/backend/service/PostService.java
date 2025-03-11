@@ -15,6 +15,7 @@ import com.swe574.group2.backend.entity.Post;
 import com.swe574.group2.backend.entity.User;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -216,14 +217,62 @@ public class PostService {
     }
 
     public Page<SearchResultDto> searchPosts(String keyword, Pageable pageable) {
-        Page<Post> postsPage = postRepository.searchPosts(keyword, pageable);
-        return postsPage.map(post -> {
-            Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
-            SearchResultDto searchResultDto = new SearchResultDto(post.getId(), post.getUser().getUsername(),
-                    post.getTitle(), post.getDescription(), post.getMysteryObject(), post.isSolved());
-                    searchResultDto.setTags(tags);
-            return searchResultDto;
-        });
+        // Check if keyword contains commas
+        if (keyword != null && keyword.contains(",")) {
+            // Split by comma and trim whitespace
+            List<String> keywords = Arrays.stream(keyword.split(","))
+                .map(String::trim)
+                .filter(kw -> !kw.isEmpty())
+                .collect(Collectors.toList());
+            
+            // Use a Map with Post ID as key to ensure uniqueness
+            Map<Long, Post> uniquePosts = new HashMap<>();
+            
+            // Search for each keyword and add results to the map
+            for (String kw : keywords) {
+                Page<Post> keywordResults = postRepository.searchPosts(kw, Pageable.unpaged());
+                for (Post post : keywordResults.getContent()) {
+                    uniquePosts.put(post.getId(), post);
+                }
+            }
+            
+            // Convert map values to a list
+            List<Post> allPosts = new ArrayList<>(uniquePosts.values());
+            
+            // Create a Page from the list using the original paging mechanism
+            Page<Post> postsPage = new PageImpl<>(allPosts, pageable, allPosts.size());
+            
+            // Map to DTOs using your existing approach
+            return postsPage.map(post -> {
+                Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
+                SearchResultDto searchResultDto = new SearchResultDto(
+                    post.getId(), 
+                    post.getUser().getUsername(), 
+                    post.getTitle(), 
+                    post.getDescription(), 
+                    post.getMysteryObject(), 
+                    post.isSolved()
+                );
+                searchResultDto.setTags(tags);
+                return searchResultDto;
+            });
+        } else {
+            // Original logic for single keyword
+            Page<Post> postsPage = postRepository.searchPosts(keyword, pageable);
+            return postsPage.map(post -> {
+                Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
+                SearchResultDto searchResultDto = new SearchResultDto(
+                    post.getId(), 
+                    post.getUser().getUsername(), 
+                    post.getTitle(), 
+                    post.getDescription(), 
+                    post.getMysteryObject(), 
+                    post.isSolved()
+                );
+                searchResultDto.setTags(tags);
+                return searchResultDto;
+            });
+        }
     }
 
     private void mapPostToDto(Post post, Set<String> tags, PostDetailsDto postDetailsDto, User currentUser) {
@@ -273,6 +322,7 @@ public class PostService {
      * @param tags A set of Wikidata entity IDs (e.g., "Q123", "Q456")
      * @return A set of corresponding human-readable labels
      */
+    @SuppressWarnings("unused")
     private Set<String> fetchTagLabelsFromWikidata(Set<String> tags) {
         if (tags == null || tags.isEmpty()) {
             return new HashSet<>();

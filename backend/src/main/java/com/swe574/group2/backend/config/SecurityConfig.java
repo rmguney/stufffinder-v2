@@ -61,6 +61,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "api/posts/getForPostList",
                                 "api/posts/getForPostDetails/**",
+                                "api/posts/searchForPosts**",
                                 "api/comments/get/**",
                                 "v3/api-docs/**",
                                 "/swagger-ui/**").permitAll() // Allow public access to log in, register and see posts & comments

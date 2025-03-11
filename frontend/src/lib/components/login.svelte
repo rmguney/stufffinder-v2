@@ -52,8 +52,10 @@
   }
 
   function setCookie(name, value) {
-    // Session cookie (no expires parameter = deleted when browser is closed)
-    document.cookie = `${name}=${value}; path=/; SameSite=Strict`;
+    // Set cookie with 1 hour expiration time
+    const expirationDate = new Date();
+    expirationDate.setTime(expirationDate.getTime() + (60 * 60 * 1000)); // 1 hour in milliseconds
+    document.cookie = `${name}=${value}; path=/; expires=${expirationDate.toUTCString()}; SameSite=Strict`;
   }
 
   function getCookie(name) {

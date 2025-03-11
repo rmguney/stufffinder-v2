@@ -10,6 +10,31 @@
     let debounceTimeout;
     let tagLabels = {}; // Store tag IDs and their labels
 
+    // Define a list of mystery object attributes to check for matches
+    const mysteryObjectAttributes = [
+        { key: "material", label: "Material" },
+        { key: "writtenText", label: "Written Text" },
+        { key: "color", label: "Color" },
+        { key: "shape", label: "Shape" },
+        { key: "location", label: "Location" },
+        { key: "hardness", label: "Hardness" },
+        { key: "timePeriod", label: "Time Period" },
+        { key: "smell", label: "Smell" },
+        { key: "texture", label: "Texture" },
+        { key: "originOfAcquisition", label: "Origin" },
+        { key: "pattern", label: "Pattern" },
+        { key: "print", label: "Print" },
+        { key: "functionality", label: "Functionality" },
+        { key: "brand", label: "Brand" },
+        { key: "markings", label: "Markings" }
+    ];
+
+    function containsSearchTerms(text, query) {
+        if (!text || !query) return false;
+        const trimmedQuery = query.trim().toLowerCase();
+        return text.toLowerCase().includes(trimmedQuery);
+    }
+
     async function searchPosts() {
         clearTimeout(debounceTimeout);
         
@@ -87,9 +112,14 @@
     function highlightMatches(text, query) {
         if (!text || !query) return text || '';
         
-        const terms = query.trim().toLowerCase().split(/\s+/);
+        const trimmedQuery = query.trim();
+        if (!trimmedQuery) return text;
+        
+        // Escape special regex characters to prevent errors
+        const escapedQuery = trimmedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        
         return text.replace(
-            new RegExp(`(${terms.join("|")})`, "gi"), 
+            new RegExp(`(${escapedQuery})`, "gi"), 
             "<mark>$1</mark>"
         );
     }
@@ -153,10 +183,34 @@
                                         </span>
                                     {/if}
                                 </div>
-                                <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                                    {@html highlightMatches(post.description || '', searchQuery)}
-                                </p>
-                                <div class="flex justify-between items-center mt-2 text-xs">
+                                
+                                <!-- Post description -->
+                                {#if post.description}
+                                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                        {@html highlightMatches(post.description, searchQuery)}
+                                    </p>
+                                {/if}
+                                
+                                <!-- Mystery object matched attributes -->
+                                {#if post.mysteryObject}
+                                    <div class="mt-3 text-sm">
+                                        <div class="space-y-1.5">
+                                            {#each mysteryObjectAttributes as attr}
+                                                {#if post.mysteryObject[attr.key] && containsSearchTerms(post.mysteryObject[attr.key], searchQuery)}
+                                                    <div class="bg-gray-50 dark:bg-gray-800 p-2 rounded">
+                                                        <span class="font-medium text-gray-700 dark:text-gray-300">{attr.label}:</span>
+                                                        <span class="text-gray-800 dark:text-gray-200">
+                                                            {@html highlightMatches(post.mysteryObject[attr.key], searchQuery)}
+                                                        </span>
+                                                    </div>
+                                                {/if}
+                                            {/each}
+                                        </div>
+                                    </div>
+                                {/if}
+                                
+                                <!-- Post metadata -->
+                                <div class="flex justify-between items-center mt-3 text-xs">
                                     <p class="text-gray-500">Posted by: {post.author}</p>
                                     {#if post.tags && post.tags.length > 0}
                                         <div class="flex gap-1 flex-wrap">

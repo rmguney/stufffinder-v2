@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swe574.group2.backend.dto.PostCreationDto;
 import com.swe574.group2.backend.dto.PostDetailsDto;
 import com.swe574.group2.backend.dto.PostListDto;
+import com.swe574.group2.backend.dto.SearchResultDto;
 import com.swe574.group2.backend.entity.MysteryObject;
 import com.swe574.group2.backend.service.PostService;
 import org.springframework.data.domain.Page;
@@ -90,8 +91,8 @@ public class PostController {
     }
 
     @GetMapping("/searchForPosts")
-    public ResponseEntity<Page<PostListDto>> searchPosts(@RequestParam("q") String query, Pageable pageable) {
-        Page<PostListDto> searchResults = postService.searchPosts(query, pageable);
+    public ResponseEntity<Page<SearchResultDto>> searchPosts(@RequestParam("q") String query, Pageable pageable) {
+        Page<SearchResultDto> searchResults = postService.searchPosts(query, pageable);
         return ResponseEntity.ok(searchResults);
     }
 }

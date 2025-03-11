@@ -29,12 +29,48 @@ public interface PostRepository  extends JpaRepository<Post, Long> {
     Set<String> findTagsByPostId(@Param("postId") Long postId);
 */
 
-    @Query("SELECT DISTINCT p FROM Post p " +
-            "LEFT JOIN p.tagMap t " +
-            "WHERE FUNCTION('REGEXP_LIKE', LOWER(p.title), CONCAT('\\b', LOWER(:keyword), '\\b')) = true OR " +
-            "FUNCTION('REGEXP_LIKE', LOWER(p.description), CONCAT('\\b', LOWER(:keyword), '\\b')) = true OR " +
-            "FUNCTION('REGEXP_LIKE', LOWER(key(t)), CONCAT('\\b', LOWER(:keyword), '\\b')) = true OR " +
-            "FUNCTION('REGEXP_LIKE', LOWER(value(t)), CONCAT('\\b', LOWER(:keyword), '\\b')) = true")
+    @Query("""
+                SELECT DISTINCT p FROM Post p 
+                LEFT JOIN p.tagMap t 
+                LEFT JOIN p.mysteryObject mo 
+                WHERE 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(p.title, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(p.description, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(key(t), ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(value(t), ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.description, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.material, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.writtenText, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.color, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.shape, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.location, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.hardness, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.timePeriod, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.smell, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.texture, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.originOfAcquisition, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.pattern, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.print, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR 
+                CONCAT(' ', LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(mo.functionality, ',', ' '), '.', ' '), '!', ' '), '?', ' '), ':', ' '), ';', ' ')), ' ') LIKE CONCAT('% ', LOWER(:keyword), ' %') OR
+                LOWER(p.title) = LOWER(:keyword) OR 
+                LOWER(p.description) = LOWER(:keyword) OR 
+                LOWER(key(t)) = LOWER(:keyword) OR 
+                LOWER(value(t)) = LOWER(:keyword) OR
+                LOWER(mo.description) = LOWER(:keyword) OR
+                LOWER(mo.material) = LOWER(:keyword) OR
+                LOWER(mo.writtenText) = LOWER(:keyword) OR
+                LOWER(mo.color) = LOWER(:keyword) OR
+                LOWER(mo.shape) = LOWER(:keyword) OR
+                LOWER(mo.location) = LOWER(:keyword) OR
+                LOWER(mo.hardness) = LOWER(:keyword) OR
+                LOWER(mo.timePeriod) = LOWER(:keyword) OR
+                LOWER(mo.smell) = LOWER(:keyword) OR
+                LOWER(mo.texture) = LOWER(:keyword) OR
+                LOWER(mo.originOfAcquisition) = LOWER(:keyword) OR
+                LOWER(mo.pattern) = LOWER(:keyword) OR
+                LOWER(mo.print) = LOWER(:keyword) OR
+                LOWER(mo.functionality) = LOWER(:keyword)
+                """)
     Page<Post> searchPosts(@Param("keyword") String keyword, Pageable pageable);
 
     List<Post> findByUserId(Long userId);

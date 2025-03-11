@@ -128,7 +128,7 @@
         parentCommentId: commentId
       };
       
-      const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
+      const response = await fetch(`z/api/comments/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

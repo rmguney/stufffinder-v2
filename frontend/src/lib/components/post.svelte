@@ -147,8 +147,8 @@ function handleImageError(event) {
   }
 </script>
 
-<Card.Root class={`shadow-lg hover:shadow-xl transition duration-300
-  ${variant === "thumb" ? 'grayscale hover:grayscale-0 bg-opacity-75 hover:bg-opacity-100 w-70 h-70 lg:hover:scale-110' : 'bg-opacity-90 hover:bg-opacity-100'}`}>
+<Card.Root class={`shadow-md hover:shadow-xl transition duration-200
+  ${variant === "thumb" ? 'bg-opacity-75 hover:bg-opacity-100 w-70 h-70 lg:hover:scale-110' : 'bg-opacity-90 hover:bg-opacity-100'}`}>
   {#if variant === "thread"}
     <!-- Thread variant layout -->
     <div class="p-4">

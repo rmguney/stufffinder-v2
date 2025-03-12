@@ -1,9 +1,11 @@
 # 🚀 StuffFinder
 
 <div align="center">
-  <img src="https://img.shields.io/badge/status-live-brightgreen" alt="Status: Live">
-  <img src="https://img.shields.io/badge/docker-containerized-blue" alt="Docker">
-  <img src="https://img.shields.io/badge/cloud-GCP_Run-4285F4" alt="Google Cloud Run">
+  
+  ![Status: Live](https://img.shields.io/badge/status-live-brightgreen?link=)
+  ![Docker](https://img.shields.io/badge/docker-containerized-blue?link=)
+  ![Google Cloud Run](https://img.shields.io/badge/cloud-GCP_Run-4285F4?link=)
+  
 </div>
 
 ## 🌐 Live Environments

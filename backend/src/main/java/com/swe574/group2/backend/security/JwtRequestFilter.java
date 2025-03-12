@@ -25,6 +25,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
     }
 
+    @SuppressWarnings("null")
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         // Get the Authorization header from the request

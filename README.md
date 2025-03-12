@@ -7,8 +7,8 @@
 </div>
 
 ## 🌐 Live Environments
-- **🖥️ Frontend:** [https://frontend-310608491068.europe-west1.run.app/](https://frontend-310608491068.europe-west1.run.app/)
-- **⚙️ Backend:** [https://backend-310608491068.europe-west1.run.app/](https://backend-310608491068.europe-west1.run.app/)
+- **🖥️ Latest Build:** https://latest---frontend-tqnach2kdq-ew.a.run.app/
+- **⚙️ Alpha v0.1.0:** https://alpha---frontend-tqnach2kdq-ew.a.run.app/
 
 ## 💻 Technology Stack
 | Component | Technology |

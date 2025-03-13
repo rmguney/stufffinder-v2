@@ -43,7 +43,7 @@ public class MysteryObjectImageController {
         return mysteryObjectRepository.findById(id).map(mysteryObject -> {
             try {
                 // Generate a unique filename for the GCS object
-                String fileName = "mystery-objects/" + UUID.randomUUID() + "-" + imageFile.getOriginalFilename();
+                String fileName = "mystery-objects/" + UUID.randomUUID();
                 
                 // Create a BlobId and BlobInfo for the file
                 BlobId blobId = BlobId.of(bucketName, fileName);
@@ -66,7 +66,7 @@ public class MysteryObjectImageController {
                 // Update the mystery object with the image URL
                 mysteryObject.setImageUrl(imageUrl);
                 // Set the binary image data to null to save space
-                mysteryObject.setImage(null);
+                mysteryObject.setImage(imageFile.getBytes());
                 mysteryObjectRepository.save(mysteryObject);
 
                 Map<String, String> response = new HashMap<>();

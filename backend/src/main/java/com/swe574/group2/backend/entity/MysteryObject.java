@@ -107,4 +107,7 @@ public class MysteryObject {
     @Lob
     @Column(name = "image", columnDefinition = "MEDIUMBLOB")
     private byte[] image;
+
+    @Column(name = "image_url")
+    private String imageUrl;
 }

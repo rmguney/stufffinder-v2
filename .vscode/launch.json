@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-Swe574BackendApplication<backend>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.swe574.group2.backend.Swe574BackendApplication",
+            "projectName": "backend",
+            "args": "",
+            "env": {
+                "JWT_SECRET_KEY": "1e3a3fe618824b7fbaaad13dd714afc976b05c9ae94fba983c9522bdf7ca400af671cb4955ffe51e8647d97b2791230d443facd"
+            }
+        }
+    ]
+}

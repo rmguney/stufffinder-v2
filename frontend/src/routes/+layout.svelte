@@ -1,4 +1,5 @@
 <script>
+    import "../app.css";
     import { ModeWatcher } from "mode-watcher";
     import Header from '$lib/components/header.svelte';
     import NotificationToast from '$lib/components/NotificationToast.svelte';

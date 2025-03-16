@@ -249,7 +249,29 @@
             
             const responseData = await response.json();
             
-            // If we have media files, upload them separately
+            // BACKWARD COMPATIBILITY: Upload first image to old endpoint if it exists
+            const firstImage = mediaFiles.find(item => item.type === 'image');
+            if (firstImage) {
+                const imageFormData = new FormData();
+                imageFormData.append('image', firstImage.file);
+                
+                try {
+                    const imageResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/upload-image`, {
+                        method: 'POST',
+                        body: imageFormData,
+                        credentials: 'include'
+                    });
+                    
+                    if (!imageResponse.ok) {
+                        console.warn('Failed to upload image to legacy endpoint, but continuing...');
+                    }
+                } catch (imageError) {
+                    console.warn('Error uploading to legacy endpoint:', imageError);
+                    // Continue with new uploads
+                }
+            }
+            
+            // If we have media files, upload them with the new endpoint
             if (mediaFiles.length > 0) {
                 for (let i = 0; i < mediaFiles.length; i++) {
                     const mediaItem = mediaFiles[i];

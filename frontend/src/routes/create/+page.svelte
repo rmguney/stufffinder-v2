@@ -9,7 +9,8 @@
     import { Textarea } from "$lib/components/ui/textarea/index.js";
     import { PUBLIC_API_URL } from "$env/static/public";
 
-    let imageFile = null;
+    // Replace single imageFile with array of media files
+    let mediaFiles = [];
     let title = '';
     let tags = [];
     let labels = [];
@@ -95,7 +96,7 @@
     
     let errors = {
         title: '',
-        image: '',
+        media: '', // Changed from image to media
         description: ''
     };
 
@@ -126,11 +127,37 @@
         return enrichedTags;
     }
     
+    // Function to handle media file selection
+    function handleMediaAdd(event) {
+        const files = event.target.files;
+        if (files && files.length > 0) {
+            // Add the new files to our media collection
+            const newFiles = Array.from(files).map(file => {
+                const fileType = file.type.split('/')[0]; // 'image', 'video', 'audio', etc.
+                return {
+                    file: file,
+                    type: fileType,
+                    url: URL.createObjectURL(file),
+                    name: file.name
+                };
+            });
+            mediaFiles = [...mediaFiles, ...newFiles];
+        }
+        // Reset the input so the same file can be selected again if needed
+        event.target.value = '';
+    }
+    
+    // Function to remove a file from the mediaFiles array
+    function removeMediaFile(index) {
+        URL.revokeObjectURL(mediaFiles[index].url); // Clean up the created URL
+        mediaFiles = mediaFiles.filter((_, i) => i !== index);
+    }
+    
     let handlePost = async () => {
         // Reset error state
         errors = {
             title: '',
-            image: '',
+            media: '',
             description: ''
         };
         
@@ -142,8 +169,8 @@
             hasErrors = true;
         }
         
-        if (!imageFile) {
-            errors.image = 'Image is required';
+        if (mediaFiles.length === 0) {
+            errors.media = 'At least one media file is required';
             hasErrors = true;
         }
         
@@ -222,20 +249,24 @@
             
             const responseData = await response.json();
             
-            // If we have an image, upload it separately
-            if (imageFile) {
-                const imageFormData = new FormData();
-                imageFormData.append('image', imageFile);
-                
-                const imageResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/upload-image`, {
-                    method: 'POST',
-                    body: imageFormData,
-                    credentials: 'include'
-                });
-    
-                if (!imageResponse.ok) {
-                    console.error('Failed to upload image');
-                    // Don't throw error here, as the post was created successfully
+            // If we have media files, upload them separately
+            if (mediaFiles.length > 0) {
+                for (let i = 0; i < mediaFiles.length; i++) {
+                    const mediaItem = mediaFiles[i];
+                    const mediaFormData = new FormData();
+                    mediaFormData.append('file', mediaItem.file);
+                    mediaFormData.append('type', mediaItem.type);
+                    
+                    const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/upload-media`, {
+                        method: 'POST',
+                        body: mediaFormData,
+                        credentials: 'include'
+                    });
+            
+                    if (!mediaResponse.ok) {
+                        console.error(`Failed to upload media file ${i+1}`);
+                        // Continue with other uploads even if one fails
+                    }
                 }
             }
     
@@ -247,13 +278,17 @@
         }
     };
 
-    // Handle file input change
-    function handleFileChange(event) {
-        const file = event.target.files[0];
-        if (file) {
-            imageFile = file;
+    // Clean up object URLs when component is destroyed
+    import { onDestroy } from 'svelte';
+    
+    onDestroy(() => {
+        // Clean up any created object URLs
+        for (const media of mediaFiles) {
+            if (media.url) {
+                URL.revokeObjectURL(media.url);
+            }
         }
-    }
+    });
 </script>
 
 <div class="flex justify-center p-6 lg:py-10 bg-change dark:bg-dark shifting">
@@ -381,7 +416,7 @@
             </div>
 
             <!-- Description -->
-            <div>
+            <div class="mb-4">
                 <label for="description" class="block text-sm font-medium mb-2">Description*</label>
                 <Textarea id="description" class="w-full p-2 mb-4 border rounded dark:border-gray-600 h-auto" bind:value={description} placeholder="You can add any additional context about your object or how you came into possession of it."/>
                 {#if errors.description}
@@ -401,20 +436,58 @@
                 <label for="anonymous-checkbox" class="text-sm">Post anonymously</label>
             </div>
 
-            <!-- Image upload with required indicator -->
-            <div class="mb-4">
-                <label for="image-upload" class="block text-sm font-medium mb-2">Upload Image*</label>
+            <!-- Media upload section -->
+            <div class="mb-6">
+                <label for="media-upload" class="block text-sm font-medium mb-2">Upload Media Files*</label>
                 <input 
                     type="file" 
-                    id="image-upload" 
-                    accept="image/*" 
-                    on:change={handleFileChange}
+                    id="media-upload" 
+                    accept="image/*,video/*,audio/*" 
+                    on:change={handleMediaAdd}
                     class="w-full p-2 border rounded dark:border-gray-600"
+                    multiple
                 />
-                {#if errors.image}
-                    <p class="text-red-500 text-sm mt-1">{errors.image}</p>
+                {#if errors.media}
+                    <p class="text-red-500 text-sm mt-1">{errors.media}</p>
                 {/if}
-                <p class="text-xs text-gray-500 mt-1">Upload an image of your mystery object (required)</p>
+                <p class="text-xs text-gray-500 mt-1">Upload images, videos, or audio files of your mystery object (at least one required)</p>
+                
+                <!-- Media Files Preview -->
+                {#if mediaFiles.length > 0}
+                    <div class="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {#each mediaFiles as mediaItem, index}
+                            <div class="relative border rounded p-2 bg-gray-50 dark:bg-neutral-800">
+                                <!-- Preview based on media type -->
+                                {#if mediaItem.type === 'image'}
+                                    <img src={mediaItem.url} alt="Preview" class="w-full h-32 object-cover rounded" />
+                                {:else if mediaItem.type === 'video'}
+                                    <video src={mediaItem.url} controls class="w-full h-32 object-cover rounded"></video>
+                                {:else if mediaItem.type === 'audio'}
+                                    <audio src={mediaItem.url} controls class="w-full mt-2"></audio>
+                                    <div class="text-center p-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                                        </svg>
+                                    </div>
+                                {:else}
+                                    <div class="text-center p-4 h-32 flex items-center justify-center">
+                                        <span>{mediaItem.name}</span>
+                                    </div>
+                                {/if}
+                                
+                                <!-- File name and remove button -->
+                                <div class="mt-2 text-xs truncate">{mediaItem.name}</div>
+                                <button 
+                                    type="button"
+                                    class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                                    on:click={() => removeMediaFile(index)}
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
             </div>
 
             <!-- Submit Button -->
@@ -425,7 +498,7 @@
                 size="icon"
                 class="w-full p-4 bg-black dark:bg-white text-white dark:text-black hover:bg-rose-900 hover:dark:bg-rose-900 hover:text-white transition-colors rounded shadow">
                 Post Your Stuff
-            </Button>
+                </Button>
             </div>
         </div>
     </Card.Root>

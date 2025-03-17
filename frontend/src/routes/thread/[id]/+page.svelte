@@ -53,6 +53,20 @@
     return rootComments;
   }
 
+  // Add a function to process media files
+  function processMediaFiles(post) {
+    if (!post || !post.mediaFiles) return [];
+    
+    return post.mediaFiles.map(media => {
+      const type = media.fileType?.split('/')[0] || 'image';
+      return {
+        type,
+        url: `${PUBLIC_API_URL}/api/mysteryObjects/media/${media.id}`,
+        name: media.fileName || `Media ${media.id}`
+      };
+    });
+  }
+
   onMount(async () => {
     try {
       // console.log("Thread ID from data:", data.id);
@@ -63,10 +77,14 @@
       const postData = await response.json();
       // console.log("Post data received:", postData);
       
-      // Update thread store with post data
+      // Process any media files
+      const mediaFiles = processMediaFiles(postData);
+      
+      // Update thread store with post data and media files
       updateThread({
           id: postData.id,
           ...postData,
+          mediaFiles: mediaFiles, // Add mediaFiles array
           mysteryObject: postData.mysteryObject ? {
               description: postData.mysteryObject.description,
               material: postData.mysteryObject.material,
@@ -263,6 +281,7 @@
         tags={thread.tags}
         mysteryObject={thread.mysteryObject}
         imageSrc={thread.mysteryObjectImage ? `data:image/png;base64,${thread.mysteryObjectImage}` : ''}
+        mediaFiles={thread.mediaFiles || []}
         postedBy={thread.author}
         postedDate={thread.createdAt}
         upvotes={thread.upvotes}

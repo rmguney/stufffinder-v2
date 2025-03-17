@@ -11,7 +11,8 @@
   export let title = '';
   export let description = '';
   export let tags = [];
-  export let imageSrc = '';
+  export let imageSrc = ''; // Keep for backward compatibility
+  export let mediaFiles = []; // New prop for multiple media files
   export let solved = false;
   export let variant = "thumb";
   export let mysteryObject = null;  // Changed from object with defaults to null
@@ -26,6 +27,7 @@
 
   let tagDetails = writable([]);
   let currentUser = null; 
+  let currentMediaIndex = 0; // Track the current displayed media in carousel
 
   const fetchTagDetails = async () => {
     if (!tags.length) {
@@ -106,6 +108,10 @@ function handleImageError(event) {
   event.target.src = '/placeholder-image.png';
 }
 
+function handleMediaError(event) {
+  event.target.src = '/placeholder-image.png';
+}
+
   $: activeUser.subscribe((value) => {
     currentUser = value;
   });
@@ -145,6 +151,34 @@ function handleImageError(event) {
       // console.log('Posted by:', postedBy);
     }
   }
+
+  // Convert single imageSrc to mediaFiles array for backward compatibility
+  $: {
+    if (imageSrc && mediaFiles.length === 0) {
+      mediaFiles = [{
+        type: 'image',
+        url: imageSrc,
+        name: 'Image'
+      }];
+    }
+  }
+  
+  // For thumbnail view, get first image if available
+  $: thumbnailImage = mediaFiles.find(file => file.type === 'image')?.url || 
+                     (mediaFiles.length > 0 ? mediaFiles[0].url : '');
+  
+  // Functions to control the carousel
+  const nextMedia = () => {
+    if (mediaFiles.length > 1) {
+      currentMediaIndex = (currentMediaIndex + 1) % mediaFiles.length;
+    }
+  };
+  
+  const prevMedia = () => {
+    if (mediaFiles.length > 1) {
+      currentMediaIndex = (currentMediaIndex - 1 + mediaFiles.length) % mediaFiles.length;
+    }
+  };
 </script>
 
 <Card.Root class={`shadow-md hover:shadow-xl transition duration-200
@@ -235,7 +269,7 @@ function handleImageError(event) {
       <!-- Separator between main content and details -->
       <Separator class="my-4" />
 
-      <!-- Mystery Object and Image section -->
+      <!-- Mystery Object and Media Carousel section -->
       <div class="flex flex-col lg:flex-row gap-6 mt-4">
         <!-- Mystery Object Details -->
         {#if mysteryObject}
@@ -269,17 +303,125 @@ function handleImageError(event) {
           </div>
         {/if}
 
-        <!-- Image Section -->
-        {#if imageSrc}
+        <!-- Media Carousel Section -->
+        {#if mediaFiles.length > 0}
           <div class="lg:w-1/2 flex-shrink-0 order-1 lg:order-2">
-            <a href={imageSrc} target="_blank" rel="noopener noreferrer" class="block">
-              <img 
-                class="rounded-lg w-full object-contain max-h-[600px] bg-neutral-100 dark:bg-neutral-950" 
-                src={imageSrc} 
-                alt={title}
-                on:error={handleImageError}
-              />
-            </a>
+            <div class="relative rounded-lg overflow-hidden bg-neutral-100 dark:bg-neutral-950">
+              <!-- Carousel navigation buttons -->
+              {#if mediaFiles.length > 1}
+                <div class="absolute top-0 bottom-0 left-0 flex items-center z-10">
+                  <button 
+                    on:click={prevMedia}
+                    class="bg-black bg-opacity-40 hover:bg-opacity-60 text-white p-2 rounded-r-lg ml-2 focus:outline-none transform transition hover:scale-110"
+                    aria-label="Previous media"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div class="absolute top-0 bottom-0 right-0 flex items-center z-10">
+                  <button 
+                    on:click={nextMedia}
+                    class="bg-black bg-opacity-40 hover:bg-opacity-60 text-white p-2 rounded-l-lg mr-2 focus:outline-none transform transition hover:scale-110"
+                    aria-label="Next media"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <!-- Media counter -->
+                <div class="absolute bottom-4 left-0 right-0 flex justify-center z-10">
+                  <div class="bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm">
+                    {currentMediaIndex + 1} / {mediaFiles.length}
+                  </div>
+                </div>
+              {/if}
+              
+              <!-- Current media display -->
+              <div class="carousel-container w-full">
+                {#if mediaFiles[currentMediaIndex]}
+                  {@const media = mediaFiles[currentMediaIndex]}
+                  {#if media.type === 'image'}
+                    <img 
+                      src={media.url} 
+                      alt={media.name || title} 
+                      class="w-full object-contain max-h-[600px]" 
+                      on:error={handleMediaError}
+                    />
+                  {:else if media.type === 'video'}
+                    <video 
+                      src={media.url} 
+                      controls 
+                      class="w-full object-contain max-h-[600px]"
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  {:else if media.type === 'audio'}
+                    <div class="flex flex-col items-center justify-center p-10 h-[300px]">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-rose-500 dark:text-rose-400 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                      </svg>
+                      <audio 
+                        src={media.url} 
+                        controls 
+                        class="w-full max-w-md"
+                      >
+                        Your browser does not support the audio tag.
+                      </audio>
+                      <p class="mt-4 text-gray-700 dark:text-gray-300">{media.name}</p>
+                    </div>
+                  {:else}
+                    <div class="flex items-center justify-center p-10 h-[300px]">
+                      <div class="text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto text-blue-500 dark:text-blue-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="text-gray-700 dark:text-gray-300">{media.name}</p>
+                      </div>
+                    </div>
+                  {/if}
+                {/if}
+              </div>
+              
+              <!-- Thumbnail navigation for multiple media -->
+              {#if mediaFiles.length > 1}
+                <div class="flex justify-center mt-4 gap-2 px-4 pb-2 overflow-x-auto">
+                  {#each mediaFiles as media, i}
+                    <button 
+                      on:click={() => currentMediaIndex = i}
+                      class="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden focus:outline-none transition-all {i === currentMediaIndex ? 'ring-2 ring-rose-500 transform scale-110' : 'opacity-60 hover:opacity-100'}"
+                    >
+                      {#if media.type === 'image'}
+                        <img src={media.url} alt="thumbnail" class="w-full h-full object-cover" />
+                      {:else if media.type === 'video'}
+                        <div class="w-full h-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                      {:else if media.type === 'audio'}
+                        <div class="w-full h-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                          </svg>
+                        </div>
+                      {:else}
+                        <div class="w-full h-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </div>
+                      {/if}
+                    </button>
+                  {/each}
+                </div>
+              {/if}
+            </div>
           </div>
         {/if}
       </div>
@@ -438,12 +580,12 @@ function handleImageError(event) {
           </Button>
         {/if} -->
         
-        {#if imageSrc}
+        {#if thumbnailImage}
           {#if variant !== "thumb"}
-            <a href={imageSrc} target="_blank" rel="noopener noreferrer">
+            <a href={thumbnailImage} target="_blank" rel="noopener noreferrer">
               <img 
                 class="object-cover w-full pt-4" 
-                src={imageSrc} 
+                src={thumbnailImage} 
                 alt={title}
                 on:error={handleImageError}
               />
@@ -451,7 +593,7 @@ function handleImageError(event) {
           {:else}
             <img 
               class="object-cover w-full h-44" 
-              src={imageSrc} 
+              src={thumbnailImage} 
               alt={title}
               on:error={handleImageError}
             />
@@ -461,3 +603,10 @@ function handleImageError(event) {
     </Card.Content>
   {/if}
 </Card.Root>
+
+<style>
+  /* Add smooth transition for carousel */
+  .carousel-container {
+    transition: all 0.3s ease-in-out;
+  }
+</style>

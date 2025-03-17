@@ -143,7 +143,7 @@ Graphs to provide an overview of the trackable effort, aside from timeline logs,
 - [Contribution Insight](https://github.com/rmguney/swe574-2025s-g2/graphs/contributors)  
 - [Project Backlog](https://github.com/users/rmguney/projects/1)  
 
-### Member: Raşit Melih Güney (rmguney)
+### Member: Melih Güney (rmguney)
 
 Responsibilities: Frontend development, mobile compatibility, integration, DevOps
 

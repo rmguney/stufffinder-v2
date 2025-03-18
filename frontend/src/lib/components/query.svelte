@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { writable } from 'svelte/store';
   import { Button } from "$lib/components/ui/button";
+  import { Input } from "$lib/components/ui/input"; // Added shadcn Input component
 
   let searchTerm = '';
   let searchResults = writable([]); // Stores search results from Wikidata
@@ -69,10 +70,14 @@
   // Reflect changes in `selectedItems` to `tags` and 'labels'
   $: tags = $selectedItems;
   $: labels = $selectedItems;
+  
+  // Export selected count for parent component
+  $: selectedCount = $selectedItems.length;
 
   // Passed down to the parent component
   export let tags;
   export let labels; 
+  export let selectedCount = 0;
 
   // Function to get SVG icon for removal buttons
   function getRemovalIcon() {
@@ -81,31 +86,35 @@
 </script>
 
 <div class="w-full mx-auto relative search-container text-sm">
-  <!-- Search Input -->
-  <input
+  <!-- Search Input - replaced with shadcn Input -->
+  <Input
     type="text"
     placeholder="Add relevant tags"
     bind:value={searchTerm}
     on:input={searchWikidata}
-    class="w-full p-3 border border-gray-300 rounded-md bg-white dark:border-gray-600 dark:bg-neutral-950 text-sm text-black dark:text-white"
+    class="w-full p-2 border rounded dark:border-gray-600"
   />
 
   <!-- Loading Indicator -->
   {#if $isLoading}
-    <p class="mt-2 text-black dark:text-white">Loading...</p>
+    <p class="mt-2 text-sm">Loading...</p>
   {/if}
 
   <!-- Search Results -->
   {#if $showResults && $searchResults.length > 0}
     <ul class="list-none p-0 mt-2 border bg-white dark:bg-neutral-950 rounded-md absolute w-full max-h-60 overflow-y-auto shadow-lg z-10">
       {#each $searchResults as result}
-        <li class="mt-2">
-          <button 
+        <li>
+          <Button 
             on:click={() => selectItem(result)} 
-            class="w-full text-left p-3 hover:bg-rose-900 hover:text-white text-black dark:text-white"
+            variant="ghost"
+            class="w-full text-left p-2 justify-start h-auto"
           >
-            {result.label}: {result.description}
-          </button>
+            <div>
+              <div class="font-medium">{result.label}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">{result.description}</div>
+            </div>
+          </Button>
         </li>
       {/each}
     </ul>
@@ -114,13 +123,6 @@
   <!-- Selected Items - Redesigned to match attribute cards -->
   <div class="selected-items mt-4">
     {#if $selectedItems.length > 0}
-      <h3 class="text-md font-medium text-black dark:text-white mb-3 flex items-center">
-        <span>Added Tags</span>
-        <span class="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-full">
-          {$selectedItems.length} added
-        </span>
-      </h3>
-      
       <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {#each $selectedItems as selectedItem}
           <div class="relative p-3 rounded-md border bg-gray-50 dark:bg-neutral-900 dark:border-gray-700 transition-all hover:shadow-sm">

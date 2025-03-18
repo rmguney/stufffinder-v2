@@ -130,7 +130,7 @@
         if (hasErrors) {
             return; // Don't proceed if validation fails
         }
-    
+
         try {
             const enrichedTags = await enrichTagsWithLabels(tags);
             
@@ -173,23 +173,25 @@
             // Add tags
             if (tags && tags.length > 0) {
                 const tagIds = tags.map(tag => tag.id);
-                formData.append('tags', new Blob([JSON.stringify(tagIds)], {
-                    type: 'application/json'
-                }));
+                formData.append('tags', JSON.stringify(tagIds));
             }
             
             // Add mystery object as JSON string
-            formData.append('mysteryObject', new Blob([JSON.stringify(mysteryObject)], {
-                type: 'application/json'
-            }));
-    
+            formData.append('mysteryObject', JSON.stringify(mysteryObject));
+            
+            // Add first media file as the primary image for backward compatibility
+            if (mediaFiles.length > 0) {
+                const firstFile = mediaFiles[0].file;
+                formData.append('image', firstFile);
+            }
+
             // Create post first
             const response = await fetch(`${PUBLIC_API_URL}/api/posts/create`, {
                 method: 'POST',
                 body: formData,
                 credentials: 'include'
             });
-    
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to create post');
@@ -197,36 +199,14 @@
             
             const responseData = await response.json();
             
-            // BACKWARD COMPATIBILITY: Upload first image to old endpoint if it exists
-            const firstImage = mediaFiles.find(item => item.type === 'image');
-            if (firstImage) {
-                const imageFormData = new FormData();
-                imageFormData.append('image', firstImage.file);
+            // Upload all media files (including the first one again to ensure it's in the new system)
+            for (let i = 0; i < mediaFiles.length; i++) {
+                const mediaItem = mediaFiles[i];
+                const mediaFormData = new FormData();
+                mediaFormData.append('file', mediaItem.file);
+                mediaFormData.append('type', mediaItem.type || 'image');
                 
                 try {
-                    const imageResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/upload-image`, {
-                        method: 'POST',
-                        body: imageFormData,
-                        credentials: 'include'
-                    });
-                    
-                    if (!imageResponse.ok) {
-                        console.warn('Failed to upload image to legacy endpoint, but continuing...');
-                    }
-                } catch (imageError) {
-                    console.warn('Error uploading to legacy endpoint:', imageError);
-                    // Continue with new uploads
-                }
-            }
-            
-            // If we have media files, upload them with the new endpoint
-            if (mediaFiles.length > 0) {
-                for (let i = 0; i < mediaFiles.length; i++) {
-                    const mediaItem = mediaFiles[i];
-                    const mediaFormData = new FormData();
-                    mediaFormData.append('file', mediaItem.file);
-                    mediaFormData.append('type', mediaItem.type);
-                    
                     const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/upload-media`, {
                         method: 'POST',
                         body: mediaFormData,
@@ -237,9 +217,12 @@
                         console.error(`Failed to upload media file ${i+1}`);
                         // Continue with other uploads even if one fails
                     }
+                } catch (mediaError) {
+                    console.error(`Error uploading media file ${i+1}:`, mediaError);
+                    // Continue with other uploads
                 }
             }
-    
+
             threadStore.update(prev => [...prev, responseData]);
             goto('/');
         } catch (error) {

@@ -13,6 +13,7 @@ public class CommentDetailsDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<CommentDetailsDto> replies; // Nested replies
+    private List<MediaFileDto> mediaFiles; // Added media files
 
     private int upvotes;
     private int downvotes;
@@ -24,13 +25,17 @@ public class CommentDetailsDto {
 
     private Long postId;
 
-    public CommentDetailsDto(Long id, String content, String authorName, LocalDateTime createdAt, LocalDateTime updatedAt, List<CommentDetailsDto> replies, int upvotes, int downvotes, boolean userUpvoted, boolean userDownvoted, boolean isBestAnswer, Long postId) {
+    public CommentDetailsDto(Long id, String content, String authorName, LocalDateTime createdAt, 
+                           LocalDateTime updatedAt, List<CommentDetailsDto> replies, 
+                           List<MediaFileDto> mediaFiles, int upvotes, int downvotes, 
+                           boolean userUpvoted, boolean userDownvoted, boolean isBestAnswer, Long postId) {
         this.id = id;
         this.content = content;
         this.author = authorName;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.replies = replies;
+        this.mediaFiles = mediaFiles;
         this.upvotes = upvotes;
         this.downvotes = downvotes;
         this.userUpvoted = userUpvoted;

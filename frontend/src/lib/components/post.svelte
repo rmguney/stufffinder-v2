@@ -105,11 +105,11 @@ $: if (variant === "thumb") {
 }
 
 function handleImageError(event) {
-  event.target.src = '/placeholder-image.png';
+  //event.target.src = '/placeholder-image.png';
 }
 
 function handleMediaError(event) {
-  event.target.src = '/placeholder-image.png';
+  //event.target.src = '/placeholder-image.png';
 }
 
   $: activeUser.subscribe((value) => {

@@ -13,9 +13,13 @@ public class MediaFile {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mystery_object_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "mystery_object_id", nullable = true)
     private MysteryObject mysteryObject;
+    
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "comment_id", nullable = true)
+    private Comment comment;
     
     @Column(nullable = false)
     private String fileName;

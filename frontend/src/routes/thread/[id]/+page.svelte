@@ -4,7 +4,6 @@
   import * as Card from "$lib/components/ui/card";
   import Post from '$lib/components/post.svelte';
   import Comment from '$lib/components/comment.svelte';
-  import MediaUploader from "$lib/components/mediaUploader.svelte"; // Import MediaUploader
   import { threadStore, updateThread, addCommentToThread, loadCommentsForThread } from '../../../threadStore';
   import { activeUser } from '../../../userStore';
   import { onMount, onDestroy } from 'svelte';
@@ -18,8 +17,10 @@
   let isLoading = false;
   let error = null;
   let comments = [];
-  let commentMediaFiles = []; // Add array to store media files for comment
-  let uploadingMedia = false; // Flag for media upload state
+  
+  // Simple media upload functionality
+  let selectedFiles = [];
+  let fileInputRef;
 
   $: commentator = $activeUser || 'Anonymous';
   
@@ -35,6 +36,14 @@
 
   // Reference to the event listener
   let refreshCommentListener;
+
+  // Function to handle file selection
+  function handleFileSelect(event) {
+    const files = Array.from(event.target.files);
+    if (files.length > 0) {
+      selectedFiles = files;
+    }
+  }
 
   // Function to organize comments into a parent-child hierarchy
   function organizeComments(comments) {
@@ -118,11 +127,6 @@
     }
   }
 
-  // Handle media update for comment
-  function handleCommentMediaUpdate(event) {
-    commentMediaFiles = event.detail.mediaFiles;
-  }
-
   onMount(async () => {
     try {
       // Fetch post with media files
@@ -149,13 +153,6 @@
     // Clean up the event listener when component is destroyed
     if (refreshCommentListener) {
       document.removeEventListener('refreshComments', refreshCommentListener);
-    }
-    
-    // Clean up any created object URLs
-    for (const media of commentMediaFiles) {
-      if (media.url) {
-        URL.revokeObjectURL(media.url);
-      }
     }
   });
 
@@ -188,15 +185,14 @@
     }
   }
 
-  // Enhanced comment submission function with media upload support
+  // Enhanced comment submission with basic media upload
   let handleSend = async () => {
-    if (!comment.trim() && commentMediaFiles.length === 0) {
+    if (!comment.trim() && selectedFiles.length === 0) {
       error = "Please enter a comment or attach media";
       return;
     }
 
     isLoading = true;
-    uploadingMedia = commentMediaFiles.length > 0;
     error = null;
     
     try {
@@ -224,37 +220,33 @@
       const newComment = await response.json();
       const commentId = newComment.commentId;
       
-      // Then, if there are media files, upload each one
-      if (commentMediaFiles.length > 0) {
-        for (let i = 0; i < commentMediaFiles.length; i++) {
-          const mediaItem = commentMediaFiles[i];
-          const mediaFormData = new FormData();
-          mediaFormData.append('file', mediaItem.file);
-          mediaFormData.append('type', mediaItem.type || 'image');
+      // Then, if there are files, upload each one
+      if (selectedFiles.length > 0) {
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const formData = new FormData();
+          formData.append('file', file);
           
           try {
+            // Note: This endpoint would need to be implemented on the backend
             const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/comments/${commentId}/upload-media`, {
               method: 'POST',
-              headers: {
-                ...getAuthHeader()
-              },
-              body: mediaFormData
+              body: formData
             });
             
             if (!mediaResponse.ok) {
-              console.error(`Failed to upload media file ${i+1} for comment`);
-              // Continue with other uploads even if one fails
+              console.error(`Failed to upload file ${i+1} for comment`);
             }
           } catch (mediaError) {
-            console.error(`Error uploading media file ${i+1} for comment:`, mediaError);
-            // Continue with other uploads
+            console.error(`Error uploading file ${i+1} for comment:`, mediaError);
           }
         }
       }
       
-      // Clear the input and media files
+      // Clear the input and files
       comment = '';
-      commentMediaFiles = [];
+      selectedFiles = [];
+      if (fileInputRef) fileInputRef.value = '';
       
       // Refresh comments to get updated data including media
       await refreshComments();
@@ -264,7 +256,6 @@
       error = err.message || "Failed to submit comment";
     } finally {
       isLoading = false;
-      uploadingMedia = false;
     }
   };
 
@@ -305,13 +296,74 @@
           placeholder="Write your comment..."
         />
         
-        <!-- Add MediaUploader component for comment media -->
+        <!-- Simplified file input for media -->
         <div class="w-full">
-          <MediaUploader
-            bind:mediaFiles={commentMediaFiles}
-            bind:errors={error}
-            on:update={handleCommentMediaUpdate}
-          />
+          <div class="flex items-center space-x-2">
+            <input 
+              type="file" 
+              id="media-upload"
+              bind:this={fileInputRef}
+              on:change={handleFileSelect}
+              accept="image/*,video/*,audio/*" 
+              class="hidden" 
+              multiple
+            />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              class="text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              on:click={() => fileInputRef?.click()}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+              </svg>
+              Add Media
+            </Button>
+            {#if selectedFiles.length > 0}
+              <span class="text-xs text-neutral-500">
+                {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''} selected
+              </span>
+            {/if}
+          </div>
+          
+          <!-- Simple file preview -->
+          {#if selectedFiles.length > 0}
+            <div class="mt-2 flex flex-wrap gap-2">
+              {#each selectedFiles as file, i}
+                <div class="relative bg-neutral-100 dark:bg-neutral-800 rounded p-1 w-16 h-16 flex items-center justify-center">
+                  {#if file.type.startsWith('image/')}
+                    <img 
+                      src={URL.createObjectURL(file)} 
+                      alt={file.name} 
+                      class="max-w-full max-h-full object-contain"
+                    />
+                  {:else if file.type.startsWith('video/')}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  {:else if file.type.startsWith('audio/')}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                  {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  {/if}
+                  <!-- Remove button -->
+                  <button 
+                    class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                    on:click={() => {
+                      selectedFiles = selectedFiles.filter((_, index) => index !== i);
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              {/each}
+            </div>
+          {/if}
         </div>
         
         {#if error}
@@ -326,13 +378,8 @@
             disabled={isLoading}
           >
             {#if isLoading}
-              {#if uploadingMedia}
-                <span class="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
-                Uploading...
-              {:else}
-                <span class="inline-block h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin mr-2"></span>
-                Sending...
-              {/if}
+              <span class="inline-block h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin mr-2"></span>
+              {selectedFiles.length > 0 ? 'Uploading...' : 'Sending...'}
             {:else}
               Post Comment
             {/if}

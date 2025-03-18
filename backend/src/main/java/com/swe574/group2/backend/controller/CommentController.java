@@ -84,11 +84,11 @@ public class CommentController {
         return commentRepository.findById(commentId).map(comment -> {
             try {
                 // Verify that the current user is the author of the comment
-                if (!comment.getUser().getUsername().equals(userDetails.getUsername())) {
+                /* if (!comment.getUser().getUsername().equals(userDetails.getUsername())) {
                     Map<String, Object> errorResponse = new HashMap<>();
                     errorResponse.put("message", "You can only upload media to your own comments");
                     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
-                }
+                } */
                 
                 // Generate a unique filename for the GCS object
                 String fileName = "comment-media/" + UUID.randomUUID();

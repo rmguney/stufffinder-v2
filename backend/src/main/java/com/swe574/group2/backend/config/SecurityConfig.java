@@ -63,8 +63,9 @@ public class SecurityConfig {
                                 "api/posts/getForPostDetails/**",
                                 "api/posts/searchForPosts**",
                                 "api/comments/get/**",
+                                "api/mysteryObjects/media/**", // Allow public access to media files
                                 "v3/api-docs/**",
-                                "/swagger-ui/**").permitAll() // Allow public access to log in, register and see posts & comments
+                                "/swagger-ui/**").permitAll() // Allow public access to these endpoints
                         .anyRequest().authenticated() // All other requests need authentication
                 )
                 .sessionManagement(sessionManagement ->

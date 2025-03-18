@@ -9,6 +9,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { getAuthHeader } from '$lib/utils/auth';
   import { PUBLIC_API_URL } from "$env/static/public";
+  import { processMediaFiles } from '$lib/utils/mediaUtils';
 
   export let data;
   let comment = '';
@@ -54,7 +55,7 @@
   }
 
   // Add a function to process media files
-  function processMediaFiles(post) {
+/*   function processMediaFiles(post) {
     if (!post || !post.mediaFiles) return [];
     
     return post.mediaFiles.map(media => {
@@ -65,73 +66,78 @@
         name: media.fileName || `Media ${media.id}`
       };
     });
-  }
+  } */
 
-  onMount(async () => {
+    async function fetchPostWithMedia(postId) {
     try {
-      // console.log("Thread ID from data:", data.id);
-      
       // Fetch post details
-      const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostDetails/${data.id}`);
+      const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostDetails/${postId}`);
       if (!response.ok) throw new Error('Failed to fetch post details');
       const postData = await response.json();
-      // console.log("Post data received:", postData);
       
-      // Process any media files
+      // Process media files into a format the frontend can use
       const mediaFiles = processMediaFiles(postData);
       
       // Update thread store with post data and media files
       updateThread({
-          id: postData.id,
-          ...postData,
-          mediaFiles: mediaFiles, // Add mediaFiles array
-          mysteryObject: postData.mysteryObject ? {
-              description: postData.mysteryObject.description,
-              material: postData.mysteryObject.material,
-              writtenText: postData.mysteryObject.writtenText,
-              color: postData.mysteryObject.color,
-              shape: postData.mysteryObject.shape,
-              descriptionOfParts: postData.mysteryObject.descriptionOfParts,
-              location: postData.mysteryObject.location,
-              hardness: postData.mysteryObject.hardness,
-              timePeriod: postData.mysteryObject.timePeriod,
-              smell: postData.mysteryObject.smell,
-              taste: postData.mysteryObject.taste,
-              texture: postData.mysteryObject.texture,
-              value: postData.mysteryObject.value,
-              originOfAcquisition: postData.mysteryObject.originOfAcquisition,
-              pattern: postData.mysteryObject.pattern,
-              brand: postData.mysteryObject.brand,
-              print: postData.mysteryObject.print,
-              functionality: postData.mysteryObject.functionality,
-              imageLicenses: postData.mysteryObject.imageLicenses,
-              markings: postData.mysteryObject.markings,
-              handmade: postData.mysteryObject.handmade,
-              oneOfAKind: postData.mysteryObject.oneOfAKind,
-              sizeX: postData.mysteryObject.sizeX,
-              sizeY: postData.mysteryObject.sizeY,
-              sizeZ: postData.mysteryObject.sizeZ,
-              weight: postData.mysteryObject.weight,
-              item_condition: postData.mysteryObject.item_condition
-          } : null,
-          title: postData.title,
-          description: postData.description,
-          tags: postData.tags || [],
-          author: postData.author,
-          createdAt: postData.createdAt,
-          updatedAt: postData.updatedAt,
-          upvotes: postData.upvotes,
-          downvotes: postData.downvotes,
-          userUpvoted: postData.userUpvoted,
-          userDownvoted: postData.userDownvoted,
-          solved: postData.solved,
-          comments: []
-      });
-
-      /* console.log('Thread ownership debug:', {
+        id: postData.id,
+        ...postData,
+        mediaFiles: mediaFiles,
+        mysteryObject: postData.mysteryObject ? {
+          description: postData.mysteryObject.description,
+          material: postData.mysteryObject.material,
+          writtenText: postData.mysteryObject.writtenText,
+          color: postData.mysteryObject.color,
+          shape: postData.mysteryObject.shape,
+          descriptionOfParts: postData.mysteryObject.descriptionOfParts,
+          location: postData.mysteryObject.location,
+          hardness: postData.mysteryObject.hardness,
+          timePeriod: postData.mysteryObject.timePeriod,
+          smell: postData.mysteryObject.smell,
+          taste: postData.mysteryObject.taste,
+          texture: postData.mysteryObject.texture,
+          value: postData.mysteryObject.value,
+          originOfAcquisition: postData.mysteryObject.originOfAcquisition,
+          pattern: postData.mysteryObject.pattern,
+          brand: postData.mysteryObject.brand,
+          print: postData.mysteryObject.print,
+          functionality: postData.mysteryObject.functionality,
+          imageLicenses: postData.mysteryObject.imageLicenses,
+          markings: postData.mysteryObject.markings,
+          handmade: postData.mysteryObject.handmade,
+          oneOfAKind: postData.mysteryObject.oneOfAKind,
+          sizeX: postData.mysteryObject.sizeX,
+          sizeY: postData.mysteryObject.sizeY,
+          sizeZ: postData.mysteryObject.sizeZ,
+          weight: postData.mysteryObject.weight,
+          item_condition: postData.mysteryObject.item_condition
+        } : null,
+        title: postData.title,
+        description: postData.description,
+        tags: postData.tags || [],
         author: postData.author,
-        currentUser: $activeUser
-      }); */
+        createdAt: postData.createdAt,
+        updatedAt: postData.updatedAt,
+        upvotes: postData.upvotes,
+        downvotes: postData.downvotes,
+        userUpvoted: postData.userUpvoted,
+        userDownvoted: postData.userDownvoted,
+        solved: postData.solved,
+        comments: []
+      });
+      
+      return postData;
+    } catch (error) {
+      console.error('Error fetching post with media:', error);
+      throw error;
+    }
+  }
+
+
+  onMount(async () => {
+    try {
+      // Fetch post with media files
+      await fetchPostWithMedia(data.id);
       
       // Load and organize comments
       await refreshComments();
@@ -139,7 +145,6 @@
       // Add event listener for comment refresh requests
       refreshCommentListener = async (event) => {
         if (event.detail?.threadId === data.id) {
-          // console.log("Comment refresh event received");
           await refreshComments();
         }
       };

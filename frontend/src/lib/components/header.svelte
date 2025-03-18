@@ -36,12 +36,12 @@
                         </svg>
                     </div>
                     <!-- Text logo for larger screens -->
-                    <span class="hidden sm:block text-lg font-semibold tracking-tight hover:text-rose-900">
+                    <span class="hidden sm:block text-2xl translate-y-0.5 font-semibold tracking-tight hover:scale-105 transition-transform">
                         Stufffinder
                     </span>
                 </a>
                 <!-- Primary Navigation -->
-                <nav class="flex items-center gap-1">
+                <nav class="flex items-center gap-1 lg:ml-1">
                     <a href="/search" class="inline-flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors" aria-label="Search">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="size-4 sm:size-5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
@@ -74,7 +74,7 @@
                     <Button 
                         on:click={handleLogout}
                         variant="ghost"
-                        class="hidden sm:flex text-sm font-medium hover:bg-rose-900 hover:text-white"
+                        class="hidden sm:flex text-sm font-medium rounded-full hover:bg-rose-900 hover:text-white"
                     >
                         Logout
                     </Button>
@@ -93,7 +93,7 @@
                     <!-- Show text button on larger screens, icon on mobile -->
                     <Button 
                         variant="ghost"
-                        class="hidden sm:flex text-sm font-medium hover:bg-rose-900 hover:text-white" 
+                        class="hidden sm:flex text-sm font-medium rounded-full hover:bg-rose-900 hover:text-white" 
                         on:click={toggleLogin}
                     >
                         Sign In

@@ -84,12 +84,13 @@
 }
 
 .dark .shifting::before {
-  background-color: #1a1a1b;
+  background-color: rgba(255, 255, 255, 0.1);
   background-image:
-    linear-gradient(rgba(28, 28, 28, 0.5), rgba(0, 0, 0, 0.5)),
-    radial-gradient(circle farthest-corner at 25% 25%, #8a4843, transparent 50%),
-    radial-gradient(circle at 75% 75%, #5b7d8a, transparent 50%), 
-    radial-gradient(circle at 50% 50%, #2c5f5a, transparent 50%);
+    linear-gradient(rgba(28, 28, 28, 0.05), rgba(0, 0, 0, 0.1)),
+    radial-gradient(circle farthest-corner at 25% 25%, #8a4843, transparent 70%),
+    radial-gradient(circle at 75% 75%, #5b7d8a, transparent 70%), 
+     radial-gradient(circle at 50% 50%, #3a7d75, transparent 70%);
+
 }
 
 @keyframes bg-change {

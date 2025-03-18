@@ -376,7 +376,8 @@
           />
           <Button 
             on:click={addReply} 
-            class="mt-2 text-xs py-1 px-3 hover:bg-rose-900"
+            variant="outline"
+            class="mt-2 text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
             Submit Reply
           </Button>

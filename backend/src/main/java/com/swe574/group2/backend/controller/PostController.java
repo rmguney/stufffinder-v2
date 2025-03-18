@@ -1,12 +1,20 @@
 package com.swe574.group2.backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.cloud.storage.Acl;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
+import com.swe574.group2.backend.dao.MediaFileRepository;
 import com.swe574.group2.backend.dto.PostCreationDto;
 import com.swe574.group2.backend.dto.PostDetailsDto;
 import com.swe574.group2.backend.dto.PostListDto;
 import com.swe574.group2.backend.dto.SearchResultDto;
+import com.swe574.group2.backend.entity.MediaFile;
 import com.swe574.group2.backend.entity.MysteryObject;
 import com.swe574.group2.backend.service.PostService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -21,14 +29,25 @@ import java.util.HashSet;
 import java.util.List;
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
+import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/posts")
 public class PostController {
     private final PostService postService;
+    private final Storage storage;
+    private final MediaFileRepository mediaFileRepository;
 
-    public PostController(PostService postService) {
+    @Value("${gcp.storage.bucket-name}")
+    private String bucketName;
+
+    @Autowired
+    public PostController(PostService postService, Storage storage, MediaFileRepository mediaFileRepository) {
         this.postService = postService;
+        this.storage = storage;
+        this.mediaFileRepository = mediaFileRepository;
     }
 
     @PostMapping("/create")
@@ -37,6 +56,7 @@ public class PostController {
             @RequestPart("content") String content,
             @RequestPart(value = "tags", required = false) List<String> tags,
             @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestPart(value = "mediaFiles", required = false) List<MultipartFile> mediaFiles,
             @RequestPart("mysteryObject") String mysteryObjectJson,
             @AuthenticationPrincipal UserDetails userDetails) throws IOException {
         
@@ -51,7 +71,95 @@ public class PostController {
         postCreationDto.setMysteryObject(mysteryObject);
         
         Map<String, Long> response = postService.createPost(postCreationDto, userDetails.getUsername());
+        
+        // Handle legacy single image upload for backward compatibility
+        if (image != null && !image.isEmpty()) {
+            uploadImageToStorage(response.get("mysteryObjectId"), image);
+        }
+        
+        // Process multiple media files if provided
+        if (mediaFiles != null && !mediaFiles.isEmpty()) {
+            for (MultipartFile mediaFile : mediaFiles) {
+                if (!mediaFile.isEmpty()) {
+                    uploadMediaFileToStorage(response.get("mysteryObjectId"), mediaFile);
+                }
+            }
+        }
+        
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    private void uploadImageToStorage(Long mysteryObjectId, MultipartFile image) throws IOException {
+        if (mysteryObjectId == null || image == null || image.isEmpty()) {
+            return;
+        }
+
+        // Get the mystery object
+        MysteryObject mysteryObject = postService.getMysteryObjectById(mysteryObjectId);
+        if (mysteryObject == null) {
+            return;
+        }
+
+        // Generate a unique filename for the GCS object
+        String fileName = "mystery-objects/" + UUID.randomUUID();
+        
+        // Create a BlobId and BlobInfo for the file
+        BlobId blobId = BlobId.of(bucketName, fileName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+            .setContentType(image.getContentType())
+            .setAcl(new ArrayList<>(Collections.singletonList(
+                Acl.of(Acl.User.ofAllUsers(), Acl.Role.READER))))
+            .build();
+        
+        // Upload the file to Google Cloud Storage
+        storage.create(blobInfo, image.getBytes());
+        
+        // Generate a URL for the uploaded image
+        String imageUrl = String.format("https://storage.googleapis.com/%s/%s", bucketName, fileName);
+        
+        // Update the mystery object with the image URL
+        mysteryObject.setImageUrl(imageUrl);
+        mysteryObject.setImage(image.getBytes());
+        postService.saveMysteryObject(mysteryObject);
+    }
+
+    private void uploadMediaFileToStorage(Long mysteryObjectId, MultipartFile file) throws IOException {
+        if (mysteryObjectId == null || file == null || file.isEmpty()) {
+            return;
+        }
+
+        // Get the mystery object
+        MysteryObject mysteryObject = postService.getMysteryObjectById(mysteryObjectId);
+        if (mysteryObject == null) {
+            return;
+        }
+
+        // Generate a unique filename for the GCS object
+        String fileName = "mystery-objects/" + UUID.randomUUID();
+        
+        // Create a BlobId and BlobInfo for the file
+        BlobId blobId = BlobId.of(bucketName, fileName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+            .setContentType(file.getContentType())
+            .setAcl(new ArrayList<>(Collections.singletonList(
+                Acl.of(Acl.User.ofAllUsers(), Acl.Role.READER))))
+            .build();
+        
+        // Upload the file to Google Cloud Storage
+        storage.create(blobInfo, file.getBytes());
+        
+        // Generate a URL for the uploaded file
+        String fileUrl = String.format("https://storage.googleapis.com/%s/%s", bucketName, fileName);
+        
+        // Create and save new MediaFile entity
+        MediaFile mediaFile = new MediaFile();
+        mediaFile.setMysteryObject(mysteryObject);
+        mediaFile.setFileName(file.getOriginalFilename());
+        mediaFile.setFileType(file.getContentType());
+        mediaFile.setFileUrl(fileUrl);
+        mediaFile.setFileData(file.getBytes());
+        
+        mediaFileRepository.save(mediaFile);
     }
 
     @GetMapping("/getForPostList")

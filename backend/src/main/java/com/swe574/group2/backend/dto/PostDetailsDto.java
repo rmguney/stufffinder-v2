@@ -4,6 +4,7 @@ import com.swe574.group2.backend.entity.MysteryObject;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Data
@@ -16,6 +17,7 @@ public class PostDetailsDto {
     private MysteryObject mysteryObject;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<MediaFileDto> mediaFiles;
 
     private int upvotes;
     private int downvotes;

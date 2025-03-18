@@ -2,6 +2,7 @@ package com.swe574.group2.backend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swe574.group2.backend.dao.CommentRepository;
+import com.swe574.group2.backend.dao.MediaFileRepository;
 import com.swe574.group2.backend.dao.MysteryObjectRepository;
 import com.swe574.group2.backend.dao.PostRepository;
 import com.swe574.group2.backend.dao.UserRepository;
@@ -9,7 +10,9 @@ import com.swe574.group2.backend.dto.PostCreationDto;
 import com.swe574.group2.backend.dto.PostDetailsDto;
 import com.swe574.group2.backend.dto.PostListDto;
 import com.swe574.group2.backend.dto.SearchResultDto;
+import com.swe574.group2.backend.dto.MediaFileDto;
 import com.swe574.group2.backend.entity.Comment;
+import com.swe574.group2.backend.entity.MediaFile;
 import com.swe574.group2.backend.entity.MysteryObject;
 import com.swe574.group2.backend.entity.Post;
 import com.swe574.group2.backend.entity.User;
@@ -34,13 +37,15 @@ public class PostService {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final NotificationService notificationService;
+    private final MediaFileRepository mediaFileRepository;
 
-    public PostService(PostRepository postRepository, MysteryObjectRepository mysteryObjectRepository, UserRepository userRepository, CommentRepository commentRepository, NotificationService notificationService) {
+    public PostService(PostRepository postRepository, MysteryObjectRepository mysteryObjectRepository, UserRepository userRepository, CommentRepository commentRepository, NotificationService notificationService, MediaFileRepository mediaFileRepository) {
         this.postRepository = postRepository;
         this.mysteryObjectRepository = mysteryObjectRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.notificationService = notificationService;
+        this.mediaFileRepository = mediaFileRepository;
     }
 
     @Transactional
@@ -169,19 +174,33 @@ public class PostService {
         return response;
     }
 
-    public PostDetailsDto getPostDetails(Long postId, String email) {
-        User user = email != null ? userRepository.findByEmail(email).orElseThrow() : null;
+    public PostDetailsDto getPostDetails(Long postId, String username) {
+        User user = username != null ? userRepository.findByEmail(username).orElseThrow() : null;
         Post post = postRepository.findPostDetailsById(postId);
         if (post == null) {
             throw new ResourceNotFoundException("Post not found with ID: " + postId);
         }
-
-        // Use tag keys (Q-IDs) for consistency
+    
         Set<String> tags = postRepository.findTagKeysByPostId(postId);
-
+    
         PostDetailsDto postDetailsDto = new PostDetailsDto();
         mapPostToDto(post, tags, postDetailsDto, user);
-
+        
+        // Add media files information if mystery object exists
+        if (post.getMysteryObject() != null) {
+            List<MediaFile> mediaFiles = mediaFileRepository.findByMysteryObjectId(post.getMysteryObject().getId());
+            List<MediaFileDto> mediaFileDtos = mediaFiles.stream().map(mediaFile -> {
+                MediaFileDto dto = new MediaFileDto();
+                dto.setId(mediaFile.getId());
+                dto.setFileName(mediaFile.getFileName());
+                dto.setFileType(mediaFile.getFileType());
+                dto.setCreatedAt(mediaFile.getCreatedAt());
+                return dto;
+            }).collect(Collectors.toList());
+            
+            postDetailsDto.setMediaFiles(mediaFileDtos);
+        }
+    
         return postDetailsDto;
     }
 
@@ -363,5 +382,13 @@ public class PostService {
         }
         
         return tagLabels;
+    }
+
+    public MysteryObject getMysteryObjectById(Long id) {
+        return mysteryObjectRepository.findById(id).orElse(null);
+    }
+
+    public MysteryObject saveMysteryObject(MysteryObject mysteryObject) {
+        return mysteryObjectRepository.save(mysteryObject);
     }
 }

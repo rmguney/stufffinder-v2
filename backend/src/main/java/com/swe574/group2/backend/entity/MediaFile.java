@@ -14,8 +14,12 @@ public class MediaFile {
     private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "mystery_object_id", nullable = false)
+    @JoinColumn(name = "mystery_object_id")
     private MysteryObject mysteryObject;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comment_id")
+    private Comment comment;
     
     @Column(nullable = false)
     private String fileName;

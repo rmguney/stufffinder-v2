@@ -4,6 +4,7 @@
   import * as Card from "$lib/components/ui/card";
   import Post from '$lib/components/post.svelte';
   import Comment from '$lib/components/comment.svelte';
+  import MediaUploader from "$lib/components/mediaUploader.svelte"; // Import MediaUploader
   import { threadStore, updateThread, addCommentToThread, loadCommentsForThread } from '../../../threadStore';
   import { activeUser } from '../../../userStore';
   import { onMount, onDestroy } from 'svelte';
@@ -17,6 +18,8 @@
   let isLoading = false;
   let error = null;
   let comments = [];
+  let commentMediaFiles = []; // Add array to store media files for comment
+  let uploadingMedia = false; // Flag for media upload state
 
   $: commentator = $activeUser || 'Anonymous';
   
@@ -25,7 +28,6 @@
   $: {
     if (thread?.comments) {
       comments = thread.comments;
-      // console.log("Updated comments array:", comments);
     } else {
       comments = [];
     }
@@ -38,8 +40,6 @@
   function organizeComments(comments) {
     if (!comments || !Array.isArray(comments)) return [];
     
-    // console.log("Raw comments to organize:", JSON.stringify(comments, null, 2));
-    
     // Since the API already returns comments with their replies nested,
     // we just need to ensure the structure is preserved
     const rootComments = comments.map(comment => ({
@@ -50,25 +50,10 @@
       })) || []
     }));
 
-    // console.log("Final organized structure:", JSON.stringify(rootComments, null, 2));
     return rootComments;
   }
 
-  // Add a function to process media files
-/*   function processMediaFiles(post) {
-    if (!post || !post.mediaFiles) return [];
-    
-    return post.mediaFiles.map(media => {
-      const type = media.fileType?.split('/')[0] || 'image';
-      return {
-        type,
-        url: `${PUBLIC_API_URL}/api/mysteryObjects/media/${media.id}`,
-        name: media.fileName || `Media ${media.id}`
-      };
-    });
-  } */
-
-    async function fetchPostWithMedia(postId) {
+  async function fetchPostWithMedia(postId) {
     try {
       // Fetch post details
       const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostDetails/${postId}`);
@@ -133,6 +118,10 @@
     }
   }
 
+  // Handle media update for comment
+  function handleCommentMediaUpdate(event) {
+    commentMediaFiles = event.detail.mediaFiles;
+  }
 
   onMount(async () => {
     try {
@@ -161,6 +150,13 @@
     if (refreshCommentListener) {
       document.removeEventListener('refreshComments', refreshCommentListener);
     }
+    
+    // Clean up any created object URLs
+    for (const media of commentMediaFiles) {
+      if (media.url) {
+        URL.revokeObjectURL(media.url);
+      }
+    }
   });
 
   // Function to refresh comments
@@ -174,11 +170,9 @@
       
       if (!response.ok) throw new Error('Failed to fetch comments');
       const rawComments = await response.json();
-      // console.log("Raw comments received:", rawComments);
       
       // Process comments to create a hierarchical structure
       const organizedComments = organizeComments(rawComments);
-      // console.log("Organized comments structure:", organizedComments);
       
       // Update the thread store with organized comments
       threadStore.update(threads => {
@@ -194,35 +188,19 @@
     }
   }
 
-  // Debug function to help visualize the comment structure
-  function debugCommentStructure(comments, depth = 0) {
-    if (!comments) return "";
-    let result = "";
-    
-    comments.forEach(comment => {
-      result += `${'  '.repeat(depth)}ID: ${comment.id}, Content: ${comment.content}\n`;
-      if (comment.replies && comment.replies.length > 0) {
-        result += `${'  '.repeat(depth)}Replies:\n`;
-        result += debugCommentStructure(comment.replies, depth + 1);
-      }
-    });
-    
-    return result;
-  }
-
+  // Enhanced comment submission function with media upload support
   let handleSend = async () => {
-    if (!comment.trim()) {
-      console.error("Comment cannot be empty");
+    if (!comment.trim() && commentMediaFiles.length === 0) {
+      error = "Please enter a comment or attach media";
       return;
     }
 
     isLoading = true;
+    uploadingMedia = commentMediaFiles.length > 0;
     error = null;
     
     try {
-      // console.log("Sending comment:", comment, "to post ID:", data.id);
-      
-      // Use direct API call
+      // First, create the comment
       const payload = {
         content: comment,
         postId: data.id,
@@ -233,7 +211,7 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')}` : ''
+          ...getAuthHeader()
         },
         body: JSON.stringify(payload)
       });
@@ -244,36 +222,54 @@
       }
       
       const newComment = await response.json();
-      // console.log("Comment submission result:", newComment);
+      const commentId = newComment.commentId;
       
-      // Refresh comments to ensure we have updated data
+      // Then, if there are media files, upload each one
+      if (commentMediaFiles.length > 0) {
+        for (let i = 0; i < commentMediaFiles.length; i++) {
+          const mediaItem = commentMediaFiles[i];
+          const mediaFormData = new FormData();
+          mediaFormData.append('file', mediaItem.file);
+          mediaFormData.append('type', mediaItem.type || 'image');
+          
+          try {
+            const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/comments/${commentId}/upload-media`, {
+              method: 'POST',
+              headers: {
+                ...getAuthHeader()
+              },
+              body: mediaFormData
+            });
+            
+            if (!mediaResponse.ok) {
+              console.error(`Failed to upload media file ${i+1} for comment`);
+              // Continue with other uploads even if one fails
+            }
+          } catch (mediaError) {
+            console.error(`Error uploading media file ${i+1} for comment:`, mediaError);
+            // Continue with other uploads
+          }
+        }
+      }
+      
+      // Clear the input and media files
+      comment = '';
+      commentMediaFiles = [];
+      
+      // Refresh comments to get updated data including media
       await refreshComments();
       
-      // Clear the input
-      comment = '';
     } catch (err) {
       console.error('Error submitting comment:', err);
       error = err.message || "Failed to submit comment";
     } finally {
       isLoading = false;
+      uploadingMedia = false;
     }
   };
 
   // Reactive statement to get the current thread from the store
   $: thread = $threadStore.find(thread => thread.id == data.id);
-  
-  // Update reactive statement to log the comment structure
-  $: {
-    if (thread) {
-      // console.log("Current thread:", thread);
-      // console.log("Thread comments:", thread.comments);
-      
-      if (comments.length > 0) {
-        // console.log("Comment hierarchy:");
-        // console.log(debugCommentStructure(comments));
-      }
-    }
-  }
 </script>
 
 <div class="flex flex-col items-center bg-change dark:bg-dark shifting p-4 lg:p-8">
@@ -302,20 +298,47 @@
     
     {#if $activeUser}
     <Card.Root class="bg-opacity-90 hover:bg-opacity-100 p-4 mt-4 flex flex-col justify-center items-center">
-      <Textarea bind:value={comment} class="w-full h-20 resize-none p-2" placeholder="Say stuff" />
-      
-      {#if error}
-        <p class="text-red-500 mt-2">{error}</p>
-      {/if}
-      
-      <Button 
-        on:click={handleSend} 
-        variant="outline"
-        class="mt-2 text-sm py-1 px-6 hover:bg-neutral-100 dark:hover:bg-neutral-800" 
-        disabled={isLoading}
-      >
-        {isLoading ? 'Sending...' : 'Send'}
-      </Button>
+      <div class="w-full space-y-4">
+        <Textarea 
+          bind:value={comment} 
+          class="w-full resize-none p-2" 
+          placeholder="Write your comment..."
+        />
+        
+        <!-- Add MediaUploader component for comment media -->
+        <div class="w-full">
+          <MediaUploader
+            bind:mediaFiles={commentMediaFiles}
+            bind:errors={error}
+            on:update={handleCommentMediaUpdate}
+          />
+        </div>
+        
+        {#if error}
+          <p class="text-red-500 text-sm">{error}</p>
+        {/if}
+        
+        <div class="flex justify-end">
+          <Button 
+            on:click={handleSend} 
+            variant="outline"
+            class="text-sm py-1 px-6 hover:bg-rose-900 hover:text-white transition-colors" 
+            disabled={isLoading}
+          >
+            {#if isLoading}
+              {#if uploadingMedia}
+                <span class="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                Uploading...
+              {:else}
+                <span class="inline-block h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin mr-2"></span>
+                Sending...
+              {/if}
+            {:else}
+              Post Comment
+            {/if}
+          </Button>
+        </div>
+      </div>
     </Card.Root>
     {:else}
     <Card.Root class="bg-opacity-90 hover:bg-opacity-100 mt-4">
@@ -349,6 +372,7 @@
               downvotes={commentItem.downvotes}
               userUpvoted={commentItem.userUpvoted}
               userDownvoted={commentItem.userDownvoted}
+              mediaFiles={commentItem.mediaFiles || []}
             />
           </div>
         {/each}

@@ -1,12 +1,13 @@
 import { PUBLIC_API_URL } from "$env/static/public";
 
-export function processMediaFiles(post) {
-  if (!post) return [];
+export function processMediaFiles(item) {
+  if (!item) return [];
   
   const mediaFiles = [];
   
-  if (post.mediaFiles && Array.isArray(post.mediaFiles) && post.mediaFiles.length > 0) {
-    post.mediaFiles.forEach(media => {
+  // Process media files array (for both posts and comments)
+  if (item.mediaFiles && Array.isArray(item.mediaFiles) && item.mediaFiles.length > 0) {
+    item.mediaFiles.forEach(media => {
       const fileTypeParts = media.fileType ? media.fileType.split('/') : ['unknown'];
       const type = fileTypeParts[0] === 'image' ? 'image' : 
                    fileTypeParts[0] === 'video' ? 'video' : 
@@ -20,21 +21,43 @@ export function processMediaFiles(post) {
         fileType: media.fileType
       });
     });
-  } else {
-    if (post.mysteryObject?.image) {
-      mediaFiles.push({
-        type: 'image',
-        url: `data:image/png;base64,${post.mysteryObject.image}`,
-        name: 'Main Image'
-      });
-    } else if (post.mysteryObject?.imageUrl) {
-      mediaFiles.push({
-        type: 'image',
-        url: post.mysteryObject.imageUrl,
-        name: 'Main Image'
-      });
-    }
+  } 
+  // Handle single base64 image from mystery object (legacy support)
+  else if (item.mysteryObject?.image) {
+    mediaFiles.push({
+      type: 'image',
+      url: `data:image/png;base64,${item.mysteryObject.image}`,
+      name: 'Main Image'
+    });
+  } 
+  // Handle image URL from mystery object
+  else if (item.mysteryObject?.imageUrl) {
+    mediaFiles.push({
+      type: 'image',
+      url: item.mysteryObject.imageUrl,
+      name: 'Main Image'
+    });
   }
   
   return mediaFiles;
+}
+
+// Process media files for comments specifically
+export function processCommentMediaFiles(comment) {
+  if (!comment || !comment.mediaFiles) return [];
+  
+  return comment.mediaFiles.map(media => {
+    const fileTypeParts = media.fileType ? media.fileType.split('/') : ['unknown'];
+    const type = fileTypeParts[0] === 'image' ? 'image' : 
+                 fileTypeParts[0] === 'video' ? 'video' : 
+                 fileTypeParts[0] === 'audio' ? 'audio' : 'unknown';
+    
+    return {
+      id: media.id,
+      type: type,
+      url: `${PUBLIC_API_URL}/api/comments/media/${media.id}`,
+      name: media.fileName || `Media ${media.id}`,
+      fileType: media.fileType
+    };
+  });
 }

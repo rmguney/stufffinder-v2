@@ -5,9 +5,10 @@
     import { threadStore } from "../../threadStore";
     import { goto } from '$app/navigation';
     import { activeUser } from '../../userStore';
-    import { Input } from "$lib/components/ui/input/index.js";
     import { Textarea } from "$lib/components/ui/textarea/index.js";
     import { PUBLIC_API_URL } from "$env/static/public";
+    import MediaUploader from "$lib/components/mediaUploader.svelte";
+    import ObjectAttributes from "$lib/components/objectAttributes.svelte";
 
     // Replace single imageFile with array of media files
     let mediaFiles = [];
@@ -52,51 +53,9 @@
     // Track which attributes are currently shown
     let activeAttributes = [];
     
-    // Whether attribute selector dropdown is open
-    let showAttributeSelector = false;
-    
-    // Define all available attributes with their metadata
-    const availableAttributes = [
-        { id: "material", label: "Material", placeholder: "E.g., wood, metal, plastic, fabric" },
-        { id: "shape", label: "Shape", placeholder: "E.g., round, square or something more elaborate" },
-        { id: "color", label: "Color", placeholder: "E.g., red, blue, yellow, transparent" },
-        { id: "texture", label: "Texture", placeholder: "E.g., smooth, rough, bumpy" },
-        { id: "marking", label: "Markings", placeholder: "Does it have logo, text, engravings etc?" },
-        { id: "smell", label: "Smell", placeholder: "E.g., sweet, odorless, pungent" },
-        { id: "functionality", label: "Functionality", placeholder: "E.g., cutting, writing, art" },
-        { id: "period", label: "Time Period", placeholder: "E.g., 1800s, 1900s, 2000s" },
-        { id: "location", label: "Location", placeholder: "Where is it typically found? E.g., Europe, Asia" },
-        { id: "writtenText", label: "Written Text", placeholder: "Any writing on the object" },
-        { id: "hardness", label: "Hardness", placeholder: "E.g., soft, hard, flexible" },
-        { id: "value", label: "Price ($)", placeholder: "Estimated value in dollars", type: "number" },
-        { id: "originOfAcquisition", label: "Origin of Acquisition", placeholder: "Where/how you got it" },
-        { id: "pattern", label: "Pattern", placeholder: "E.g., striped, checkered, floral" },
-        { id: "print", label: "Print", placeholder: "Any printed design or imagery" },
-        { id: "dimensions", label: "Dimensions", placeholder: "Size measurements", type: "dimensions" },
-        { id: "weight", label: "Weight (grams)", placeholder: "Weight in grams", type: "number" },
-        { id: "handmade", label: "Handmade", placeholder: "", type: "checkbox" },
-        { id: "oneOfAKind", label: "One of a Kind", placeholder: "", type: "checkbox" }
-    ];
-    
-    // Function to add an attribute to the form
-    function addAttribute(attrId) {
-        if (!activeAttributes.includes(attrId)) {
-            activeAttributes = [...activeAttributes, attrId];
-        }
-        showAttributeSelector = false;
-    }
-    
-    // Function to remove an attribute from the form
-    function removeAttribute(attrId) {
-        activeAttributes = activeAttributes.filter(attr => attr !== attrId);
-    }
-    
-    // Get available (not yet added) attributes
-    $: availableToAdd = availableAttributes.filter(attr => !activeAttributes.includes(attr.id));
-    
     let errors = {
         title: '',
-        media: '', // Changed from image to media
+        media: '',
         description: ''
     };
 
@@ -127,30 +86,19 @@
         return enrichedTags;
     }
     
-    // Function to handle media file selection
-    function handleMediaAdd(event) {
-        const files = event.target.files;
-        if (files && files.length > 0) {
-            // Add the new files to our media collection
-            const newFiles = Array.from(files).map(file => {
-                const fileType = file.type.split('/')[0]; // 'image', 'video', 'audio', etc.
-                return {
-                    file: file,
-                    type: fileType,
-                    url: URL.createObjectURL(file),
-                    name: file.name
-                };
-            });
-            mediaFiles = [...mediaFiles, ...newFiles];
-        }
-        // Reset the input so the same file can be selected again if needed
-        event.target.value = '';
+    // Handle updates from the MediaUploader component
+    function handleMediaUpdate(event) {
+        mediaFiles = event.detail.mediaFiles;
     }
     
-    // Function to remove a file from the mediaFiles array
-    function removeMediaFile(index) {
-        URL.revokeObjectURL(mediaFiles[index].url); // Clean up the created URL
-        mediaFiles = mediaFiles.filter((_, i) => i !== index);
+    // Handle updates from ObjectAttributes component
+    function handleAttributesUpdate(event) {
+        activeAttributes = event.detail.activeAttributes;
+    }
+    
+    // Handle attribute value changes
+    function handleAttributeValueChange(event) {
+        attributeValues = event.detail.attributeValues;
     }
     
     let handlePost = async () => {
@@ -368,149 +316,6 @@
                 {/if}
             </div>
 
-            <!-- Object Attributes Section -->
-            <div class="mb-6">
-                <h3 class="text-lg font-medium mb-3 flex items-center">
-                    <span>Object Attributes</span>
-                    <span class="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-full">
-                        {activeAttributes.length} added
-                    </span>
-                </h3>
-                
-                <!-- Add Attribute Button -->
-                <Button 
-                    variant="outline" 
-                    on:click={() => showAttributeSelector = !showAttributeSelector} 
-                    class="w-full p-2 border rounded mb-4 transition-all hover:bg-gray-50 dark:hover:bg-neutral-800 flex justify-center items-center gap-2 items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    Add Attribute
-                </Button>
-                
-                <!-- Attribute Selector Dropdown -->
-                {#if showAttributeSelector}
-                    <div class="mt-2 p-2 border rounded bg-white dark:bg-neutral-800 shadow-lg max-h-60 overflow-y-auto mb-4 z-10 relative">
-                        <div class="sticky top-0 bg-white dark:bg-neutral-800 p-2 border-b mb-1 flex items-center justify-between">
-                            <span class="font-medium">Select Attribute</span>
-                            <button 
-                                class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" 
-                                on:click={() => showAttributeSelector = false}
-                                aria-label="Close selector">
-                                ✕
-                            </button>
-                        </div>
-                        {#each availableToAdd as attribute}
-                            <button 
-                                class="block w-full text-left p-2.5 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded transition-colors"
-                                on:click={() => addAttribute(attribute.id)}>
-                                {attribute.label}
-                            </button>
-                        {/each}
-                        {#if availableToAdd.length === 0}
-                            <p class="p-2 text-gray-500 text-center">All attributes have been added</p>
-                        {/if}
-                    </div>
-                {/if}
-                
-                <!-- Display Active Attributes -->
-                {#if activeAttributes.length > 0}
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
-                        {#each activeAttributes as attrId}
-                            {@const attr = availableAttributes.find(a => a.id === attrId)}
-                            
-                            <div class="relative p-3 rounded-md border bg-gray-50 dark:bg-neutral-900 dark:border-gray-700 transition-all hover:shadow-sm {attr.type === 'dimensions' ? 'col-span-1 sm:col-span-2' : ''}">
-                                <!-- Updated Remove button with consistent styling -->
-                                <button 
-                                    type="button" 
-                                    class="absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-                                    on:click={() => removeAttribute(attrId)}
-                                    title="Remove attribute"
-                                >
-                                    {@html RemovalIcon()}
-                                </button>
-                                
-                                {#if attr.type === "select"}
-                                    <label for={attrId} class="block text-sm font-medium mb-2">{attr.label}</label>
-                                    <select 
-                                        id={attrId} 
-                                        bind:value={attributeValues[attrId]} 
-                                        class="w-full p-2 rounded border dark:border-gray-600 dark:bg-neutral-950 text-sm">
-                                        {#each attr.options as option}
-                                            <option value={option.value}>{option.label}</option>
-                                        {/each}
-                                    </select>
-                                
-                                {:else if attr.type === "dimensions"}
-                                    <div id="dimensions-label" class="block text-sm font-medium mb-3">Dimensions (cm)</div>
-                                    <div class="grid grid-cols-3 gap-3" role="group" aria-labelledby="dimensions-label">
-                                        <div>
-                                            <label for="sizeX" class="block text-xs font-medium mb-1">Length</label>
-                                            <Input type="number" id="sizeX" class="w-full p-2 border rounded dark:border-gray-600" bind:value={attributeValues.sizeX} placeholder="Length (cm)" />
-                                        </div>
-                                        <div>
-                                            <label for="sizeY" class="block text-xs font-medium mb-1">Width</label>
-                                            <Input type="number" id="sizeY" class="w-full p-2 border rounded dark:border-gray-600" bind:value={attributeValues.sizeY} placeholder="Width (cm)" />
-                                        </div>
-                                        <div>
-                                            <label for="sizeZ" class="block text-xs font-medium mb-1">Height</label>
-                                            <Input type="number" id="sizeZ" class="w-full p-2 border rounded dark:border-gray-600" bind:value={attributeValues.sizeZ} placeholder="Height (cm)" />
-                                        </div>
-                                    </div>
-                                
-                                {:else if attr.type === "checkbox"}
-                                    <div class="pt-2">
-                                        <div class="flex items-center">
-                                            <input 
-                                                type="checkbox" 
-                                                bind:checked={attributeValues[attrId]} 
-                                                id={`${attrId}-checkbox`} 
-                                                class="w-4 h-4 mr-3" 
-                                            />
-                                            <label for={`${attrId}-checkbox`} class="text-sm font-medium">
-                                                {attr.label}
-                                            </label>
-                                        </div>
-                                    </div>
-                                
-                                {:else}
-                                    <label for={attrId} class="block text-sm font-medium mb-2">{attr.label}</label>
-                                    
-                                    {#if attrId === "color"}
-                                        <!-- Color picker UI -->
-                                        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                                            <input 
-                                                type="color"
-                                                id="color-picker"
-                                                value={selectedHexColor}
-                                                on:change={handleColorChange}
-                                                class="w-full sm:w-14 h-10 border-none p-0 cursor-pointer rounded"
-                                                aria-label="Select color"
-                                            />
-                                            <div class="flex items-center gap-2 flex-1 mt-2 sm:mt-0 border rounded p-2 bg-white dark:bg-neutral-800">
-                                                <div 
-                                                    class="w-6 h-6 rounded border"
-                                                    style="background-color: {selectedHexColor};"
-                                                ></div>
-                                                <span class="text-sm truncate">
-                                                    {isLoadingColorName ? 'Loading...' : attributeValues.color || 'Select a color'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    {:else}
-                                        <Input 
-                                            type={attr.type || "text"} 
-                                            id={attrId} 
-                                            class="w-full p-2 border rounded dark:border-gray-600" 
-                                            bind:value={attributeValues[attrId]} 
-                                            placeholder={attr.placeholder || ""}
-                                        />
-                                    {/if}
-                                {/if}
-                            </div>
-                        {/each}
-                    </div>
-                {/if}
-            </div>
-
             <!-- Description -->
             <div class="mb-5">
                 <label for="description" class="block text-sm font-medium mb-1.5">Description*</label>
@@ -519,102 +324,37 @@
                     <p class="text-red-500 text-sm mt-1">{errors.description}</p>
                 {/if}
             </div>
-            
-            <!-- Tags -->
-            <div class="mb-5">
-                <label for="tags" class="block text-sm font-medium mb-1.5">Tags</label>
-                
-                <!-- Remove the styles for tag dismissal buttons since we've moved that to the Query component -->
-                <Query bind:tags={tags} bind:labels={labels} />
-            </div>
-
-            <!-- Anonymous Checkbox -->
-<!--             <div class="mb-6 flex items-center bg-gray-50 dark:bg-neutral-900 p-3 rounded-md">
-                <input 
-                    type="checkbox" 
-                    bind:checked={anonymous} 
-                    id="anonymous-checkbox" 
-                    class="w-4 h-4 mr-3" 
-                />
-                <label for="anonymous-checkbox" class="text-sm font-medium">Post anonymously</label>
-            </div> -->
-
-            <!-- Media upload section -->
-            <div class="mb-6">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
-                    <label for="media-upload" class="block text-sm font-medium">Upload Media Files*</label>
-                    <span class="text-xs text-gray-500 mt-1 sm:mt-0">{mediaFiles.length} files selected</span>
+             
+            <!-- Attributes and Tags wrapper for side-by-side on lg screens -->
+            <div class="flex flex-col lg:flex-row lg:gap-6">
+                <!-- Object Attributes Component -->
+                <div class="w-full lg:w-1/2">
+                    <ObjectAttributes 
+                        bind:attributeValues={attributeValues}
+                        bind:activeAttributes={activeAttributes}
+                        on:update={handleAttributesUpdate}
+                        on:valuechange={handleAttributeValueChange}
+                    />
                 </div>
-                
-                <div class="border-2 border-dashed rounded-lg p-4 text-center mb-3 bg-gray-50 dark:bg-neutral-900 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors">
-                    <label for="media-upload" class="cursor-pointer block">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        <!-- Different text based on screen size -->
-                        <span class="text-sm block sm:hidden">Tap to select files</span>
-                        <span class="text-sm hidden sm:block lg:hidden">Click to select files</span>
-                        <span class="text-sm hidden lg:block">Click to select files or drag and drop</span>
-                        <p class="text-xs text-gray-500 mt-1">Images, videos, or audio files</p>
-                        <input 
-                            type="file" 
-                            id="media-upload" 
-                            accept="image/*,video/*,audio/*" 
-                            on:change={handleMediaAdd}
-                            class="hidden"
-                            multiple
-                        />
+
+                <!-- Tags -->
+                <div class="w-full lg:w-1/2 mb-5">
+                    <label class="block text-sm font-medium mb-1.5 flex items-center">
+                        <span>Tags</span>
+                        <span class="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-full">
+                            {tags.length} added
+                        </span>
                     </label>
+                    <Query bind:tags={tags} bind:labels={labels} />
                 </div>
-                
-                {#if errors.media}
-                    <p class="text-red-500 text-sm mb-3">{errors.media}</p>
-                {/if}
-                
-                <!-- Media Files Preview -->
-                {#if mediaFiles.length > 0}
-                    <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {#each mediaFiles as mediaItem, index}
-                            <div class="relative border rounded overflow-hidden bg-white dark:bg-neutral-800 shadow-sm hover:shadow transition-all">
-                                <!-- Add consistent removal button to the top-right corner, similar to attributes -->
-                                <button 
-                                    type="button"
-                                    class="absolute top-2 right-2 z-10 h-6 w-6 rounded-full flex items-center justify-center bg-black bg-opacity-50 text-white hover:bg-red-500 transition-colors"
-                                    on:click={() => removeMediaFile(index)}
-                                    title="Remove media"
-                                >
-                                    {@html RemovalIcon()}
-                                </button>
-
-                                <!-- Media preview with consistent height -->
-                                <div class="aspect-square overflow-hidden bg-gray-100 dark:bg-neutral-900 flex items-center justify-center">
-                                    {#if mediaItem.type === 'image'}
-                                        <img src={mediaItem.url} alt="Preview" class="w-full h-full object-cover" />
-                                    {:else if mediaItem.type === 'video'}
-                                        <video src={mediaItem.url} class="w-full h-full object-cover" controls></video>
-                                    {:else if mediaItem.type === 'audio'}
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                                        </svg>
-                                    {:else}
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                    {/if}
-                                </div>
-                                
-                                <!-- File name and controls -->
-                                <div class="p-2 border-t">
-                                    <div class="text-xs truncate font-medium">{mediaItem.name}</div>
-                                    <div class="mt-1">
-                                        <span class="text-xs text-gray-500 capitalize">{mediaItem.type}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        {/each}
-                    </div>
-                {/if}
             </div>
+
+            <!-- Media upload component -->
+            <MediaUploader
+                bind:mediaFiles={mediaFiles}
+                bind:errors={errors}
+                on:update={handleMediaUpdate}
+            />
 
             <!-- Submit Button -->
             <div>

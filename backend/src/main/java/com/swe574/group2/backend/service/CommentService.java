@@ -1,11 +1,14 @@
 package com.swe574.group2.backend.service;
 
 import com.swe574.group2.backend.dao.CommentRepository;
+import com.swe574.group2.backend.dao.MediaFileRepository;
 import com.swe574.group2.backend.dao.PostRepository;
 import com.swe574.group2.backend.dao.UserRepository;
 import com.swe574.group2.backend.dto.CommentCreateDto;
 import com.swe574.group2.backend.dto.CommentDetailsDto;
+import com.swe574.group2.backend.dto.MediaFileDto;
 import com.swe574.group2.backend.entity.Comment;
+import com.swe574.group2.backend.entity.MediaFile;
 import com.swe574.group2.backend.entity.Post;
 import com.swe574.group2.backend.entity.User;
 import org.springframework.stereotype.Service;
@@ -23,12 +26,16 @@ public class CommentService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final MediaFileRepository mediaFileRepository;
 
-    public CommentService(CommentRepository commentRepository, PostRepository postRepository, UserRepository userRepository, NotificationService notificationService) {
+    public CommentService(CommentRepository commentRepository, PostRepository postRepository, 
+                         UserRepository userRepository, NotificationService notificationService,
+                         MediaFileRepository mediaFileRepository) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.mediaFileRepository = mediaFileRepository;
     }
 
     public Map<String, Long> createComment(CommentCreateDto commentCreateDto, String email) {
@@ -147,6 +154,19 @@ public class CommentService {
         boolean userUpvoted = currentUser != null ? comment.getUpvotedBy().contains(currentUser) : false;
         boolean userDownvoted = currentUser != null ? comment.getDownvotedBy().contains(currentUser) : false;
 
+        // Get media files for this comment
+        List<MediaFileDto> mediaFileDtos = mediaFileRepository.findByCommentId(comment.getId())
+            .stream()
+            .map(mediaFile -> {
+                MediaFileDto dto = new MediaFileDto();
+                dto.setId(mediaFile.getId());
+                dto.setFileName(mediaFile.getFileName());
+                dto.setFileType(mediaFile.getFileType());
+                dto.setCreatedAt(mediaFile.getCreatedAt());
+                return dto;
+            })
+            .collect(Collectors.toList());
+
         return new CommentDetailsDto(
                 comment.getId(),
                 comment.getContent(),
@@ -156,6 +176,7 @@ public class CommentService {
                 comment.getReplies().stream()
                         .map(reply -> mapCommentToDto(reply, currentUser))
                         .collect(Collectors.toList()),
+                mediaFileDtos,
                 comment.getUpvotesCount(),
                 comment.getDownvotesCount(),
                 userUpvoted,

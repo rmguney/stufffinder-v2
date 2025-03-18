@@ -9,7 +9,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { getAuthHeader } from '$lib/utils/auth';
   import { PUBLIC_API_URL } from "$env/static/public";
-  import { processMediaFiles } from '$lib/utils/mediaUtils';
+  import { processMediaFiles, processCommentMediaFiles } from '$lib/utils/mediaUtils';
 
   export let data;
   let comment = '';
@@ -17,6 +17,10 @@
   let isLoading = false;
   let error = null;
   let comments = [];
+  
+  // Simple media upload functionality
+  let selectedFiles = [];
+  let fileInputRef;
 
   $: commentator = $activeUser || 'Anonymous';
   
@@ -25,7 +29,6 @@
   $: {
     if (thread?.comments) {
       comments = thread.comments;
-      // console.log("Updated comments array:", comments);
     } else {
       comments = [];
     }
@@ -34,11 +37,17 @@
   // Reference to the event listener
   let refreshCommentListener;
 
+  // Function to handle file selection
+  function handleFileSelect(event) {
+    const files = Array.from(event.target.files);
+    if (files.length > 0) {
+      selectedFiles = files;
+    }
+  }
+
   // Function to organize comments into a parent-child hierarchy
   function organizeComments(comments) {
     if (!comments || !Array.isArray(comments)) return [];
-    
-    // console.log("Raw comments to organize:", JSON.stringify(comments, null, 2));
     
     // Since the API already returns comments with their replies nested,
     // we just need to ensure the structure is preserved
@@ -50,25 +59,10 @@
       })) || []
     }));
 
-    // console.log("Final organized structure:", JSON.stringify(rootComments, null, 2));
     return rootComments;
   }
 
-  // Add a function to process media files
-/*   function processMediaFiles(post) {
-    if (!post || !post.mediaFiles) return [];
-    
-    return post.mediaFiles.map(media => {
-      const type = media.fileType?.split('/')[0] || 'image';
-      return {
-        type,
-        url: `${PUBLIC_API_URL}/api/mysteryObjects/media/${media.id}`,
-        name: media.fileName || `Media ${media.id}`
-      };
-    });
-  } */
-
-    async function fetchPostWithMedia(postId) {
+  async function fetchPostWithMedia(postId) {
     try {
       // Fetch post details
       const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostDetails/${postId}`);
@@ -133,7 +127,6 @@
     }
   }
 
-
   onMount(async () => {
     try {
       // Fetch post with media files
@@ -174,11 +167,30 @@
       
       if (!response.ok) throw new Error('Failed to fetch comments');
       const rawComments = await response.json();
-      // console.log("Raw comments received:", rawComments);
       
-      // Process comments to create a hierarchical structure
-      const organizedComments = organizeComments(rawComments);
-      // console.log("Organized comments structure:", organizedComments);
+      // Process media files for each comment and its replies recursively
+      const processCommentWithMedia = (comment) => {
+        // Process media files for this comment
+        const processedMediaFiles = processCommentMediaFiles(comment);
+        
+        // Process replies recursively
+        const processedReplies = comment.replies 
+          ? comment.replies.map(reply => processCommentWithMedia(reply))
+          : [];
+        
+        // Return the comment with processed media files and replies
+        return {
+          ...comment,
+          mediaFiles: processedMediaFiles,
+          replies: processedReplies
+        };
+      };
+      
+      // Process all comments
+      const processedComments = rawComments.map(comment => processCommentWithMedia(comment));
+      
+      // Create a hierarchical structure
+      const organizedComments = organizeComments(processedComments);
       
       // Update the thread store with organized comments
       threadStore.update(threads => {
@@ -194,25 +206,10 @@
     }
   }
 
-  // Debug function to help visualize the comment structure
-  function debugCommentStructure(comments, depth = 0) {
-    if (!comments) return "";
-    let result = "";
-    
-    comments.forEach(comment => {
-      result += `${'  '.repeat(depth)}ID: ${comment.id}, Content: ${comment.content}\n`;
-      if (comment.replies && comment.replies.length > 0) {
-        result += `${'  '.repeat(depth)}Replies:\n`;
-        result += debugCommentStructure(comment.replies, depth + 1);
-      }
-    });
-    
-    return result;
-  }
-
+  // Enhanced comment submission with basic media upload
   let handleSend = async () => {
-    if (!comment.trim()) {
-      console.error("Comment cannot be empty");
+    if (!comment.trim() && selectedFiles.length === 0) {
+      error = "Please enter a comment or attach media";
       return;
     }
 
@@ -220,9 +217,7 @@
     error = null;
     
     try {
-      // console.log("Sending comment:", comment, "to post ID:", data.id);
-      
-      // Use direct API call
+      // First, create the comment
       const payload = {
         content: comment,
         postId: data.id,
@@ -233,7 +228,7 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': localStorage.getItem('authToken') ? `Bearer ${localStorage.getItem('authToken')}` : ''
+          ...getAuthHeader()
         },
         body: JSON.stringify(payload)
       });
@@ -244,13 +239,39 @@
       }
       
       const newComment = await response.json();
-      // console.log("Comment submission result:", newComment);
+      const commentId = newComment.commentId;
       
-      // Refresh comments to ensure we have updated data
+      // Then, if there are files, upload each one
+      if (selectedFiles.length > 0) {
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          try {
+            // Note: This endpoint would need to be implemented on the backend
+            const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/comments/${commentId}/upload-media`, {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (!mediaResponse.ok) {
+              console.error(`Failed to upload file ${i+1} for comment`);
+            }
+          } catch (mediaError) {
+            console.error(`Error uploading file ${i+1} for comment:`, mediaError);
+          }
+        }
+      }
+      
+      // Clear the input and files
+      comment = '';
+      selectedFiles = [];
+      if (fileInputRef) fileInputRef.value = '';
+      
+      // Refresh comments to get updated data including media
       await refreshComments();
       
-      // Clear the input
-      comment = '';
     } catch (err) {
       console.error('Error submitting comment:', err);
       error = err.message || "Failed to submit comment";
@@ -261,19 +282,6 @@
 
   // Reactive statement to get the current thread from the store
   $: thread = $threadStore.find(thread => thread.id == data.id);
-  
-  // Update reactive statement to log the comment structure
-  $: {
-    if (thread) {
-      // console.log("Current thread:", thread);
-      // console.log("Thread comments:", thread.comments);
-      
-      if (comments.length > 0) {
-        // console.log("Comment hierarchy:");
-        // console.log(debugCommentStructure(comments));
-      }
-    }
-  }
 </script>
 
 <div class="flex flex-col items-center bg-change dark:bg-dark shifting p-4 lg:p-8">
@@ -302,20 +310,103 @@
     
     {#if $activeUser}
     <Card.Root class="bg-opacity-90 hover:bg-opacity-100 p-4 mt-4 flex flex-col justify-center items-center">
-      <Textarea bind:value={comment} class="w-full h-20 resize-none p-2" placeholder="Say stuff" />
-      
-      {#if error}
-        <p class="text-red-500 mt-2">{error}</p>
-      {/if}
-      
-      <Button 
-        on:click={handleSend} 
-        variant="outline"
-        class="mt-2 text-sm py-1 px-6 hover:bg-neutral-100 dark:hover:bg-neutral-800" 
-        disabled={isLoading}
-      >
-        {isLoading ? 'Sending...' : 'Send'}
-      </Button>
+      <div class="w-full space-y-4">
+        <Textarea 
+          bind:value={comment} 
+          class="w-full resize-none p-2" 
+          placeholder="Write your comment..."
+        />
+        
+        <!-- Simplified file input for media -->
+        <div class="w-full">
+          <div class="flex items-center space-x-2">
+            <input 
+              type="file" 
+              id="media-upload"
+              bind:this={fileInputRef}
+              on:change={handleFileSelect}
+              accept="image/*,video/*,audio/*" 
+              class="hidden" 
+              multiple
+            />
+            <Button 
+              variant="outline" 
+              size="sm" 
+              class="text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              on:click={() => fileInputRef?.click()}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+              </svg>
+              Add Media
+            </Button>
+            {#if selectedFiles.length > 0}
+              <span class="text-xs text-neutral-500">
+                {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''} selected
+              </span>
+            {/if}
+          </div>
+          
+          <!-- Simple file preview -->
+          {#if selectedFiles.length > 0}
+            <div class="mt-2 flex flex-wrap gap-2">
+              {#each selectedFiles as file, i}
+                <div class="relative bg-neutral-100 dark:bg-neutral-800 rounded p-1 w-16 h-16 flex items-center justify-center">
+                  {#if file.type.startsWith('image/')}
+                    <img 
+                      src={URL.createObjectURL(file)} 
+                      alt={file.name} 
+                      class="max-w-full max-h-full object-contain"
+                    />
+                  {:else if file.type.startsWith('video/')}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  {:else if file.type.startsWith('audio/')}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                  {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  {/if}
+                  <!-- Remove button -->
+                  <button 
+                    class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                    on:click={() => {
+                      selectedFiles = selectedFiles.filter((_, index) => index !== i);
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+        
+        {#if error}
+          <p class="text-red-500 text-sm">{error}</p>
+        {/if}
+        
+        <div class="flex justify-end">
+          <Button 
+            on:click={handleSend} 
+            variant="outline"
+            class="text-sm py-1 px-6 hover:bg-rose-900 hover:text-white transition-colors" 
+            disabled={isLoading}
+          >
+            {#if isLoading}
+              <span class="inline-block h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin mr-2"></span>
+              {selectedFiles.length > 0 ? 'Uploading...' : 'Sending...'}
+            {:else}
+              Post Comment
+            {/if}
+          </Button>
+        </div>
+      </div>
     </Card.Root>
     {:else}
     <Card.Root class="bg-opacity-90 hover:bg-opacity-100 mt-4">
@@ -349,6 +440,7 @@
               downvotes={commentItem.downvotes}
               userUpvoted={commentItem.userUpvoted}
               userDownvoted={commentItem.userDownvoted}
+              mediaFiles={commentItem.mediaFiles || []}
             />
           </div>
         {/each}

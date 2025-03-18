@@ -62,7 +62,7 @@ public class SecurityConfig {
                                 "api/posts/getForPostList",
                                 "api/posts/getForPostDetails/**",
                                 "api/posts/searchForPosts**",
-                                "api/comments/get/**",
+                                "api/comments/**",
                                 "api/mysteryObjects/media/**", // Allow public access to media files
                                 "v3/api-docs/**",
                                 "/swagger-ui/**").permitAll() // Allow public access to these endpoints

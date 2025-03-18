@@ -316,14 +316,6 @@
                 {/if}
             </div>
 
-            <!-- Object Attributes Component -->
-            <ObjectAttributes 
-                bind:attributeValues={attributeValues}
-                bind:activeAttributes={activeAttributes}
-                on:update={handleAttributesUpdate}
-                on:valuechange={handleAttributeValueChange}
-            />
-
             <!-- Description -->
             <div class="mb-5">
                 <label for="description" class="block text-sm font-medium mb-1.5">Description*</label>
@@ -332,11 +324,29 @@
                     <p class="text-red-500 text-sm mt-1">{errors.description}</p>
                 {/if}
             </div>
-            
-            <!-- Tags -->
-            <div class="mb-5">
-                <label for="tags" class="block text-sm font-medium mb-1.5">Tags</label>
-                <Query bind:tags={tags} bind:labels={labels} />
+             
+            <!-- Attributes and Tags wrapper for side-by-side on lg screens -->
+            <div class="flex flex-col lg:flex-row lg:gap-6">
+                <!-- Object Attributes Component -->
+                <div class="w-full lg:w-1/2">
+                    <ObjectAttributes 
+                        bind:attributeValues={attributeValues}
+                        bind:activeAttributes={activeAttributes}
+                        on:update={handleAttributesUpdate}
+                        on:valuechange={handleAttributeValueChange}
+                    />
+                </div>
+
+                <!-- Tags -->
+                <div class="w-full lg:w-1/2 mb-5">
+                    <label class="block text-sm font-medium mb-1.5 flex items-center">
+                        <span>Tags</span>
+                        <span class="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-full">
+                            {tags.length} added
+                        </span>
+                    </label>
+                    <Query bind:tags={tags} bind:labels={labels} />
+                </div>
             </div>
 
             <!-- Media upload component -->

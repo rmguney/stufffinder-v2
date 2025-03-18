@@ -2,6 +2,7 @@
     import { Button } from "$lib/components/ui/button";
     import { Input } from "$lib/components/ui/input";
     import ColorPicker from "./colorPicker.svelte";
+    import MaterialSelector from "./materialSelector.svelte";
     import { createEventDispatcher } from 'svelte';
     
     const dispatch = createEventDispatcher();
@@ -56,6 +57,11 @@
         attributeValues[attrId] = value;
         dispatch('valuechange', { attributeValues });
     }
+
+    // Handle material selection
+    function handleMaterialChange(event) {
+        updateAttributeValue('material', event.detail.value);
+    }
     
     // Get available (not yet added) attributes
     $: availableToAdd = availableAttributes.filter(attr => !activeAttributes.includes(attr.id));
@@ -66,30 +72,32 @@
     }
 </script>
 
-<div class="mb-6">
-    <h3 class="text-lg font-medium mb-3 flex items-center">
+<div class="mb-5">
+    <label class="block text-sm font-medium mb-1.5 flex items-center">
         <span>Object Attributes</span>
-        <span class="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-full">
+        <span class="ml-2 px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-xs rounded-full">
             {activeAttributes.length} added
         </span>
-    </h3>
+    </label>
     
-    <!-- Add Attribute Button -->
+    <!-- Add Attribute Button with active state ring -->
     <Button 
         variant="outline" 
         on:click={() => showAttributeSelector = !showAttributeSelector} 
-        class="w-full p-2 border rounded mb-4 transition-all hover:bg-gray-50 dark:hover:bg-neutral-800 flex justify-center items-center gap-2 items-center gap-2">
+        class="w-full p-2 border dark:border-gray-600 rounded mb-4 transition-all hover:bg-neutral-50 dark:hover:bg-neutral-800 flex justify-center items-center gap-2 
+               {showAttributeSelector ? 'ring-2 dark:ring-neutral-50 ring-neutral-800' : ''}"
+    >
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        Add Attribute
+        <span class="text-sm">Add Attribute</span>
     </Button>
     
     <!-- Attribute Selector Dropdown -->
     {#if showAttributeSelector}
-        <div class="mt-2 p-2 border rounded bg-white dark:bg-neutral-800 shadow-lg max-h-60 overflow-y-auto mb-4 z-10 relative">
+        <div class="mt-2 p-2 border rounded bg-white dark:bg-neutral-950 shadow-lg max-h-60 overflow-y-auto mb-4 z-10 relative">
             <div class="sticky top-0 bg-white dark:bg-neutral-800 p-2 border-b mb-1 flex items-center justify-between">
-                <span class="font-medium">Select Attribute</span>
+                <span class="text-sm font-medium">Select Attribute</span>
                 <button 
-                    class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" 
+                    class="text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300" 
                     on:click={() => showAttributeSelector = false}
                     aria-label="Close selector">
                     ✕
@@ -97,13 +105,13 @@
             </div>
             {#each availableToAdd as attribute}
                 <button 
-                    class="block w-full text-left p-2.5 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded transition-colors"
+                    class="block w-full text-left p-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded transition-colors text-sm"
                     on:click={() => addAttribute(attribute.id)}>
                     {attribute.label}
                 </button>
             {/each}
             {#if availableToAdd.length === 0}
-                <p class="p-2 text-gray-500 text-center">All attributes have been added</p>
+                <p class="p-2 text-sm text-neutral-500 text-center">All attributes have been added</p>
             {/if}
         </div>
     {/if}
@@ -114,11 +122,11 @@
             {#each activeAttributes as attrId}
                 {@const attr = availableAttributes.find(a => a.id === attrId)}
                 
-                <div class="relative p-3 rounded-md border bg-gray-50 dark:bg-neutral-900 dark:border-gray-700 transition-all hover:shadow-sm {attr.type === 'dimensions' ? 'col-span-1 sm:col-span-2' : ''}">
+                <div class="relative p-3 rounded-md border bg-neutral-50 dark:bg-neutral-900 dark:border-neutral-700 transition-all hover:shadow-sm {attr.type === 'dimensions' ? 'col-span-1 sm:col-span-2' : ''}">
                     <!-- Updated Remove button with consistent styling -->
                     <button 
                         type="button" 
-                        class="absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                        class="absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center bg-neutral-100 text-neutral-500 hover:bg-red-50 hover:text-red-500 dark:bg-neutral-800 dark:hover:bg-neutral-700 transition-colors"
                         on:click={() => removeAttribute(attrId)}
                         title="Remove attribute"
                     >
@@ -131,7 +139,7 @@
                             id={attrId} 
                             bind:value={attributeValues[attrId]} 
                             on:change={() => dispatch('valuechange', { attributeValues })}
-                            class="w-full p-2 rounded border dark:border-gray-600 dark:bg-neutral-950 text-sm">
+                            class="w-full p-2 rounded border dark:border-neutral-600 dark:bg-neutral-950 text-sm">
                             {#each attr.options as option}
                                 <option value={option.value}>{option.label}</option>
                             {/each}
@@ -145,7 +153,7 @@
                                 <Input 
                                     type="number" 
                                     id="sizeX" 
-                                    class="w-full p-2 border rounded dark:border-gray-600" 
+                                    class="w-full p-2 border rounded dark:border-neutral-600" 
                                     bind:value={attributeValues.sizeX}
                                     on:input={() => dispatch('valuechange', { attributeValues })}
                                     placeholder="Length (cm)" 
@@ -156,7 +164,7 @@
                                 <Input 
                                     type="number" 
                                     id="sizeY" 
-                                    class="w-full p-2 border rounded dark:border-gray-600" 
+                                    class="w-full p-2 border rounded dark:border-neutral-600" 
                                     bind:value={attributeValues.sizeY}
                                     on:input={() => dispatch('valuechange', { attributeValues })}
                                     placeholder="Width (cm)" 
@@ -167,7 +175,7 @@
                                 <Input 
                                     type="number" 
                                     id="sizeZ" 
-                                    class="w-full p-2 border rounded dark:border-gray-600" 
+                                    class="w-full p-2 border rounded dark:border-neutral-600" 
                                     bind:value={attributeValues.sizeZ}
                                     on:input={() => dispatch('valuechange', { attributeValues })}
                                     placeholder="Height (cm)" 
@@ -197,13 +205,21 @@
                             bind:value={attributeValues.color}
                             on:colorchange={(event) => updateAttributeValue('color', event.detail.color)}
                         />
+                    
+                    {:else if attrId === "material"}
+                        <label for={attrId} class="block text-sm font-medium mb-2">{attr.label}</label>
+                        <MaterialSelector 
+                            bind:value={attributeValues.material}
+                            on:change={handleMaterialChange}
+                            placeholder={attr.placeholder}
+                        />
                         
                     {:else}
                         <label for={attrId} class="block text-sm font-medium mb-2">{attr.label}</label>
                         <Input 
                             type={attr.type || "text"} 
                             id={attrId} 
-                            class="w-full p-2 border rounded dark:border-gray-600" 
+                            class="w-full p-2 border rounded dark:border-neutral-600" 
                             bind:value={attributeValues[attrId]} 
                             on:input={() => dispatch('valuechange', { attributeValues })}
                             placeholder={attr.placeholder || ""}
@@ -212,5 +228,7 @@
                 </div>
             {/each}
         </div>
+    {:else}
+        <p class="text-sm text-neutral-500 dark:text-gray-400 mt-2">No attributes added yet. Click 'Add Attribute' to start.</p>
     {/if}
 </div>

@@ -73,6 +73,11 @@
   // Passed down to the parent component
   export let tags;
   export let labels; 
+
+  // Function to get SVG icon for removal buttons
+  function getRemovalIcon() {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+  }
 </script>
 
 <div class="w-full mx-auto relative search-container text-sm">
@@ -106,28 +111,51 @@
     </ul>
   {/if}
 
-  <!-- Selected Items -->
+  <!-- Selected Items - Redesigned to match attribute cards -->
   <div class="selected-items mt-4">
-    <h3 class="text-md font-semibold text-black dark:text-white">Added Tags:</h3>
-    <ul class="list-none p-0 mt-2">
-      {#each $selectedItems as selectedItem}
-        <li class="mt-2 flex items-center">
-          <a 
-            href={`https://www.wikidata.org/wiki/${selectedItem.id}`} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            class="underline text-black dark:text-white hover:text-rose-700 dark:hover:text-rose-900"
-          >
-            {selectedItem.label}: {selectedItem.description}
-          </a>
-          <Button 
-            on:click={() => removeSelectedItem(selectedItem.id)} 
-            class="ml-4 bg-neutral-950 dark:bg-white text-white dark:text-black hover:bg-rose-900 hover:text-white hover:dark:bg-rose-900 transition-colors duration-300"
-          >
-            Remove
-          </Button>
-        </li>
-      {/each}
-    </ul>
+    {#if $selectedItems.length > 0}
+      <h3 class="text-md font-medium text-black dark:text-white mb-3 flex items-center">
+        <span>Added Tags</span>
+        <span class="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-full">
+          {$selectedItems.length} added
+        </span>
+      </h3>
+      
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {#each $selectedItems as selectedItem}
+          <div class="relative p-3 rounded-md border bg-gray-50 dark:bg-neutral-900 dark:border-gray-700 transition-all hover:shadow-sm">
+            <!-- Remove button in consistent style -->
+            <button 
+              type="button"
+              class="absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+              on:click={() => removeSelectedItem(selectedItem.id)}
+              title="Remove tag"
+            >
+              {@html getRemovalIcon()}
+            </button>
+            
+            <!-- Tag content -->
+            <div class="pr-6">
+              <div class="font-medium text-sm mb-1">{selectedItem.label}</div>
+              <a 
+                href={`https://www.wikidata.org/wiki/${selectedItem.id}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="text-xs text-gray-500 hover:text-rose-700 dark:hover:text-rose-400 transition-colors"
+              >
+                {selectedItem.id}
+              </a>
+              {#if selectedItem.description}
+                <p class="text-xs mt-1 line-clamp-2 text-gray-600 dark:text-gray-400">
+                  {selectedItem.description}
+                </p>
+              {/if}
+            </div>
+          </div>
+        {/each}
+      </div>
+    {:else}
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">No tags added yet. Search for relevant terms above.</p>
+    {/if}
   </div>
 </div>

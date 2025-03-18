@@ -227,26 +227,23 @@
 <!-- Regular and mobile login buttons are now handled in the header component -->
 
 <Sheet.Root bind:open={loginBar}>
-  <Sheet.Overlay />
-  <Sheet.Content side="right" class="w-80">
-    <Sheet.Header>
-      <Sheet.Close />
-    </Sheet.Header>
-    <div class="pt-8">
-      <Tabs.Root value={activeTab} class="w-full p-4" onValueChange={updateIndicator}>
-        <div class="relative">
-          <Tabs.List bind:this={tabsContainer} class="grid w-full grid-cols-2">
+  <Sheet.Overlay class="backdrop-blur-sm" />
+  <Sheet.Content side="right" class="w-[92%] max-w-[360px] sm:w-[380px] rounded-l-xl border-l border-neutral-100/30 dark:border-neutral-900/20 shadow-xl">
+    <div class="pt-6 px-4">
+      <Tabs.Root value={activeTab} class="w-full" onValueChange={updateIndicator}>
+        <div class="relative mb-6">
+          <Tabs.List bind:this={tabsContainer} class="grid w-full grid-cols-2 bg-neutral-50/30 dark:bg-neutral-800/30 rounded-md p-1">
             <Tabs.Trigger 
               value="login" 
               data-value="login"
-              class="data-[state=active]:text-rose-900 data-[state=active]:bg-transparent relative z-10"
+              class="data-[state=active]:text-neutral-800 dark:data-[state=active]:text-white data-[state=active]:font-medium py-2 relative z-10 rounded-md transition-colors"
             >
               Login
             </Tabs.Trigger>
             <Tabs.Trigger 
               value="register" 
               data-value="register"
-              class="data-[state=active]:text-rose-900 data-[state=active]:bg-transparent relative z-10"
+              class="data-[state=active]:text-neutral-800 dark:data-[state=active]:text-white data-[state=active]:font-medium py-2 relative z-10 rounded-md transition-colors"
             >
               Register
             </Tabs.Trigger>
@@ -254,23 +251,36 @@
           <!-- Animated tab indicator -->
           <div 
             bind:this={tabIndicator} 
-            class="absolute bottom-0 h-0.5 bg-rose-900 transition-all duration-300 ease-in-out z-0"
+            class="absolute top-1 bottom-1 bg-white dark:bg-neutral-700 rounded-md shadow-sm transition-all duration-300 ease-in-out z-0"
           ></div>
         </div>
-        <Tabs.Content value="login">
-          <Card.Root class="border-neutral-200/50 dark:border-neutral-800/50">
-            <Card.Header>
-              <Card.Title class="text-lg tracking-tight">Login</Card.Title>
-              <Card.Description class="text-neutral-500 dark:text-neutral-400">
-                Enter your credentials to access your account.
+        <Tabs.Content value="login" class="transition-all animate-in fade-in duration-300">
+          <Card.Root class="border-none shadow-none">
+            <Card.Header class="p-0 pb-4">
+              <Card.Title class="text-lg font-bold text-neutral-800 dark:text-neutral-500">Sign In</Card.Title>
+              <Card.Description class="text-neutral-500 dark:text-neutral-400 mt-1">
+                Enter your credentials to access your account
               </Card.Description>
             </Card.Header>
-            <Card.Content class="space-y-3">
-              <div class="space-y-1">
-                <Label for="login-username" class="text-sm font-medium">Username</Label>
-                <Input id="login-username" type="text" bind:value={loginUsername} class={loginErrors.username ? "focus-visible:ring-rose-900 border-red-300" : "focus-visible:ring-rose-900"} />
+            <Card.Content class="p-0 space-y-4">
+              <div class="space-y-1.5">
+                <Label for="login-username" class="text-sm font-medium block">Username</Label>
+                <div class="relative">
+                  <div class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+                  </div>
+                  <Input 
+                    id="login-username" 
+                    type="text" 
+                    bind:value={loginUsername} 
+                    class={loginErrors.username 
+                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 bg-red-50/30" 
+                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 transition-colors"} 
+                    placeholder="Enter username"
+                  />
+                </div>
                 {#if loginErrors.username}
-                  <p class="text-xs font-medium text-rose-500 flex items-center gap-1.5 mt-1.5" transition:fly={{ y: -10, duration: 150 }}>
+                  <p class="text-xs font-medium text-neutral-500 flex items-center gap-1.5" transition:fly={{ y: -10, duration: 150 }}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                     </svg>
@@ -278,11 +288,24 @@
                   </p>
                 {/if}
               </div>
-              <div class="space-y-1">
-                <Label for="login-password" class="text-sm font-medium">Password</Label>
-                <Input id="login-password" type="password" bind:value={loginPassword} class={loginErrors.password ? "focus-visible:ring-rose-900 border-red-300" : "focus-visible:ring-rose-900"} />
+              <div class="space-y-1.5">
+                <Label for="login-password" class="text-sm font-medium block">Password</Label>
+                <div class="relative">
+                  <div class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </div>
+                  <Input 
+                    id="login-password" 
+                    type="password" 
+                    bind:value={loginPassword} 
+                    class={loginErrors.password 
+                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 bg-red-50/30" 
+                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 transition-colors"} 
+                    placeholder="Enter password"
+                  />
+                </div>
                 {#if loginErrors.password}
-                  <p class="text-xs font-medium text-rose-500 flex items-center gap-1.5 mt-1.5" transition:fly={{ y: -10, duration: 150 }}>
+                  <p class="text-xs font-medium text-neutral-500 flex items-center gap-1.5" transition:fly={{ y: -10, duration: 150 }}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                     </svg>
@@ -291,44 +314,58 @@
                 {/if}
               </div>
               {#if loginErrors.message}
-                <div class="flex items-center gap-1.5 mt-3" transition:fly={{ y: -10, duration: 200 }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5 text-rose-500 flex-shrink-0">
+                <div class="flex items-center gap-1.5 p-3 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-md" transition:fly={{ y: -10, duration: 200 }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-neutral-500 flex-shrink-0">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                   </svg>
-                  <p class="text-xs font-medium text-rose-600">{loginErrors.message}</p>
+                  <p class="text-xs font-medium text-neutral-600">{loginErrors.message}</p>
                 </div>
               {/if}
             </Card.Content>
-            <Card.Footer>
+            <Card.Footer class="p-0 pt-4">
               <Button 
-                class="bg-neutral-900 hover:bg-rose-900 text-white transition-colors w-full" 
+                variant="outline"
+                class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800 w-full" 
                 on:click={() => handleLogin()}
                 disabled={loginLoading}
               >
                 {#if loginLoading}
-                  <span class="inline-block h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2"></span>
+                  <span class="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
                   Logging in...
                 {:else}
-                  Login
+                  Sign In
                 {/if}
               </Button>
             </Card.Footer>
           </Card.Root>
         </Tabs.Content>
-        <Tabs.Content value="register">
-          <Card.Root class="border-neutral-200/50 dark:border-neutral-800/50">
-            <Card.Header>
-              <Card.Title class="text-lg tracking-tight">Register</Card.Title>
-              <Card.Description class="text-neutral-500 dark:text-neutral-400">
-                Create a new account to join our community!
+        <Tabs.Content value="register" class="transition-all animate-in fade-in duration-300">
+          <Card.Root class="border-none shadow-none">
+            <Card.Header class="p-0 pb-4">
+              <Card.Title class="text-lg font-bold text-neutral-800 dark:text-neutral-500">Create Account</Card.Title>
+              <Card.Description class="text-neutral-500 dark:text-neutral-400 mt-1">
+                Join our community in just a few steps
               </Card.Description>
             </Card.Header>
-            <Card.Content class="space-y-3">
-              <div class="space-y-1">
-                <Label for="register-username" class="text-sm font-medium">Username</Label>
-                <Input id="register-username" type="text" bind:value={registerUsername} class={registerErrors.username ? "focus-visible:ring-rose-900 border-red-300" : "focus-visible:ring-rose-900"} />
+            <Card.Content class="p-0 space-y-4">
+              <div class="space-y-1.5">
+                <Label for="register-username" class="text-sm font-medium block">Username</Label>
+                <div class="relative">
+                  <div class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
+                  </div>
+                  <Input 
+                    id="register-username" 
+                    type="text" 
+                    bind:value={registerUsername} 
+                    class={registerErrors.username 
+                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 bg-red-50/30" 
+                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 transition-colors"} 
+                    placeholder="Choose a username"
+                  />
+                </div>
                 {#if registerErrors.username}
-                  <p class="text-xs font-medium text-rose-500 flex items-center gap-1.5 mt-1.5" transition:fly={{ y: -10, duration: 150 }}>
+                  <p class="text-xs font-medium text-neutral-500 flex items-center gap-1.5" transition:fly={{ y: -10, duration: 150 }}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                     </svg>
@@ -336,11 +373,24 @@
                   </p>
                 {/if}
               </div>
-              <div class="space-y-1">
-                <Label for="register-password" class="text-sm font-medium">Password</Label>
-                <Input id="register-password" type="password" bind:value={registerPassword} class={registerErrors.password ? "focus-visible:ring-rose-900 border-red-300" : "focus-visible:ring-rose-900"} />
+              <div class="space-y-1.5">
+                <Label for="register-password" class="text-sm font-medium block">Password</Label>
+                <div class="relative">
+                  <div class="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  </div>
+                  <Input 
+                    id="register-password" 
+                    type="password" 
+                    bind:value={registerPassword} 
+                    class={registerErrors.password 
+                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 bg-red-50/30" 
+                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 transition-colors"} 
+                    placeholder="Create a password"
+                  />
+                </div>
                 {#if registerErrors.password}
-                  <p class="text-xs font-medium text-rose-500 flex items-center gap-1.5 mt-1.5" transition:fly={{ y: -10, duration: 150 }}>
+                  <p class="text-xs font-medium text-neutral-500 flex items-center gap-1.5" transition:fly={{ y: -10, duration: 150 }}>
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5">
                       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                     </svg>
@@ -349,33 +399,34 @@
                 {/if}
               </div>
               {#if registerSuccess}
-                <div class="flex items-center gap-1.5 mt-3" transition:fly={{ y: -10, duration: 200 }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0">
+                <div class="flex items-center gap-1.5 p-3 bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 rounded-md" transition:fly={{ y: -10, duration: 200 }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-emerald-500 flex-shrink-0">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
                   </svg>
                   <p class="text-xs font-medium text-emerald-600">{registerSuccess}</p>
                 </div>
               {/if}
               {#if registerErrors.message}
-                <div class="flex items-center gap-1.5 mt-3" transition:fly={{ y: -10, duration: 200 }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3.5 h-3.5 text-rose-500 flex-shrink-0">
+                <div class="flex items-center gap-1.5 p-3 bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-md" transition:fly={{ y: -10, duration: 200 }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4 text-neutral-500 flex-shrink-0">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                   </svg>
-                  <p class="text-xs font-medium text-rose-600">{registerErrors.message}</p>
+                  <p class="text-xs font-medium text-neutral-600">{registerErrors.message}</p>
                 </div>
               {/if}
             </Card.Content>
-            <Card.Footer>
+            <Card.Footer class="p-0 pt-4">
               <Button 
-                class="bg-neutral-900 hover:bg-rose-900 text-white transition-colors w-full" 
+                variant="outline"
+                class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800 w-full" 
                 on:click={handleRegister}
                 disabled={registerLoading}
               >
                 {#if registerLoading}
-                  <span class="inline-block h-4 w-4 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2"></span>
-                  Registering...
+                  <span class="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                  Creating account...
                 {:else}
-                  Register
+                  Create Account
                 {/if}
               </Button>
             </Card.Footer>

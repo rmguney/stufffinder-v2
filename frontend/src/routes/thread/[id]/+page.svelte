@@ -303,7 +303,12 @@
         <p class="text-red-500 mt-2">{error}</p>
       {/if}
       
-      <Button on:click={handleSend} class="mt-4 hover:bg-rose-900" disabled={isLoading}>
+      <Button 
+        on:click={handleSend} 
+        variant="outline"
+        class="mt-2 text-sm py-1 px-6 hover:bg-neutral-100 dark:hover:bg-neutral-800" 
+        disabled={isLoading}
+      >
         {isLoading ? 'Sending...' : 'Send'}
       </Button>
     </Card.Root>
@@ -314,8 +319,15 @@
       </Card.Header>
     </Card.Root>
     {/if}
-    <div class="flex flex-col justify-center pt-4">
-      <pre class="text-xs">Comments: {comments.length}</pre>
+    <div class="flex flex-col justify-center pt-2">
+      <div class="flex items-center mb-1">
+        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-50 dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd" />
+          </svg>
+          Comments: {comments.length}
+        </div>
+      </div>
       {#if comments.length > 0}
         {#each comments as commentItem (commentItem.id)}
           <div class="mb-2">

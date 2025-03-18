@@ -55,7 +55,8 @@ export function processCommentMediaFiles(comment) {
     return {
       id: media.id,
       type: type,
-      url: `${PUBLIC_API_URL}/api/comments/media/${media.id}`,
+      // FIX: Change from /api/comments/media/ to /api/mysteryObjects/media/
+      url: `${PUBLIC_API_URL}/api/mysteryObjects/media/${media.id}`,
       name: media.fileName || `Media ${media.id}`,
       fileType: media.fileType
     };

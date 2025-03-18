@@ -280,8 +280,8 @@
   // Handle media errors
   function handleMediaError(event) {
     console.error("Media failed to load:", event);
-    event.target.src = '/placeholder-image.png';
-  }
+/*     event.target.src = '/placeholder-image.png';
+ */  }
 </script>
 
 <div class="flex w-full py-1">

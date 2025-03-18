@@ -9,7 +9,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { getAuthHeader } from '$lib/utils/auth';
   import { PUBLIC_API_URL } from "$env/static/public";
-  import { processMediaFiles } from '$lib/utils/mediaUtils';
+  import { processMediaFiles, processCommentMediaFiles } from '$lib/utils/mediaUtils';
 
   export let data;
   let comment = '';
@@ -168,8 +168,29 @@
       if (!response.ok) throw new Error('Failed to fetch comments');
       const rawComments = await response.json();
       
-      // Process comments to create a hierarchical structure
-      const organizedComments = organizeComments(rawComments);
+      // Process media files for each comment and its replies recursively
+      const processCommentWithMedia = (comment) => {
+        // Process media files for this comment
+        const processedMediaFiles = processCommentMediaFiles(comment);
+        
+        // Process replies recursively
+        const processedReplies = comment.replies 
+          ? comment.replies.map(reply => processCommentWithMedia(reply))
+          : [];
+        
+        // Return the comment with processed media files and replies
+        return {
+          ...comment,
+          mediaFiles: processedMediaFiles,
+          replies: processedReplies
+        };
+      };
+      
+      // Process all comments
+      const processedComments = rawComments.map(comment => processCommentWithMedia(comment));
+      
+      // Create a hierarchical structure
+      const organizedComments = organizeComments(processedComments);
       
       // Update the thread store with organized comments
       threadStore.update(threads => {

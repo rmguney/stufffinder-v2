@@ -319,32 +319,53 @@
         
         <!-- Simplified file input for media -->
         <div class="w-full">
-          <div class="flex items-center space-x-2">
-            <input 
-              type="file" 
-              id="media-upload"
-              bind:this={fileInputRef}
-              on:change={handleFileSelect}
-              accept="image/*,video/*,audio/*" 
-              class="hidden" 
-              multiple
-            />
+          <div class="flex items-center justify-center gap-2">
+            <div class="flex items-center space-x-2">
+              <input 
+                type="file" 
+                id="media-upload"
+                bind:this={fileInputRef}
+                on:change={handleFileSelect}
+                accept="image/*,video/*,audio/*" 
+                class="hidden" 
+                multiple
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                class="text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                on:click={() => fileInputRef?.click()}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                </svg>
+                Add Media
+              </Button>
+              {#if selectedFiles.length > 0}
+                <span class="text-xs text-neutral-500">
+                  {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''} selected
+                </span>
+              {/if}
+            </div>
+            
+            <!-- Post Comment button moved here -->
             <Button 
-              variant="outline" 
-              size="sm" 
+              on:click={handleSend} 
+              variant="outline"
+              size="sm"
               class="text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
-              on:click={() => fileInputRef?.click()}
+              disabled={isLoading}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-              </svg>
-              Add Media
+              {#if isLoading}
+                <span class="inline-block h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin mr-2"></span>
+                {selectedFiles.length > 0 ? 'Uploading...' : 'Sending...'}
+              {:else}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+                Post Comment
+              {/if}
             </Button>
-            {#if selectedFiles.length > 0}
-              <span class="text-xs text-neutral-500">
-                {selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''} selected
-              </span>
-            {/if}
           </div>
           
           <!-- Simple file preview -->
@@ -390,22 +411,6 @@
         {#if error}
           <p class="text-red-500 text-sm">{error}</p>
         {/if}
-        
-        <div class="flex justify-end">
-          <Button 
-            on:click={handleSend} 
-            variant="outline"
-            class="text-sm py-1 px-6 hover:bg-rose-900 hover:text-white transition-colors" 
-            disabled={isLoading}
-          >
-            {#if isLoading}
-              <span class="inline-block h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin mr-2"></span>
-              {selectedFiles.length > 0 ? 'Uploading...' : 'Sending...'}
-            {:else}
-              Post Comment
-            {/if}
-          </Button>
-        </div>
       </div>
     </Card.Root>
     {:else}

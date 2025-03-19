@@ -12,6 +12,7 @@
   
   <div class="w-full h-full flex items-center justify-center bg-neutral-900 relative">
     {#if src}
+      <!-- svelte-ignore a11y-media-has-caption -->
       <video 
         class="max-w-full max-h-full object-contain"
         controls

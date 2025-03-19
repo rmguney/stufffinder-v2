@@ -4,7 +4,6 @@
   import { onMount } from 'svelte';
 
   onMount(async function () {
-    // Debug logging to check thread structure
     console.log("Thread data sample:", $threadStore.length > 0 ? $threadStore[0] : "No threads");
   });
 </script>
@@ -18,6 +17,7 @@
         description=" "
         tags={thread.tags || []}
         imageSrc={thread.mysteryObjectImage ? `data:image/png;base64,${thread.mysteryObjectImage}` : ''}
+        mediaFiles={thread.mediaFiles || []}
         postedBy={thread.author}
         createdAt={thread.createdAt}
         updatedAt={thread.updatedAt}

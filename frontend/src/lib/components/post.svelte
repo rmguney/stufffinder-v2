@@ -105,11 +105,27 @@ $: if (variant === "thumb") {
 }
 
 function handleImageError(event) {
-  //event.target.src = '/placeholder-image.png';
+  const svgIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="size-10 bg-black">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+    </svg>
+    `;
+  
+  event.target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgIcon)}`;
+  event.target.style.backgroundColor = '#f0f0f0';
+  event.target.alt = 'Image not available';
 }
 
 function handleMediaError(event) {
-  //event.target.src = '/placeholder-image.png';
+  const svgIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="size-10 bg-black">
+      <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+    </svg>
+    `;
+  
+  event.target.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgIcon)}`;
+  event.target.style.backgroundColor = '#000';
+  event.target.alt = 'Media not available';
 }
 
   $: activeUser.subscribe((value) => {
@@ -182,7 +198,7 @@ function handleMediaError(event) {
 </script>
 
 <Card.Root class={`shadow-md hover:shadow-xl transition duration-200
-  ${variant === "thumb" ? 'bg-opacity-75 hover:bg-opacity-100 w-70 h-70 lg:hover:scale-110' : 'bg-opacity-90 hover:bg-opacity-100'}`}>
+  ${variant === "thumb" ? 'bg-opacity-90 hover:bg-opacity-100 w-70 h-70 lg:hover:scale-105' : 'bg-opacity-90 hover:bg-opacity-100'}`}>
   {#if variant === "thread"}
     <!-- Thread variant layout -->
     <div class="p-4">

@@ -25,7 +25,7 @@
   export let downvotes = 0;
   export let userUpvoted = false;
   export let userDownvoted = false;
-  export let parentCommentId = null;
+ // export let parentCommentId = null;
   export let mediaFiles = []; // Add mediaFiles array prop
 
   let currentUser = null;
@@ -362,6 +362,7 @@
                       on:error={handleMediaError}
                     />
                   {:else if media.type === 'video'}
+                    <!-- svelte-ignore a11y-media-has-caption -->
                     <video 
                       src={media.url} 
                       controls 
@@ -403,7 +404,7 @@
                 {#each mediaFiles as media, i}
                   <button 
                     on:click|stopPropagation={() => currentMediaIndex = i}
-                    class="flex-shrink-0 w-12 h-12 rounded overflow-hidden focus:outline-none transition-all {i === currentMediaIndex ? 'ring-2 ring-rose-500 transform scale-105' : 'opacity-60 hover:opacity-100'}"
+                    class="flex-shrink-0 w-12 h-12 rounded overflow-hidden focus:outline-none transition-all {i === currentMediaIndex ? 'ring-2 ring-neutral-500 transform scale-105' : 'opacity-60 hover:opacity-100'}"
                   >
                     {#if media.type === 'image'}
                       <img src={media.url} alt="thumbnail" class="w-full h-full object-cover" />

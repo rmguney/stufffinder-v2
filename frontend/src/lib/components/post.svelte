@@ -17,7 +17,7 @@
   export let variant = "thumb";
   export let mysteryObject = null;  // Changed from object with defaults to null
   export let postedBy = '';
-  export let postedDate = '';
+  //export let postedDate = '';
   export let upvotes = 0;
   export let downvotes = 0;
   export let userUpvoted = false;
@@ -353,6 +353,7 @@ function handleMediaError(event) {
                       on:error={handleMediaError}
                     />
                   {:else if media.type === 'video'}
+                    <!-- svelte-ignore a11y-media-has-caption -->
                     <video 
                       src={media.url} 
                       controls 
@@ -389,11 +390,11 @@ function handleMediaError(event) {
               
               <!-- Thumbnail navigation for multiple media -->
               {#if mediaFiles.length > 1}
-                <div class="flex justify-center mt-4 gap-2 px-4 pb-2 overflow-x-auto">
+                <div class="flex justify-center mt-4 gap-2 px-4 py-2 overflow-x-auto">
                   {#each mediaFiles as media, i}
                     <button 
                       on:click={() => currentMediaIndex = i}
-                      class="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden focus:outline-none transition-all {i === currentMediaIndex ? 'ring-2 ring-rose-500 transform scale-110' : 'opacity-60 hover:opacity-100'}"
+                      class="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden focus:outline-none transition-all {i === currentMediaIndex ? 'ring-2 ring-neutral-500 transform scale-110' : 'opacity-60 hover:opacity-100'}"
                     >
                       {#if media.type === 'image'}
                         <img src={media.url} alt="thumbnail" class="w-full h-full object-cover" />

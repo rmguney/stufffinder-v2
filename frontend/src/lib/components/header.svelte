@@ -36,7 +36,7 @@
                         </svg>
                     </div>
                     <!-- Text logo for larger screens -->
-                    <span class="hidden sm:block text-2xl translate-y-0.5 font-semibold tracking-tight hover:scale-105 transition-transform">
+                    <span class="hidden sm:block text-2xl font-semibold tracking-tight hover:scale-105 transition-transform">
                         Stufffinder
                     </span>
                 </a>

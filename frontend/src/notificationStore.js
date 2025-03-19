@@ -1,7 +1,7 @@
-import { writable } from 'svelte/store';
 import { getAuthHeader } from '$lib/utils/auth';
 import { PUBLIC_API_URL } from "$env/static/public";
 import { activeUser } from "./userStore";
+import { writable, get } from 'svelte/store';
 
 // Create a store for notifications
 export const notifications = writable([]);
@@ -96,12 +96,15 @@ export async function markAsRead(notificationId) {
 // Function to mark all notifications as read
 export async function markAllAsRead() {
     try {
+        console.log(notifications);
         const notificationsValue = get(notifications);
         for (const notification of notificationsValue) {
             if (!notification.isRead) {
                 await markAsRead(notification.id);
             }
         }
+
+        fetchNotifications();
     } catch (error) {
         console.error('Error marking all notifications as read:', error);
     }

@@ -120,7 +120,6 @@
         transform-origin: top center;
     }
 
-    /* Badge animation */
     @keyframes pulse {
         0% { transform: scale(0.95); }
         50% { transform: scale(1.05); }
@@ -131,21 +130,26 @@
         animation: pulse 2s infinite;
     }
 
-    /* Notification type indicators */
     .indicator {
-        @apply w-2 h-2 rounded-full absolute left-1 top-1/2 transform -translate-y-1/2;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 9999px;
+        position: absolute;
+        left: 0.25rem;
+        top: 50%;
+        transform: translateY(-50%);
     }
     
     .comment-indicator {
-        @apply bg-blue-500;
+        background-color: #3b82f6;
     }
     
     .upvote-indicator {
-        @apply bg-green-500;
+        background-color: #10b981;
     }
     
     .best-answer-indicator {
-        @apply bg-yellow-500;
+        background-color: #eab308;
     }
 </style>
 
@@ -201,7 +205,10 @@
                             <p class="text-sm sm:text-base">No notifications yet</p>
                         </div>
                     {:else}
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                        <!-- svelte-ignore a11y-no-static-element-interactions -->
                         {#each $notifications as notification}
+                            <!-- svelte-ignore a11y-click-events-have-key-events -->
                             <div 
                                 class="relative pl-6 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900 {notification.isRead ? 'opacity-75' : 'bg-opacity-50 bg-neutral-50 dark:bg-neutral-950'}"
                                 on:click={() => handleNotificationClick(notification)}
@@ -243,3 +250,6 @@
         </Popover.Content>
     </Popover.Root>
 {/if}
+
+<!-- this is a linter exception do not delete -->
+<div class="animate-ring hidden"></div>

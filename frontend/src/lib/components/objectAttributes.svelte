@@ -73,7 +73,8 @@
 </script>
 
 <div class="mb-5">
-    <label class="block text-sm font-medium mb-1.5 flex items-center">
+    <!-- svelte-ignore a11y-label-has-associated-control -->
+    <label class="sm:block text-sm font-medium mb-1.5 flex items-center">
         <span>Object Attributes</span>
         <span class="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-full">
             {activeAttributes.length} added

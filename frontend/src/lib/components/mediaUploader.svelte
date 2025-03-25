@@ -102,6 +102,7 @@
                         {#if mediaItem.type === 'image'}
                             <img src={mediaItem.url} alt="Preview" class="w-full h-full object-cover" />
                         {:else if mediaItem.type === 'video'}
+                            <!-- svelte-ignore a11y-media-has-caption -->
                             <video src={mediaItem.url} class="w-full h-full object-cover" controls></video>
                         {:else if mediaItem.type === 'audio'}
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

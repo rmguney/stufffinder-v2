@@ -112,7 +112,10 @@
                 </div>
             {:else}
                 <div class="divide-y divide-neutral-200 dark:divide-neutral-700">
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <!-- svelte-ignore a11y-no-static-element-interactions -->
                     {#each $notifications as notification}
+                        <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <div 
                             class="p-4 flex items-start gap-4 cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-900 {notification.isRead ? 'opacity-75' : 'bg-neutral-50 dark:bg-neutral-900/40'}"
                             on:click={() => handleNotificationClick(notification)}

@@ -25,6 +25,7 @@
         material: '',
         shape: '',
         color: '',
+        colorHex: '#ffffff', // Add hex value storage
         texture: '',
         weight: '',
         smell: '',
@@ -134,38 +135,46 @@
         try {
             const enrichedTags = await enrichTagsWithLabels(tags);
             
-            // Create mysteryObject using attributeValues
+            // Deep clone and sanitize attribute values to prevent JSON issues
+            const sanitizedAttributes = JSON.parse(JSON.stringify(attributeValues));
+            
+            // Create mysteryObject using sanitized attributes
             const mysteryObject = {
                 description,
-                material: attributeValues.material,
-                color: attributeValues.color,
-                shape: attributeValues.shape,
-                location: attributeValues.location,
-                smell: attributeValues.smell,
-                taste: attributeValues.taste || attributeValues.smell,
-                texture: attributeValues.texture,
-                functionality: attributeValues.functionality,
-                markings: attributeValues.marking,
-                handmade: attributeValues.handmade || false,
-                oneOfAKind: attributeValues.oneOfAKind || false,
-                weight: parseFloat(attributeValues.weight) || null,
-                timePeriod: attributeValues.period,
-                writtenText: attributeValues.writtenText,
-                descriptionOfParts: attributeValues.descriptionOfParts,
-                hardness: attributeValues.hardness,
-                value: parseFloat(attributeValues.value) || null,
-                originOfAcquisition: attributeValues.originOfAcquisition,
-                pattern: attributeValues.pattern,
-                brand: attributeValues.brand,
-                print: attributeValues.print,
-                imageLicenses: attributeValues.imageLicenses,
-                sizeX: parseFloat(attributeValues.sizeX) || null,
-                sizeY: parseFloat(attributeValues.sizeY) || null,
-                sizeZ: parseFloat(attributeValues.sizeZ) || null,
-                item_condition: attributeValues.itemCondition || null
+                material: sanitizedAttributes.material || null,
+                // Fix: Only use the hex color value without additional properties
+                color: sanitizedAttributes.colorHex || null,
+                shape: sanitizedAttributes.shape || null,
+                location: sanitizedAttributes.location || null,
+                smell: sanitizedAttributes.smell || null,
+                taste: sanitizedAttributes.taste || sanitizedAttributes.smell || null,
+                texture: sanitizedAttributes.texture || null,
+                functionality: sanitizedAttributes.functionality || null,
+                markings: sanitizedAttributes.marking || null,
+                handmade: sanitizedAttributes.handmade || false,
+                oneOfAKind: sanitizedAttributes.oneOfAKind || false,
+                weight: parseFloat(sanitizedAttributes.weight) || null,
+                timePeriod: sanitizedAttributes.period || null,
+                writtenText: sanitizedAttributes.writtenText || null,
+                descriptionOfParts: sanitizedAttributes.descriptionOfParts || null,
+                hardness: sanitizedAttributes.hardness || null,
+                value: parseFloat(sanitizedAttributes.value) || null,
+                originOfAcquisition: sanitizedAttributes.originOfAcquisition || null,
+                pattern: sanitizedAttributes.pattern || null,
+                brand: sanitizedAttributes.brand || null,
+                print: sanitizedAttributes.print || null,
+                imageLicenses: sanitizedAttributes.imageLicenses || null,
+                sizeX: parseFloat(sanitizedAttributes.sizeX) || null,
+                sizeY: parseFloat(sanitizedAttributes.sizeY) || null,
+                sizeZ: parseFloat(sanitizedAttributes.sizeZ) || null,
+                item_condition: sanitizedAttributes.itemCondition || null
             };
             
-            // Create FormData for multipart request
+            // Store color name as a UI-side property that doesn't go to the backend
+            // This will be handled separately by the Post component
+            const colorNameForUI = attributeValues.color;
+            
+            // Create FormData with better error handling
             const formData = new FormData();
             formData.append('title', title);
             formData.append('content', description);
@@ -176,8 +185,25 @@
                 formData.append('tags', JSON.stringify(tagIds));
             }
             
-            // Add mystery object as JSON string
-            formData.append('mysteryObject', JSON.stringify(mysteryObject));
+            try {
+                // Cleanup the mysteryObject to ensure it's valid JSON
+                // Remove any undefined, null, or empty string values to minimize issues
+                Object.keys(mysteryObject).forEach(key => {
+                    if (mysteryObject[key] === undefined || mysteryObject[key] === '' || mysteryObject[key] === null) {
+                        delete mysteryObject[key];
+                    }
+                });
+                
+                // Safely stringify the mysteryObject
+                const mysteryObjectJSON = JSON.stringify(mysteryObject);
+                formData.append('mysteryObject', mysteryObjectJSON);
+                
+                // Log for debugging
+                console.log('Sending mysteryObject:', mysteryObjectJSON);
+            } catch (jsonError) {
+                console.error('Error converting mysteryObject to JSON:', jsonError, mysteryObject);
+                throw new Error('Failed to process object data');
+            }
             
             // Add first media file as the primary image for backward compatibility
             if (mediaFiles.length > 0) {

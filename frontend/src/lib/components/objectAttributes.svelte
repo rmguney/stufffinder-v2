@@ -58,6 +58,13 @@
         dispatch('valuechange', { attributeValues });
     }
 
+    // Handle color change specifically to store both name and hex
+    function handleColorChange(event) {
+        attributeValues.color = event.detail.color;
+        attributeValues.colorHex = event.detail.hex; // Store hex separately
+        dispatch('valuechange', { attributeValues });
+    }
+
     // Handle material selection
     function handleMaterialChange(event) {
         updateAttributeValue('material', event.detail.value);
@@ -204,7 +211,8 @@
                         <label for={attrId} class="block text-sm font-medium mb-2">{attr.label}</label>
                         <ColorPicker 
                             bind:value={attributeValues.color}
-                            on:colorchange={(event) => updateAttributeValue('color', event.detail.color)}
+                            bind:hexValue={attributeValues.colorHex}
+                            on:colorchange={handleColorChange}
                         />
                     
                     {:else if attrId === "material"}

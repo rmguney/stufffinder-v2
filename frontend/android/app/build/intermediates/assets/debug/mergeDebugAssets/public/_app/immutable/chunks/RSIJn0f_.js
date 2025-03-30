@@ -1,0 +1,1 @@
+const n=()=>{const t=o("tokenKey");return t||null},u=()=>{const t=n();return t?{Authorization:`Bearer ${t}`,"Content-Type":"application/json"}:{}};function o(t){const e=`; ${document.cookie}`.split(`; ${t}=`);return e.length===2?e.pop().split(";").shift():null}export{u as g};

@@ -1,0 +1,8 @@
+{
+	"appId": "app.vercel.stufffinder",
+	"appName": "StuffFinder",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https"
+	}
+}

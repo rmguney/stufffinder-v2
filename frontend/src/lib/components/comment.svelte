@@ -25,17 +25,17 @@
   export let downvotes = 0;
   export let userUpvoted = false;
   export let userDownvoted = false;
- // export let parentCommentId = null;
   export let mediaFiles = []; // Add mediaFiles array prop
 
   let currentUser = null;
   let replyInputVisible = false;
+  let editMode = false;
   let replyText = "";
   let replyMediaFiles = []; // Add array for reply media files
   let isUploadingMedia = false;
-  
-  // Add debug variable
   let isOwner = false;
+  let commentText = comment;
+  //let editMediaFiles = [...mediaFiles];
 
   function getCookie(name) {
     const value = `; ${document.cookie}`;
@@ -44,7 +44,6 @@
     return null;
   }
 
-  // Subscribe to the active user
   $: {
     activeUser.subscribe((value) => {
       currentUser = value;
@@ -307,9 +306,17 @@
         </div>
 
         <!-- Comment content -->
-        <div class="text-neutral-900 dark:text-neutral-100">
-          {comment || "No content"}
-        </div>
+        {#if editMode}
+          <Textarea
+            bind:value={commentText}
+            class="w-full p-2 border rounded-lg text-sm bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
+            placeholder="Edit your comment..."
+          />
+        {:else}
+          <div class="text-neutral-900 dark:text-neutral-100">
+            {comment || "No content"}
+          </div>
+        {/if}
 
         <!-- Media display section -->
         {#if mediaFiles && mediaFiles.length > 0}
@@ -464,8 +471,8 @@
       <!-- Actions section -->
       <div class="p-4 flex flex-wrap gap-2">
         {#if isOwner && !selected}
-          <Button 
-            on:click={toggleBestAnswer} 
+          <Button
+            on:click={toggleBestAnswer}
             variant="outline"
             class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800"
           >
@@ -473,24 +480,90 @@
           </Button>
         {/if}
 
-        <Button 
-          on:click={toggleReplyInput} 
+        {#if currentUser === commentator}
+          <Button
+            on:click={() => {
+              editMode = !editMode;
+              commentText = comment;
+            }}
+            variant="outline"
+            class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+          >
+            {editMode ? "Cancel Edit" : "Edit"}
+          </Button>
+        {/if}
+
+        <Button
+          on:click={toggleReplyInput}
           variant="outline"
           class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800"
         >
           {replyInputVisible ? "Cancel" : "Reply"}
         </Button>
+        {#if editMode}
+          <Button
+            on:click={async () => {
+              try {
+                const headers = getAuthHeader();
+                if (!headers.Authorization) {
+                  console.error("Please log in to edit");
+                  return;
+                }
+
+                const payload = {
+                  content: commentText,
+                  postId: threadId,
+                };
+
+                const response = await fetch(
+                  `${PUBLIC_API_URL}/api/comments/edit/${commentId}`,
+                  {
+                    method: "PUT",
+                    headers: {
+                      "Content-Type": "application/json",
+                      ...headers,
+                    },
+                    body: JSON.stringify(payload),
+                  }
+                );
+
+                if (!response.ok) {
+                  const errorText = await response.text();
+                  throw new Error(`Failed to edit comment: ${errorText}`);
+                }
+
+                // Reset the form
+                editMode = false;
+                comment = commentText;
+
+                // Dispatch event to refresh comments
+                document.dispatchEvent(
+                  new CustomEvent("refreshComments", {
+                    bubbles: true,
+                    detail: { threadId },
+                  })
+                );
+              } catch (error) {
+                console.error("Error editing comment:", error);
+              }
+            }}
+            variant="outline"
+            class="text-xs py-1 px-3 hover:bg-rose-900 hover:text-white transition-colors"
+          >
+            Save Edit
+          </Button>
+        {/if}
       </div>
 
       <!-- Reply input with media upload -->
       {#if replyInputVisible}
         <div class="p-4 pt-0">
-          <Textarea 
-            bind:value={replyText} 
+          <Textarea
+            bind:value={replyText}
             class="w-full p-2 border rounded-lg text-sm bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
             placeholder="Write your reply..."
           />
-          
+
           <!-- Media uploader for replies -->
           <div class="my-3">
             <MediaUploader
@@ -498,9 +571,9 @@
               on:update={handleReplyMediaUpdate}
             />
           </div>
-          
-          <Button 
-            on:click={addReply} 
+
+          <Button
+            on:click={addReply}
             variant="outline"
             class="mt-2 text-xs py-1 px-3 hover:bg-rose-900 hover:text-white transition-colors"
             disabled={isUploadingMedia}

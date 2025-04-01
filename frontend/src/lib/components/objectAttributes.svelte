@@ -58,6 +58,13 @@
         dispatch('valuechange', { attributeValues });
     }
 
+    // Handle color change specifically to store both name and hex
+    function handleColorChange(event) {
+        attributeValues.color = event.detail.color;
+        attributeValues.colorHex = event.detail.hex; // Store hex separately
+        dispatch('valuechange', { attributeValues });
+    }
+
     // Handle material selection
     function handleMaterialChange(event) {
         updateAttributeValue('material', event.detail.value);
@@ -73,7 +80,8 @@
 </script>
 
 <div class="mb-5">
-    <label class="block text-sm font-medium mb-1.5 flex items-center">
+    <!-- svelte-ignore a11y-label-has-associated-control -->
+    <label class="sm:block text-sm font-medium mb-1.5 flex items-center">
         <span>Object Attributes</span>
         <span class="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-full">
             {activeAttributes.length} added
@@ -203,7 +211,8 @@
                         <label for={attrId} class="block text-sm font-medium mb-2">{attr.label}</label>
                         <ColorPicker 
                             bind:value={attributeValues.color}
-                            on:colorchange={(event) => updateAttributeValue('color', event.detail.color)}
+                            bind:hexValue={attributeValues.colorHex}
+                            on:colorchange={handleColorChange}
                         />
                     
                     {:else if attrId === "material"}

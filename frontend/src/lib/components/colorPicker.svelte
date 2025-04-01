@@ -2,14 +2,36 @@
     import { createEventDispatcher } from 'svelte';
     
     export let value = '';
-    let selectedHexColor = "#ffffff";
+    export let hexValue = "#ffffff";
+    let selectedHexColor = hexValue || "#ffffff";
     let isLoadingColorName = false;
     
     const dispatch = createEventDispatcher();
     
+    // Function to ensure hex color is valid
+    function sanitizeHexColor(hex) {
+        // Ensure it starts with # and contains valid hex characters
+        if (!hex) return "#ffffff";
+        
+        // Add # if missing
+        if (!hex.startsWith('#')) {
+            hex = '#' + hex;
+        }
+        
+        // Validate the hex format
+        if (!/^#([0-9A-Fa-f]{3}){1,2}$/.test(hex)) {
+            console.warn("Invalid hex color, using default:", hex);
+            return "#ffffff";
+        }
+        
+        return hex;
+    }
+    
     // Function to fetch color name from TheColorAPI
     async function fetchColorName(hexColor) {
         isLoadingColorName = true;
+        hexColor = sanitizeHexColor(hexColor);
+        
         // Remove the # character from hex color
         const cleanHex = hexColor.replace('#', '');
         
@@ -20,12 +42,14 @@
             }
             const data = await response.json();
             
-            // Update color value with the name
+            // Update color value with the name and keep hex
             value = data.name.value || 'Unknown color';
+            hexValue = hexColor;
             dispatch('colorchange', { color: value, hex: hexColor });
         } catch (error) {
             console.error('Error fetching color name:', error);
-            value = `Color #${cleanHex}`;
+            value = `Unknown color`;
+            hexValue = hexColor;
             dispatch('colorchange', { color: value, hex: hexColor });
         } finally {
             isLoadingColorName = false;
@@ -33,7 +57,7 @@
     }
     
     function handleColorChange(event) {
-        selectedHexColor = event.target.value;
+        selectedHexColor = sanitizeHexColor(event.target.value);
         fetchColorName(selectedHexColor);
     }
 </script>
@@ -53,7 +77,8 @@
             style="background-color: {selectedHexColor};"
         ></div>
         <span class="text-sm truncate">
-            {isLoadingColorName ? 'Loading...' : value || 'Select a color'}
+            {isLoadingColorName ? 'Loading...' : (value || 'Select a color')}
+            <span class="text-xs opacity-75 ml-1">({selectedHexColor})</span>
         </span>
     </div>
 </div>

@@ -68,11 +68,14 @@
 </script>
 
 {#if showToast && toastNotification}
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div 
         class="fixed bottom-4 right-4 max-w-md z-50 flex"
         transition:fly={{ y: 20, duration: 300 }}
         on:click={handleToastClick}
     >
+        <!-- svelte-ignore a11y-no-static-element-interactions -->
         <div 
             class="bg-white dark:bg-neutral-900 shadow-lg rounded-lg p-4 border border-neutral-200 dark:border-neutral-800 flex items-start gap-3 cursor-pointer hover:shadow-xl transition-shadow duration-200"
             on:mouseenter={() => clearTimeout(timer)}

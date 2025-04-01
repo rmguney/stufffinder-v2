@@ -72,13 +72,32 @@
       // Process media files into a format the frontend can use
       const mediaFiles = processMediaFiles(postData);
       
+      // Check if color is a hex value and fetch color name if needed
+      if (postData.mysteryObject && postData.mysteryObject.color) {
+        const colorValue = postData.mysteryObject.color;
+        if (isHexColor(colorValue) && !postData.mysteryObject._colorName) {
+          try {
+            // Store color name as a UI-only property
+            const colorName = await getColorNameFromHex(colorValue);
+            if (colorName) {
+              postData.mysteryObject._colorName = colorName;
+            }
+          } catch (colorErr) {
+            console.error('Error fetching color name:', colorErr);
+          }
+        }
+      }
+
       // Update thread store with post data and media files
       updateThread({
         id: postData.id,
         ...postData,
         mediaFiles: mediaFiles,
-        // Use the full mystery object to include subParts
-        mysteryObject: postData.mysteryObject,
+        mysteryObject: postData.mysteryObject ? {
+          ...postData.mysteryObject,
+          // Make sure we preserve any UI properties
+          _colorName: postData.mysteryObject._colorName
+        } : null,
         title: postData.title,
         description: postData.description,
         tags: postData.tags || [],
@@ -97,6 +116,26 @@
     } catch (error) {
       console.error('Error fetching post with media:', error);
       throw error;
+    }
+  }
+
+  // Helper function to check if a string is a valid hex color
+  function isHexColor(str) {
+    if (!str || typeof str !== 'string') return false;
+    return /^#([0-9A-Fa-f]{3}){1,2}$/.test(str);
+  }
+
+  // Helper function to get color name from hex
+  async function getColorNameFromHex(hexColor) {
+    try {
+      const cleanHex = hexColor.replace('#', '');
+      const response = await fetch(`https://www.thecolorapi.com/id?hex=${cleanHex}`);
+      if (!response.ok) return null;
+      const data = await response.json();
+      return data.name.value;
+    } catch (error) {
+      console.error('Error fetching color name:', error);
+      return null;
     }
   }
 

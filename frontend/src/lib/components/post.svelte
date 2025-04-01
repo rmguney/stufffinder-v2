@@ -133,6 +133,37 @@ function handleMediaError(event) {
   event.target.alt = 'Media not available';
 }
 
+// Function to determine if a string is a valid hex color - improved regex
+function isHexColor(str) {
+  if (!str || typeof str !== 'string') return false;
+  return /^#([0-9A-Fa-f]{3}){1,2}$/.test(str);
+}
+
+// Get color name or fall back to hex
+function getColorDisplay(color, colorName) {
+  if (!color) return "No color specified";
+
+  if (colorName) return colorName;
+
+  if (isHexColor(color)) {
+    try {
+      // Fetch color name on demand if we don't have it
+      getColorNameFromHex(color).then(name => {
+        if (name) {
+          // This is tricky in Svelte, but we'll at least have it for next render
+          if (mysteryObject) mysteryObject._colorName = name;
+        }
+      });
+      // Return hex for now
+      return color;
+    } catch (e) {
+      return color;
+    }
+  }
+
+  return color; // Fall back to whatever was provided
+}
+
   $: activeUser.subscribe((value) => {
     currentUser = value;
   });
@@ -147,7 +178,7 @@ function handleMediaError(event) {
   });
 
   // No need to load sub-parts separately since they're already included in the mysteryObject
-  
+
   // Handle updates from the MysteryObjectSubParts component
   function handleSubPartsUpdate(event) {
     mysteryObjectSubParts = event.detail.subParts;
@@ -306,7 +337,7 @@ function handleMediaError(event) {
       <div class="flex flex-col lg:flex-row gap-6 mt-4">
           <!-- Mystery Object Details -->
           {#if mysteryObject}
-            <div class="lg:w-1/2 flex-grow order-2 lg:order-1"> 
+            <div class="lg:w-1/2 flex-grow order-2 lg:order-1">
               <div class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {#each Object.entries(mysteryObject) as [key, value]}
@@ -332,7 +363,7 @@ function handleMediaError(event) {
                     {/if}
                   {/each}
                 </div>
-                
+
                 <!-- Show Sub-Parts Section if there are any parts to show -->
                 {#if mysteryObjectSubParts && mysteryObjectSubParts.length > 0}
                   <div class="mt-6">
@@ -343,7 +374,7 @@ function handleMediaError(event) {
                           <div class="flex justify-between items-start mb-2">
                             <h5 class="font-medium text-sm">{part.description || 'Unnamed Part'}</h5>
                           </div>
-                          
+
                           <!-- Attribute summary -->
                           <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mt-2">
                             {#if part.material}
@@ -364,9 +395,46 @@ function handleMediaError(event) {
                     </div>
                   </div>
                 {/if}
-                
+
               </div>
             </div>
+        <!-- Mystery Object Details -->
+        {#if mysteryObject}
+          <div class="lg:w-1/2 flex-grow order-2 lg:order-1">
+            <div class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {#each Object.entries(mysteryObject) as [key, value]}
+                  {#if value && !['id', 'images', 'description', 'colorName', 'image', 'imageUrl', 'IMAGE', 'IMAGE URL', '_colorName'].includes(key) && !key.toLowerCase().includes('image')}
+                    <div class="bg-white dark:bg-neutral-950 p-3 rounded-md border border-neutral-100 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors">
+                      <span class="block text-xs font-medium text-black dark:text-white mb-1">
+                        {key.split(/(?=[A-Z])/).join(' ').replace('_', ' ').toUpperCase()}
+                      </span>
+                      <span class="text-neutral-900 dark:text-neutral-100">
+                        {#if key === 'value'}
+                          ${value}
+                        {:else if ['handmade', 'oneOfAKind'].includes(key)}
+                          Yes
+                        {:else if key.startsWith('size')}
+                          {value} cm
+                        {:else if key === 'weight'}
+                          {value}g
+                        {:else if key === 'color' && value}
+                          <div class="flex items-center gap-2">
+                            {#if isHexColor(value)}
+                              <span class="w-4 h-4 inline-block rounded border" style="background-color: {value};"></span>
+                            {/if}
+                            {getColorDisplay(value, mysteryObject._colorName)}
+                          </div>
+                        {:else}
+                          {value}
+                        {/if}
+                      </span>
+                    </div>
+                  {/if}
+                {/each}
+              </div>
+            </div>
+          </div>
         {/if}
 
         <!-- Media Carousel Section -->
@@ -445,7 +513,7 @@ function handleMediaError(event) {
                     <div class="flex items-center justify-center p-10 h-[300px]">
                       <div class="text-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto text-blue-500 dark:text-blue-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                         <p class="text-gray-700 dark:text-gray-300">{media.name}</p>
                       </div>
@@ -480,7 +548,7 @@ function handleMediaError(event) {
                       {:else}
                         <div class="w-full h-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                         </div>
                       {/if}
@@ -608,7 +676,17 @@ function handleMediaError(event) {
             <div class="flex flex-col">
               <ul>
                 {#if mysteryObject.writtenText}<li class="mt-2"><span class="font-semibold text-md">Written Text:</span> {mysteryObject.writtenText}</li>{/if}
-                {#if mysteryObject.color}<li class="mt-2"><span class="font-semibold text-md">Color:</span> {mysteryObject.color}</li>{/if}
+                {#if mysteryObject.color}
+                  <li class="mt-2">
+                    <span class="font-semibold text-md">Color:</span>
+                    <div class="inline-flex items-center gap-2 ml-1">
+                      {#if isHexColor(mysteryObject.color)}
+                        <span class="w-4 h-4 inline-block rounded border" style="background-color: {mysteryObject.color};"></span>
+                      {/if}
+                      {getColorDisplay(mysteryObject.color, mysteryObject._colorName)}
+                    </div>
+                  </li>
+                {/if}
                 {#if mysteryObject.shape}<li class="mt-2"><span class="font-semibold text-md">Shape:</span> {mysteryObject.shape}</li>{/if}
                 {#if mysteryObject.descriptionOfParts}<li class="mt-2"><span class="font-semibold text-md">Parts Description:</span> {mysteryObject.descriptionOfParts}</li>{/if}
                 {#if mysteryObject.location}<li class="mt-2"><span class="font-semibold text-md">Location:</span> {mysteryObject.location}</li>{/if}

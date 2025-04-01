@@ -678,6 +678,7 @@
                                         {#each allVisibleExpansions
                                         .filter(exp => exp.relation === relationType && !exp.label.match(/^Q\d+$/)) as expansion (expansion.id)}
                                             <div class="flex items-center">
+                                                <!-- svelte-ignore a11y-label-has-associated-control -->
                                                 <label class="flex items-center space-x-2 px-2 py-1 bg-white dark:bg-neutral-800 rounded border border-neutral-200 dark:border-neutral-700 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700"
                                                        class:border-rose-500={expansion.fromPreviousSearch}
                                                        class:bg-rose-50={expansion.fromPreviousSearch && !isExpansionSelected(expansion)}

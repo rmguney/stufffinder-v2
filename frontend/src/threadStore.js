@@ -149,25 +149,31 @@ export function forceRefreshThreads() {
 }
 
 // Function to update or add a thread
-export function updateThread(newThread) {
+export function updateThread(updatedThread) {
     threadStore.update(threads => {
-        const index = threads.findIndex(t => t.id === newThread.id);
+        const index = threads.findIndex(t => t.id == updatedThread.id);
         let updatedThreads;
         
         if (index !== -1) {
             // Update existing thread
             updatedThreads = [...threads];
+            
+            // Preserve comments if they exist
+            const existingComments = updatedThreads[index].comments || [];
+            
             updatedThreads[index] = {
                 ...updatedThreads[index],
-                ...newThread
+                ...updatedThread,
+                comments: existingComments // Keep existing comments
             };
+            
+            // For UI updates - updated timestamp
+            updatedThreads[index].updatedAt = new Date().toISOString();
         } else {
             // Add new thread
-            updatedThreads = [...threads, newThread];
+            updatedThreads = [...threads, updatedThread];
         }
         
-        // Use debounced save
-        //debouncedSaveToLocalStorage(updatedThreads);
         return updatedThreads;
     });
 }

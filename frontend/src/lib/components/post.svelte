@@ -6,6 +6,8 @@
   import { Button } from "$lib/components/ui/button";
   import { Separator } from "$lib/components/ui/separator";
   import { PUBLIC_API_URL } from "$env/static/public";
+  import MysteryObjectSubParts from "./mysteryObjectSubParts.svelte";
+  import { getMysteryObjectWithSubParts } from "$lib/utils/mysteryObjectUtils.js";
 
   export let id = '';
   export let title = '';
@@ -16,6 +18,7 @@
   export let solved = false;
   export let variant = "thumb";
   export let mysteryObject = null;  // Changed from object with defaults to null
+  let mysteryObjectSubParts = mysteryObject?.subParts || [];
   export let postedBy = '';
   //export let postedDate = '';
   export let upvotes = 0;
@@ -28,6 +31,8 @@
   let tagDetails = writable([]);
   let currentUser = null; 
   let currentMediaIndex = 0; // Track the current displayed media in carousel
+  let isLoadingSubParts = false;
+  let subPartsError = null;
 
   const fetchTagDetails = async () => {
     if (!tags.length) {
@@ -132,9 +137,21 @@ function handleMediaError(event) {
     currentUser = value;
   });
 
+  // Update mysteryObjectSubParts whenever mysteryObject changes
+  $: if (mysteryObject && mysteryObject.subParts) {
+    mysteryObjectSubParts = mysteryObject.subParts;
+  }
+
   onMount(() => {
-    fetchTagDetails(); 
+    fetchTagDetails();
   });
+
+  // No need to load sub-parts separately since they're already included in the mysteryObject
+  
+  // Handle updates from the MysteryObjectSubParts component
+  function handleSubPartsUpdate(event) {
+    mysteryObjectSubParts = event.detail.subParts;
+  }
 
   const handleVote = async (isUpvote) => {
     if (!currentUser) return; // Must be logged in to vote
@@ -287,36 +304,69 @@ function handleMediaError(event) {
 
       <!-- Mystery Object and Media Carousel section -->
       <div class="flex flex-col lg:flex-row gap-6 mt-4">
-        <!-- Mystery Object Details -->
-        {#if mysteryObject}
-          <div class="lg:w-1/2 flex-grow order-2 lg:order-1"> 
-            <div class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {#each Object.entries(mysteryObject) as [key, value]}
-                  {#if value && !['id', 'images', 'description'].includes(key)}
-                    <div class="bg-white dark:bg-neutral-950 p-3 rounded-md border border-neutral-100 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors">
-                      <span class="block text-xs font-medium text-black dark:text-white mb-1">
-                        {key.split(/(?=[A-Z])/).join(' ').replace('_', ' ').toUpperCase()}
-                      </span>
-                      <span class="text-neutral-900 dark:text-neutral-100">
-                        {#if key === 'value'}
-                          ${value}
-                        {:else if ['handmade', 'oneOfAKind'].includes(key)}
-                          Yes
-                        {:else if key.startsWith('size')}
-                          {value} cm
-                        {:else if key === 'weight'}
-                          {value}g
-                        {:else}
-                          {value}
-                        {/if}
-                      </span>
+          <!-- Mystery Object Details -->
+          {#if mysteryObject}
+            <div class="lg:w-1/2 flex-grow order-2 lg:order-1"> 
+              <div class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {#each Object.entries(mysteryObject) as [key, value]}
+                    {#if value && !['id', 'images', 'description', 'subParts', 'parent'].includes(key)}
+                      <div class="bg-white dark:bg-neutral-950 p-3 rounded-md border border-neutral-100 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors">
+                        <span class="block text-xs font-medium text-black dark:text-white mb-1">
+                          {key.split(/(?=[A-Z])/).join(' ').replace('_', ' ').toUpperCase()}
+                        </span>
+                        <span class="text-neutral-900 dark:text-neutral-100">
+                          {#if key === 'value'}
+                            ${value}
+                          {:else if ['handmade', 'oneOfAKind'].includes(key)}
+                            Yes
+                          {:else if key.startsWith('size')}
+                            {value} cm
+                          {:else if key === 'weight'}
+                            {value}g
+                          {:else}
+                            {value}
+                          {/if}
+                        </span>
+                      </div>
+                    {/if}
+                  {/each}
+                </div>
+                
+                <!-- Show Sub-Parts Section if there are any parts to show -->
+                {#if mysteryObjectSubParts && mysteryObjectSubParts.length > 0}
+                  <div class="mt-6">
+                    <h4 class="font-medium text-base mb-3">Object Parts</h4>
+                    <div class="space-y-3">
+                      {#each mysteryObjectSubParts as part (part.id)}
+                        <div class="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md p-3">
+                          <div class="flex justify-between items-start mb-2">
+                            <h5 class="font-medium text-sm">{part.description || 'Unnamed Part'}</h5>
+                          </div>
+                          
+                          <!-- Attribute summary -->
+                          <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mt-2">
+                            {#if part.material}
+                              <div class="flex justify-between"><span class="text-neutral-500">Material:</span> <span>{part.material}</span></div>
+                            {/if}
+                            {#if part.color}
+                              <div class="flex justify-between"><span class="text-neutral-500">Color:</span> <span>{part.color}</span></div>
+                            {/if}
+                            {#if part.shape}
+                              <div class="flex justify-between"><span class="text-neutral-500">Shape:</span> <span>{part.shape}</span></div>
+                            {/if}
+                            {#if part.texture}
+                              <div class="flex justify-between"><span class="text-neutral-500">Texture:</span> <span>{part.texture}</span></div>
+                            {/if}
+                          </div>
+                        </div>
+                      {/each}
                     </div>
-                  {/if}
-                {/each}
+                  </div>
+                {/if}
+                
               </div>
             </div>
-          </div>
         {/if}
 
         <!-- Media Carousel Section -->

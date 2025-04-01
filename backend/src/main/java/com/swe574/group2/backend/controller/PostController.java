@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import org.springframework.http.MediaType;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -48,6 +49,31 @@ public class PostController {
         this.postService = postService;
         this.storage = storage;
         this.mediaFileRepository = mediaFileRepository;
+    }
+
+    // New JSON endpoint for post creation
+    @PostMapping(value = "/create-json", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, Long>> createPostJson(
+            @RequestBody Map<String, Object> requestBody,
+            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+        
+        String title = (String) requestBody.get("title");
+        String content = (String) requestBody.get("content");
+        List<String> tags = requestBody.containsKey("tags") ? 
+            (List<String>) requestBody.get("tags") : Collections.emptyList();
+        
+        ObjectMapper objectMapper = new ObjectMapper();
+        MysteryObject mysteryObject = objectMapper.convertValue(
+            requestBody.get("mysteryObject"), MysteryObject.class);
+        
+        PostCreationDto postCreationDto = new PostCreationDto();
+        postCreationDto.setTitle(title);
+        postCreationDto.setContent(content);
+        postCreationDto.setTags(new HashSet<>(tags));
+        postCreationDto.setMysteryObject(mysteryObject);
+        
+        Map<String, Long> response = postService.createPost(postCreationDto, userDetails.getUsername());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/create")
@@ -89,6 +115,29 @@ public class PostController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/{postId}/mysteryObjects/{mysteryObjectId}/set-image")
+    public ResponseEntity<Map<String, String>> setMysteryObjectImage(
+            @PathVariable Long postId,
+            @PathVariable Long mysteryObjectId,
+            @RequestParam("file") MultipartFile image,
+            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+        
+        if (mysteryObjectId == null || image == null || image.isEmpty()) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Invalid image or mystery object"));
+        }
+
+        // Get the mystery object
+        MysteryObject mysteryObject = postService.getMysteryObjectById(mysteryObjectId);
+        if (mysteryObject == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Upload and set the image
+        uploadImageToStorage(mysteryObjectId, image);
+        
+        return ResponseEntity.ok(Collections.singletonMap("status", "Image uploaded successfully"));
+    }
+    
     private void uploadImageToStorage(Long mysteryObjectId, MultipartFile image) throws IOException {
         if (mysteryObjectId == null || image == null || image.isEmpty()) {
             return;

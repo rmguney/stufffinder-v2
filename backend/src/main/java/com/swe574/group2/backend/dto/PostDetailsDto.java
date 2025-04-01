@@ -1,6 +1,7 @@
 package com.swe574.group2.backend.dto;
 
 import com.swe574.group2.backend.entity.MysteryObject;
+import com.swe574.group2.backend.dto.MysteryObjectDto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ public class PostDetailsDto {
     private String title;
     private String description;
     private Set<String> tags;
-    private MysteryObject mysteryObject;
+    private MysteryObjectDto mysteryObject;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<MediaFileDto> mediaFiles;
@@ -35,7 +36,7 @@ public class PostDetailsDto {
         this.title = title;
         this.description = description;
         this.tags = tags;
-        this.mysteryObject = mysteryObject;
+        this.mysteryObject = mysteryObject != null ? MysteryObjectDto.fromEntity(mysteryObject) : null;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.upvotes = upvotes;

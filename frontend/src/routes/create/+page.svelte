@@ -9,6 +9,7 @@
     import { PUBLIC_API_URL } from "$env/static/public";
     import MediaUploader from "$lib/components/mediaUploader.svelte";
     import ObjectAttributes from "$lib/components/objectAttributes.svelte";
+    import MysteryObjectSubParts from "$lib/components/mysteryObjectSubParts.svelte";
 
     // Replace single imageFile with array of media files
     let mediaFiles = [];
@@ -19,6 +20,9 @@
     let description = '';
     let anonymous = false; 
     let resolved = false;
+    
+    // For mystery object sub-parts
+    let mysteryObjectSubParts = [];
     
     // Store all attribute values in a single object
     let attributeValues = {
@@ -101,6 +105,39 @@
         attributeValues = event.detail.attributeValues;
     }
     
+    // Function to create a clean subpart object suitable for the API
+    function prepareSubPartForApi(subpart) {
+        return {
+            description: subpart.description || "",
+            material: subpart.material || null,
+            color: subpart.color || null,
+            shape: subpart.shape || null,
+            location: subpart.location || null,
+            smell: subpart.smell || null,
+            taste: subpart.taste || null,
+            texture: subpart.texture || null,
+            functionality: subpart.functionality || null,
+            markings: subpart.markings || null,
+            handmade: subpart.handmade || false,
+            oneOfAKind: subpart.oneOfAKind || false,
+            weight: subpart.weight ? parseFloat(subpart.weight) : null,
+            timePeriod: subpart.timePeriod || null,
+            writtenText: subpart.writtenText || null,
+            descriptionOfParts: subpart.descriptionOfParts || null,
+            hardness: subpart.hardness || null,
+            value: subpart.value ? parseFloat(subpart.value) : null,
+            originOfAcquisition: subpart.originOfAcquisition || null,
+            pattern: subpart.pattern || null,
+            brand: subpart.brand || null,
+            print: subpart.print || null,
+            imageLicenses: subpart.imageLicenses || null,
+            sizeX: subpart.sizeX ? parseFloat(subpart.sizeX) : null,
+            sizeY: subpart.sizeY ? parseFloat(subpart.sizeY) : null,
+            sizeZ: subpart.sizeZ ? parseFloat(subpart.sizeZ) : null,
+            item_condition: subpart.item_condition || null
+        };
+    }
+    
     let handlePost = async () => {
         // Reset error state
         errors = {
@@ -137,31 +174,31 @@
             // Create mysteryObject using attributeValues
             const mysteryObject = {
                 description,
-                material: attributeValues.material,
-                color: attributeValues.color,
-                shape: attributeValues.shape,
-                location: attributeValues.location,
-                smell: attributeValues.smell,
-                taste: attributeValues.taste || attributeValues.smell,
-                texture: attributeValues.texture,
-                functionality: attributeValues.functionality,
-                markings: attributeValues.marking,
+                material: attributeValues.material || null,
+                color: attributeValues.color || null,
+                shape: attributeValues.shape || null,
+                location: attributeValues.location || null,
+                smell: attributeValues.smell || null,
+                taste: attributeValues.taste || attributeValues.smell || null,
+                texture: attributeValues.texture || null,
+                functionality: attributeValues.functionality || null,
+                markings: attributeValues.marking || null,
                 handmade: attributeValues.handmade || false,
                 oneOfAKind: attributeValues.oneOfAKind || false,
-                weight: parseFloat(attributeValues.weight) || null,
-                timePeriod: attributeValues.period,
-                writtenText: attributeValues.writtenText,
-                descriptionOfParts: attributeValues.descriptionOfParts,
-                hardness: attributeValues.hardness,
-                value: parseFloat(attributeValues.value) || null,
-                originOfAcquisition: attributeValues.originOfAcquisition,
-                pattern: attributeValues.pattern,
-                brand: attributeValues.brand,
-                print: attributeValues.print,
-                imageLicenses: attributeValues.imageLicenses,
-                sizeX: parseFloat(attributeValues.sizeX) || null,
-                sizeY: parseFloat(attributeValues.sizeY) || null,
-                sizeZ: parseFloat(attributeValues.sizeZ) || null,
+                weight: attributeValues.weight ? parseFloat(attributeValues.weight) : null,
+                timePeriod: attributeValues.period || null,
+                writtenText: attributeValues.writtenText || null,
+                descriptionOfParts: attributeValues.descriptionOfParts || null,
+                hardness: attributeValues.hardness || null,
+                value: attributeValues.value ? parseFloat(attributeValues.value) : null,
+                originOfAcquisition: attributeValues.originOfAcquisition || null,
+                pattern: attributeValues.pattern || null,
+                brand: attributeValues.brand || null,
+                print: attributeValues.print || null,
+                imageLicenses: attributeValues.imageLicenses || null,
+                sizeX: attributeValues.sizeX ? parseFloat(attributeValues.sizeX) : null,
+                sizeY: attributeValues.sizeY ? parseFloat(attributeValues.sizeY) : null,
+                sizeZ: attributeValues.sizeZ ? parseFloat(attributeValues.sizeZ) : null,
                 item_condition: attributeValues.itemCondition || null
             };
             
@@ -174,55 +211,138 @@
             if (tags && tags.length > 0) {
                 const tagIds = tags.map(tag => tag.id);
                 formData.append('tags', JSON.stringify(tagIds));
+            } else {
+                // Add empty array if no tags to avoid null issues
+                formData.append('tags', JSON.stringify([]));
             }
             
-            // Add mystery object as JSON string
+            // Add mystery object as JSON string (without subparts)
             formData.append('mysteryObject', JSON.stringify(mysteryObject));
             
-            // Add first media file as the primary image for backward compatibility
+            // Add first media file as the primary image
             if (mediaFiles.length > 0) {
                 const firstFile = mediaFiles[0].file;
                 formData.append('image', firstFile);
             }
 
-            // Create post first
-            const response = await fetch(`${PUBLIC_API_URL}/api/posts/create`, {
+            // Create a simplified post with just the essential data to avoid issues
+            const simplifiedPost = {
+                title,
+                content: description,
+                tags: tags.map(tag => tag.id),
+                mysteryObject: mysteryObject
+            };
+            
+            // First create the post without files
+            console.log("Creating post with JSON data");
+            const createResponse = await fetch(`${PUBLIC_API_URL}/api/posts/create-json`, {
                 method: 'POST',
-                body: formData,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(simplifiedPost),
                 credentials: 'include'
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to create post');
+            
+            if (!createResponse.ok) {
+                let errorMessage = `Failed to create post: ${createResponse.status} ${createResponse.statusText}`;
+                try {
+                    const errorData = await createResponse.json();
+                    if (errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } catch (parseError) {
+                    console.error("Error parsing response:", parseError);
+                }
+                throw new Error(errorMessage);
             }
             
-            const responseData = await response.json();
+            const responseData = await createResponse.json();
+            console.log("Post created successfully:", responseData);
             
-            // Upload all media files (including the first one again to ensure it's in the new system)
-            for (let i = 0; i < mediaFiles.length; i++) {
-                const mediaItem = mediaFiles[i];
-                const mediaFormData = new FormData();
-                mediaFormData.append('file', mediaItem.file);
-                mediaFormData.append('type', mediaItem.type || 'image');
+            // Then upload image separately if available
+            if (mediaFiles.length > 0) {
+                const imageFormData = new FormData();
+                imageFormData.append('file', mediaFiles[0].file);
                 
+                console.log("Uploading main image");
                 try {
-                    const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/upload-media`, {
+                    await fetch(`${PUBLIC_API_URL}/api/posts/${responseData.postId}/mysteryObjects/${responseData.mysteryObjectId}/set-image`, {
                         method: 'POST',
-                        body: mediaFormData,
+                        body: imageFormData,
                         credentials: 'include'
                     });
-            
-                    if (!mediaResponse.ok) {
-                        console.error(`Failed to upload media file ${i+1}`);
-                        // Continue with other uploads even if one fails
-                    }
-                } catch (mediaError) {
-                    console.error(`Error uploading media file ${i+1}:`, mediaError);
-                    // Continue with other uploads
+                } catch (imageError) {
+                    console.error("Error uploading main image:", imageError);
                 }
             }
 
+            console.log("Post created successfully:", responseData);
+            
+            // Upload media files
+            if (mediaFiles.length > 0) {
+                console.log(`Uploading ${mediaFiles.length} media files`);
+                
+                for (let i = 0; i < mediaFiles.length; i++) {
+                    const mediaItem = mediaFiles[i];
+                    const mediaFormData = new FormData();
+                    mediaFormData.append('file', mediaItem.file);
+                    mediaFormData.append('type', mediaItem.type || 'image');
+                    
+                    try {
+                        console.log(`Uploading media file ${i+1}/${mediaFiles.length}`);
+                        const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/upload-media`, {
+                            method: 'POST',
+                            body: mediaFormData,
+                            credentials: 'include'
+                        });
+                
+                        if (!mediaResponse.ok) {
+                            console.error(`Failed to upload media file ${i+1}:`, mediaResponse.status, mediaResponse.statusText);
+                        } else {
+                            console.log(`Media file ${i+1} uploaded successfully`);
+                        }
+                    } catch (mediaError) {
+                        console.error(`Error uploading media file ${i+1}:`, mediaError);
+                    }
+                }
+            }
+
+            // Add sub-parts to the mystery object
+            if (mysteryObjectSubParts.length > 0) {
+                console.log(`Adding ${mysteryObjectSubParts.length} sub-parts to mystery object`);
+                
+                // Process sub-parts sequentially to avoid race conditions
+                for (let i = 0; i < mysteryObjectSubParts.length; i++) {
+                    try {
+                        console.log(`Adding sub-part ${i+1}/${mysteryObjectSubParts.length}`);
+                        
+                        // Create a clean object suitable for the API
+                        const cleanSubPart = prepareSubPartForApi(mysteryObjectSubParts[i]);
+                        
+                        const subPartResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/subParts`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(cleanSubPart),
+                            credentials: 'include'
+                        });
+                        
+                        if (!subPartResponse.ok) {
+                            console.error(`Failed to add sub-part ${i+1}:`, subPartResponse.status, subPartResponse.statusText);
+                            const errorText = await subPartResponse.text();
+                            console.error('Error response:', errorText);
+                        } else {
+                            console.log(`Sub-part ${i+1} added successfully`);
+                        }
+                    } catch (subPartError) {
+                        console.error(`Error adding sub-part ${i+1}:`, subPartError);
+                    }
+                }
+            }
+
+            // Update thread store and navigate to home
             threadStore.update(prev => [...prev, responseData]);
             goto('/');
         } catch (error) {
@@ -279,6 +399,11 @@
     function RemovalIcon() {
         return `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
     }
+    
+    // Handle updates from the MysteryObjectSubParts component
+    function handleSubPartsUpdate(event) {
+        mysteryObjectSubParts = event.detail.subParts;
+    }
 </script>
 
 <div class="flex justify-center p-3 sm:p-6 lg:py-10 bg-change dark:bg-dark shifting">
@@ -331,6 +456,18 @@
                     </label>
                     <Query bind:tags={tags} bind:labels={labels} />
                 </div>
+            </div>
+
+            <!-- Sub-parts component -->
+            <div class="mb-5">
+                <h3 class="block text-sm font-medium mb-3">Object Parts (Optional)</h3>
+                <p class="text-sm text-neutral-500 mb-4">You can add parts to your mystery object if it consists of multiple components.</p>
+                
+                <MysteryObjectSubParts 
+                    mysteryObjectId={null}
+                    bind:subParts={mysteryObjectSubParts}
+                    on:update={handleSubPartsUpdate}
+                />
             </div>
 
             <!-- Media upload component -->

@@ -59,11 +59,15 @@ public class SecurityConfig {
                                 "/api/auth/register",
                                 "/api/auth/login",
                                 "/api/auth/**",
-                                "api/posts/getForPostList",
-                                "api/posts/getForPostDetails/**",
-                                "api/posts/searchForPosts**",
-                                "api/comments/**",
-                                "api/mysteryObjects/media/**", // Allow public access to media files
+                                "/api/posts/**",
+                                "/api/posts/getForPostList",
+                                "/api/posts/getForPostDetails/**",
+                                "/api/posts/searchForPosts**",
+                                "/api/posts/create-json", // New JSON endpoint for post creation
+                                "/api/posts/mysteryObjects/**", // New endpoint for mystery object image upload
+                                "/api/comments/**",
+                                "/api/mysteryObjects/media/**", // Allow public access to media files
+                                "/api/mysteryObjects/**",
                                 "v3/api-docs/**",
                                 "/swagger-ui/**").permitAll() // Allow public access to these endpoints
                         .anyRequest().authenticated() // All other requests need authentication

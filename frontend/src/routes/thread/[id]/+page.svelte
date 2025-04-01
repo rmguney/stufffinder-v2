@@ -69,43 +69,16 @@
       if (!response.ok) throw new Error('Failed to fetch post details');
       const postData = await response.json();
       
-      // Process media files into a format the frontend can use
-      const mediaFiles = processMediaFiles(postData);
-      
-      // Update thread store with post data and media files
-      updateThread({
-        id: postData.id,
-        ...postData,
-        mediaFiles: mediaFiles,
-        mysteryObject: postData.mysteryObject ? {
-          description: postData.mysteryObject.description,
-          material: postData.mysteryObject.material,
-          writtenText: postData.mysteryObject.writtenText,
-          color: postData.mysteryObject.color,
-          shape: postData.mysteryObject.shape,
-          descriptionOfParts: postData.mysteryObject.descriptionOfParts,
-          location: postData.mysteryObject.location,
-          hardness: postData.mysteryObject.hardness,
-          timePeriod: postData.mysteryObject.timePeriod,
-          smell: postData.mysteryObject.smell,
-          taste: postData.mysteryObject.taste,
-          texture: postData.mysteryObject.texture,
-          value: postData.mysteryObject.value,
-          originOfAcquisition: postData.mysteryObject.originOfAcquisition,
-          pattern: postData.mysteryObject.pattern,
-          brand: postData.mysteryObject.brand,
-          print: postData.mysteryObject.print,
-          functionality: postData.mysteryObject.functionality,
-          imageLicenses: postData.mysteryObject.imageLicenses,
-          markings: postData.mysteryObject.markings,
-          handmade: postData.mysteryObject.handmade,
-          oneOfAKind: postData.mysteryObject.oneOfAKind,
-          sizeX: postData.mysteryObject.sizeX,
-          sizeY: postData.mysteryObject.sizeY,
-          sizeZ: postData.mysteryObject.sizeZ,
-          weight: postData.mysteryObject.weight,
-          item_condition: postData.mysteryObject.item_condition
-        } : null,
+          // Process media files into a format the frontend can use
+          const mediaFiles = processMediaFiles(postData);
+          
+          // Update thread store with post data and media files
+          updateThread({
+            id: postData.id,
+            ...postData,
+            mediaFiles: mediaFiles,
+            // Use the full mystery object to include subParts
+            mysteryObject: postData.mysteryObject,
         title: postData.title,
         description: postData.description,
         tags: postData.tags || [],

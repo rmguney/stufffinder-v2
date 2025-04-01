@@ -76,8 +76,28 @@
 
   // Passed down to the parent component
   export let tags;
-  export let labels; 
+  export let labels;
   export let selectedCount = 0;
+  let initialTagsSet = false; // Flag to prevent resetting after initial load
+
+  // Reactively update selectedItems when the tags prop changes from the parent
+  $: {
+    // Only run this logic after the component has mounted and if tags is a valid array
+    // and initial tags haven't been set yet or if the incoming tags array is different
+    if (typeof window !== 'undefined' && Array.isArray(tags)) {
+      // Check if the incoming tags are different from the current selectedItems
+      // This prevents unnecessary updates if the parent component re-renders
+      let currentSelectedIds = $selectedItems.map(t => t.id).sort().join(',');
+      let incomingTagIds = tags.map(t => t.id).sort().join(',');
+
+      if (!initialTagsSet || currentSelectedIds !== incomingTagIds) {
+        selectedItems.set(tags);
+        if (tags.length > 0) {
+          initialTagsSet = true; // Mark initial tags as set
+        }
+      }
+    }
+  }
 
   // Function to get SVG icon for removal buttons
   function getRemovalIcon() {

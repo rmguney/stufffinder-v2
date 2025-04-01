@@ -245,8 +245,8 @@ function getColorDisplay(color, colorName) {
   };
 </script>
 
-<Card.Root class={`shadow-md hover:shadow-xl transition duration-200
-  ${variant === "thumb" ? 'bg-opacity-90 hover:bg-opacity-100 w-70 h-70 lg:hover:scale-105' : 'bg-opacity-90 hover:bg-opacity-100'}`}>
+<Card.Root class={`shadow-md hover:shadow-xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
+  ${variant === "thumb" ? 'bg-opacity-90 hover:bg-opacity-100 w-70 h-70 lg:hover:scale-[1.02] hover:-translate-y-1' : 'bg-opacity-90 hover:bg-opacity-100'}`}>
   {#if variant === "thread"}
     <!-- Thread variant layout -->
     <div class="p-4">
@@ -407,11 +407,11 @@ function getColorDisplay(color, colorName) {
               <!-- Carousel navigation buttons -->
               {#if mediaFiles.length > 1}
                 <div class="absolute top-0 bottom-0 left-0 flex items-center z-10">
-                  <button 
-                    on:click={prevMedia}
-                    class="bg-black bg-opacity-40 hover:bg-opacity-60 text-white p-2 rounded-r-lg ml-2 focus:outline-none transform transition hover:scale-110"
-                    aria-label="Previous media"
-                  >
+              <button 
+                on:click={prevMedia}
+                class="bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white p-3 rounded-r-lg ml-2 focus:outline-none transform transition-all duration-200 hover:scale-110 hover:shadow-lg"
+                aria-label="Previous media"
+              >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -421,7 +421,7 @@ function getColorDisplay(color, colorName) {
                 <div class="absolute top-0 bottom-0 right-0 flex items-center z-10">
                   <button 
                     on:click={nextMedia}
-                    class="bg-black bg-opacity-40 hover:bg-opacity-60 text-white p-2 rounded-l-lg mr-2 focus:outline-none transform transition hover:scale-110"
+                    class="bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white p-3 rounded-l-lg mr-2 focus:outline-none transform transition-all duration-200 hover:scale-110 hover:shadow-lg"
                     aria-label="Next media"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -432,7 +432,7 @@ function getColorDisplay(color, colorName) {
                 
                 <!-- Media counter -->
                 <div class="absolute bottom-4 left-0 right-0 flex justify-center z-10">
-                  <div class="bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm">
+                <div class="bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm shadow-sm">
                     {currentMediaIndex + 1} / {mediaFiles.length}
                   </div>
                 </div>
@@ -491,7 +491,8 @@ function getColorDisplay(color, colorName) {
                   {#each mediaFiles as media, i}
                     <button 
                       on:click={() => currentMediaIndex = i}
-                      class="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden focus:outline-none transition-all {i === currentMediaIndex ? 'ring-2 ring-neutral-500 transform scale-110' : 'opacity-60 hover:opacity-100'}"
+                      class="flex-shrink-0 w-16 h-16 rounded-md overflow-hidden focus:outline-none transition-all duration-200 ease-in-out 
+                             {i === currentMediaIndex ? 'ring-2 ring-neutral-500 ring-offset-2 transform scale-110 shadow-md' : 'opacity-60 hover:opacity-100 hover:shadow-sm'}"
                     >
                       {#if media.type === 'image'}
                         <img src={media.url} alt="thumbnail" class="w-full h-full object-cover" />
@@ -713,8 +714,18 @@ function getColorDisplay(color, colorName) {
 </Card.Root>
 
 <style>
-  /* Add smooth transition for carousel */
+  /* Modern transitions and animations */
   .carousel-container {
-    transition: all 0.3s ease-in-out;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Fade-in animation for cards */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .card-animate {
+    animation: fadeIn 0.4s ease-out;
   }
 </style>

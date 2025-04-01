@@ -28,8 +28,7 @@
     let attributeValues = {
         material: '',
         shape: '',
-        color: '',
-        colorHex: '#ffffff', // Add hex value storage
+        color: '', 
         texture: '',
         weight: '',
         smell: '',

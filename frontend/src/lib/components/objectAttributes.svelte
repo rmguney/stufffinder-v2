@@ -57,14 +57,14 @@
         attributeValues[attrId] = value;
         dispatch('valuechange', { attributeValues });
     }
-
+    
     // Handle color change specifically to store both name and hex
     function handleColorChange(event) {
         attributeValues.color = event.detail.color;
         attributeValues.colorHex = event.detail.hex; // Store hex separately
         dispatch('valuechange', { attributeValues });
     }
-
+    
     // Handle material selection
     function handleMaterialChange(event) {
         updateAttributeValue('material', event.detail.value);
@@ -92,10 +92,12 @@
     <Button 
         variant="outline" 
         on:click={() => showAttributeSelector = !showAttributeSelector} 
-        class="w-full p-2 border dark:border-gray-600 rounded mb-4 transition-all hover:bg-neutral-50 dark:hover:bg-neutral-800 flex justify-center items-center gap-2 
-               {showAttributeSelector ? 'ring-2 dark:ring-neutral-50 ring-neutral-800' : ''}"
+        class="w-full p-2 border dark:border-gray-600 rounded mb-4 transition-all hover:bg-neutral-50 dark:hover:bg-neutral-800 flex justify-center items-center gap-2 {showAttributeSelector ? 'ring-2 dark:ring-neutral-50 ring-neutral-800' : ''}"
     >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
         <span class="text-sm">Add Attribute</span>
     </Button>
     
@@ -107,14 +109,16 @@
                 <button 
                     class="text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300" 
                     on:click={() => showAttributeSelector = false}
-                    aria-label="Close selector">
+                    aria-label="Close selector"
+                >
                     ✕
                 </button>
             </div>
             {#each availableToAdd as attribute}
                 <button 
                     class="block w-full text-left p-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded transition-colors text-sm"
-                    on:click={() => addAttribute(attribute.id)}>
+                    on:click={() => addAttribute(attribute.id)}
+                >
                     {attribute.label}
                 </button>
             {/each}
@@ -129,7 +133,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
             {#each activeAttributes as attrId}
                 {@const attr = availableAttributes.find(a => a.id === attrId)}
-                
+                {#if attr} <!-- Add check to ensure attr is found -->
                 <div class="relative p-3 rounded-md border bg-neutral-50 dark:bg-neutral-900 dark:border-neutral-700 transition-all hover:shadow-sm {attr.type === 'dimensions' ? 'col-span-1 sm:col-span-2' : ''}">
                     <!-- Updated Remove button with consistent styling -->
                     <button 
@@ -147,7 +151,8 @@
                             id={attrId} 
                             bind:value={attributeValues[attrId]} 
                             on:change={() => dispatch('valuechange', { attributeValues })}
-                            class="w-full p-2 rounded border dark:border-neutral-600 dark:bg-neutral-950 text-sm">
+                            class="w-full p-2 rounded border dark:border-neutral-600 dark:bg-neutral-950 text-sm"
+                        >
                             {#each attr.options as option}
                                 <option value={option.value}>{option.label}</option>
                             {/each}
@@ -235,6 +240,7 @@
                         />
                     {/if}
                 </div>
+                {/if} <!-- End check for attr -->
             {/each}
         </div>
     {:else}

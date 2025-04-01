@@ -75,7 +75,6 @@ public class MediaFileController {
                 mediaFile.setFileName(file.getOriginalFilename());
                 mediaFile.setFileType(file.getContentType());
                 mediaFile.setFileUrl(fileUrl);
-                mediaFile.setFileData(file.getBytes()); // Store locally as well for faster access
                 
                 // Save the media file
                 MediaFile savedFile = mediaFileRepository.save(mediaFile);
@@ -100,24 +99,13 @@ public class MediaFileController {
     public ResponseEntity<?> getMedia(@PathVariable Long mediaId) {
         return mediaFileRepository.findById(mediaId)
             .map(mediaFile -> {
-                if (mediaFile.getFileData() != null) {
-                    ByteArrayResource resource = new ByteArrayResource(mediaFile.getFileData());
-                    
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.add(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=" + mediaFile.getFileName());
-                    
-                    return ResponseEntity.ok()
-                        .headers(headers)
-                        .contentLength(mediaFile.getFileData().length)
-                        .contentType(MediaType.parseMediaType(mediaFile.getFileType()))
-                        .body(resource);
-                } else if (mediaFile.getFileUrl() != null) {
-                    // If no data in database, redirect to GCS URL
+                if (mediaFile.getFileUrl() != null) {
+                    // Redirect to GCS URL
                     HttpHeaders headers = new HttpHeaders();
                     headers.add(HttpHeaders.LOCATION, mediaFile.getFileUrl());
                     return new ResponseEntity<>(headers, HttpStatus.FOUND);
                 } else {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Media not found");
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Media URL not found");
                 }
             })
             .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Media not found"));

@@ -22,14 +22,6 @@ export function processMediaFiles(item) {
       });
     });
   } 
-  // Handle single base64 image from mystery object (legacy support)
-  else if (item.mysteryObject?.image) {
-    mediaFiles.push({
-      type: 'image',
-      url: `data:image/png;base64,${item.mysteryObject.image}`,
-      name: 'Main Image'
-    });
-  } 
   // Handle image URL from mystery object
   else if (item.mysteryObject?.imageUrl) {
     mediaFiles.push({

@@ -31,3 +31,11 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# === Emacs auto-generated files ===
+*~
+\#*\#
+.\#*
+*.elc
+auto-save-list/
+tramp/

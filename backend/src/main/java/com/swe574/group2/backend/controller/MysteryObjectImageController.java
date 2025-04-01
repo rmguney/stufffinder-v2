@@ -63,10 +63,8 @@ public class MysteryObjectImageController {
                 // For permanently public images, use this instead:
                 String imageUrl = String.format("https://storage.googleapis.com/%s/%s", bucketName, fileName);
                 
-                // Update the mystery object with the image URL
+                // Update the mystery object with the image URL only
                 mysteryObject.setImageUrl(imageUrl);
-                // Set the binary image data to null to save space
-                mysteryObject.setImage(imageFile.getBytes());
                 mysteryObjectRepository.save(mysteryObject);
 
                 Map<String, String> response = new HashMap<>();

@@ -87,7 +87,7 @@
           }
         }
       }
-      
+
       // Update thread store with post data and media files
       updateThread({
         id: postData.id,

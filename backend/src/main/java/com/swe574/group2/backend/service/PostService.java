@@ -11,6 +11,7 @@ import com.swe574.group2.backend.dto.PostDetailsDto;
 import com.swe574.group2.backend.dto.PostListDto;
 import com.swe574.group2.backend.dto.SearchResultDto;
 import com.swe574.group2.backend.dto.MediaFileDto;
+import com.swe574.group2.backend.dto.MysteryObjectDto;
 import com.swe574.group2.backend.entity.Comment;
 import com.swe574.group2.backend.entity.MediaFile;
 import com.swe574.group2.backend.entity.MysteryObject;
@@ -94,13 +95,26 @@ public class PostService {
         post.setUser(userRepository.findByEmail(userName).orElseThrow());
 
         MysteryObject mysteryObject = postCreationDto.getMysteryObject();
-
-        if (mysteryObject.getImage() != null) {
-            // Decode the Base64 image
-            mysteryObject.setImage(Base64.getDecoder().decode(mysteryObject.getImage()));
+        
+        // Handle sub-parts if any
+        List<MysteryObject> subParts = new ArrayList<>();
+        if (mysteryObject.getSubParts() != null && !mysteryObject.getSubParts().isEmpty()) {
+            // Save the sub-parts temporarily
+            subParts.addAll(mysteryObject.getSubParts());
+            // Clear the sub-parts from the object so we can save it first
+            mysteryObject.setSubParts(new ArrayList<>());
         }
 
         mysteryObjectRepository.save(mysteryObject);
+        
+        // Now add sub-parts if any
+        if (!subParts.isEmpty()) {
+            for (MysteryObject subPart : subParts) {
+                mysteryObject.addSubPart(subPart);
+            }
+            mysteryObjectRepository.save(mysteryObject);
+        }
+        
         post.setMysteryObject(mysteryObject);
 
         Post savedPost = postRepository.save(post);
@@ -140,8 +154,6 @@ public class PostService {
         }
 
         postRepository.save(post);
-
-
 
         Map<String, Long> response = new HashMap<>();
         response.put("postId", post.getId());
@@ -300,7 +312,8 @@ public class PostService {
         postDetailsDto.setTitle(post.getTitle());
         postDetailsDto.setDescription(post.getDescription());
         postDetailsDto.setTags(tags);
-        postDetailsDto.setMysteryObject(post.getMysteryObject());
+        postDetailsDto.setMysteryObject(post.getMysteryObject() != null ? 
+                                        MysteryObjectDto.fromEntity(post.getMysteryObject()) : null);
         postDetailsDto.setCreatedAt(post.getCreatedAt());
         postDetailsDto.setUpdatedAt(post.getUpdatedAt());
         postDetailsDto.setUpvotes(post.getUpvotesCount());
@@ -327,8 +340,14 @@ public class PostService {
         return posts.stream()
                 .map(post -> {
                     Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
-                    PostListDto postListDto = new PostListDto(post.getId(), post.getUser().getUsername(),
-                            post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
+                    PostListDto postListDto = new PostListDto(
+                        post.getId(), 
+                        post.getUser().getUsername(),
+                        post.getTitle(), 
+                        post.getDescription(), 
+                        null, // Removed image reference 
+                        post.isSolved()
+                    );
                     postListDto.setTags(tags);
                     postListDto.setCreatedAt(post.getCreatedAt());
                     return postListDto;

@@ -69,16 +69,16 @@
       if (!response.ok) throw new Error('Failed to fetch post details');
       const postData = await response.json();
       
-          // Process media files into a format the frontend can use
-          const mediaFiles = processMediaFiles(postData);
-          
-          // Update thread store with post data and media files
-          updateThread({
-            id: postData.id,
-            ...postData,
-            mediaFiles: mediaFiles,
-            // Use the full mystery object to include subParts
-            mysteryObject: postData.mysteryObject,
+      // Process media files into a format the frontend can use
+      const mediaFiles = processMediaFiles(postData);
+      
+      // Update thread store with post data and media files
+      updateThread({
+        id: postData.id,
+        ...postData,
+        mediaFiles: mediaFiles,
+        // Use the full mystery object to include subParts
+        mysteryObject: postData.mysteryObject,
         title: postData.title,
         description: postData.description,
         tags: postData.tags || [],

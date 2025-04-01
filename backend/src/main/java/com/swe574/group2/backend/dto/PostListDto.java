@@ -12,16 +12,16 @@ public class PostListDto {
     private String title;
     private String description;
     private Set<String> tags;
-    private byte[] mysteryObjectImage;
+    private String mysteryObjectImageUrl;
     private boolean isSolved;
     private LocalDateTime createdAt;
 
-    public PostListDto(Long id, String author, String title, String description, byte[] mysteryObjectImage, boolean isSolved) {
+    public PostListDto(Long id, String author, String title, String description, String mysteryObjectImageUrl, boolean isSolved) {
         this.id = id;
         this.author = author;
         this.title = title;
         this.description = description;
-        this.mysteryObjectImage = mysteryObjectImage;
+        this.mysteryObjectImageUrl = mysteryObjectImageUrl;
         this.isSolved = isSolved;
     }
 

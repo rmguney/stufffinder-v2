@@ -168,7 +168,6 @@ public class PostController {
         
         // Update the mystery object with the image URL
         mysteryObject.setImageUrl(imageUrl);
-        mysteryObject.setImage(image.getBytes());
         postService.saveMysteryObject(mysteryObject);
     }
 
@@ -206,7 +205,6 @@ public class PostController {
         mediaFile.setFileName(file.getOriginalFilename());
         mediaFile.setFileType(file.getContentType());
         mediaFile.setFileUrl(fileUrl);
-        mediaFile.setFileData(file.getBytes());
         
         mediaFileRepository.save(mediaFile);
     }

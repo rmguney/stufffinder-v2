@@ -95,11 +95,6 @@ public class PostService {
         post.setUser(userRepository.findByEmail(userName).orElseThrow());
 
         MysteryObject mysteryObject = postCreationDto.getMysteryObject();
-
-        if (mysteryObject.getImage() != null) {
-            // Decode the Base64 image
-            mysteryObject.setImage(Base64.getDecoder().decode(mysteryObject.getImage()));
-        }
         
         // Handle sub-parts if any
         List<MysteryObject> subParts = new ArrayList<>();
@@ -159,8 +154,6 @@ public class PostService {
         }
 
         postRepository.save(post);
-
-
 
         Map<String, Long> response = new HashMap<>();
         response.put("postId", post.getId());
@@ -347,8 +340,14 @@ public class PostService {
         return posts.stream()
                 .map(post -> {
                     Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
-                    PostListDto postListDto = new PostListDto(post.getId(), post.getUser().getUsername(),
-                            post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
+                    PostListDto postListDto = new PostListDto(
+                        post.getId(), 
+                        post.getUser().getUsername(),
+                        post.getTitle(), 
+                        post.getDescription(), 
+                        null, // Removed image reference 
+                        post.isSolved()
+                    );
                     postListDto.setTags(tags);
                     postListDto.setCreatedAt(post.getCreatedAt());
                     return postListDto;

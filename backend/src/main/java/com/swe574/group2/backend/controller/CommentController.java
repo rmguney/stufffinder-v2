@@ -113,7 +113,6 @@ public class CommentController {
                 mediaFile.setFileName(file.getOriginalFilename());
                 mediaFile.setFileType(file.getContentType());
                 mediaFile.setFileUrl(fileUrl);
-                mediaFile.setFileData(file.getBytes()); // Store locally as well for faster access
                 
                 // Save the media file
                 MediaFile savedFile = mediaFileRepository.save(mediaFile);

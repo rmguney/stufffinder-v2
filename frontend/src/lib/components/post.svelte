@@ -310,7 +310,7 @@ function handleMediaError(event) {
               <div class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {#each Object.entries(mysteryObject) as [key, value]}
-                    {#if value && !['id', 'images', 'description', 'subParts', 'parent'].includes(key)}
+                    {#if value && !['id', 'images', 'imageUrl', 'description', 'subParts', 'parent'].includes(key)}
                       <div class="bg-white dark:bg-neutral-950 p-3 rounded-md border border-neutral-100 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors">
                         <span class="block text-xs font-medium text-black dark:text-white mb-1">
                           {key.split(/(?=[A-Z])/).join(' ').replace('_', ' ').toUpperCase()}

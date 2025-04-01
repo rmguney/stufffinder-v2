@@ -30,9 +30,6 @@ public class MediaFile {
     @Column(nullable = false)
     private String fileUrl;
     
-    @Lob
-    @Column(columnDefinition = "MEDIUMBLOB")
-    private byte[] fileData;
     
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

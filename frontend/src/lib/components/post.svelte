@@ -381,13 +381,70 @@ function getColorDisplay(color, colorName) {
                               <div class="flex justify-between"><span class="text-neutral-500">Material:</span> <span>{part.material}</span></div>
                             {/if}
                             {#if part.color}
-                              <div class="flex justify-between"><span class="text-neutral-500">Color:</span> <span>{part.color}</span></div>
+                              <div class="flex justify-between">
+                                <span class="text-neutral-500">Color:</span> 
+                                <span>
+                                  {#if isHexColor(part.color)}
+                                    <span class="w-3 h-3 inline-block rounded border mr-1" style="background-color: {part.color};"></span>
+                                  {/if}
+                                  {part.color}
+                                </span>
+                              </div>
                             {/if}
                             {#if part.shape}
                               <div class="flex justify-between"><span class="text-neutral-500">Shape:</span> <span>{part.shape}</span></div>
                             {/if}
                             {#if part.texture}
                               <div class="flex justify-between"><span class="text-neutral-500">Texture:</span> <span>{part.texture}</span></div>
+                            {/if}
+                            {#if part.writtenText}
+                              <div class="flex justify-between"><span class="text-neutral-500">Written Text:</span> <span>{part.writtenText}</span></div>
+                            {/if}
+                            {#if part.hardness}
+                              <div class="flex justify-between"><span class="text-neutral-500">Hardness:</span> <span>{part.hardness}</span></div>
+                            {/if}
+                            {#if part.timePeriod}
+                              <div class="flex justify-between"><span class="text-neutral-500">Time Period:</span> <span>{part.timePeriod}</span></div>
+                            {/if}
+                            {#if part.smell}
+                              <div class="flex justify-between"><span class="text-neutral-500">Smell:</span> <span>{part.smell}</span></div>
+                            {/if}
+                            {#if part.taste}
+                              <div class="flex justify-between"><span class="text-neutral-500">Taste:</span> <span>{part.taste}</span></div>
+                            {/if}
+                            {#if part.value}
+                              <div class="flex justify-between"><span class="text-neutral-500">Value:</span> <span>${part.value}</span></div>
+                            {/if}
+                            {#if part.pattern}
+                              <div class="flex justify-between"><span class="text-neutral-500">Pattern:</span> <span>{part.pattern}</span></div>
+                            {/if}
+                            {#if part.brand}
+                              <div class="flex justify-between"><span class="text-neutral-500">Brand:</span> <span>{part.brand}</span></div>
+                            {/if}
+                            {#if part.print}
+                              <div class="flex justify-between"><span class="text-neutral-500">Print:</span> <span>{part.print}</span></div>
+                            {/if}
+                            {#if part.handmade}
+                              <div class="flex justify-between"><span class="text-neutral-500">Handmade:</span> <span>Yes</span></div>
+                            {/if}
+                            {#if part.oneOfAKind}
+                              <div class="flex justify-between"><span class="text-neutral-500">One of a Kind:</span> <span>Yes</span></div>
+                            {/if}
+                            {#if part.item_condition}
+                              <div class="flex justify-between"><span class="text-neutral-500">Condition:</span> <span>{part.item_condition}</span></div>
+                            {/if}
+                            {#if part.sizeX || part.sizeY || part.sizeZ}
+                              <div class="flex justify-between">
+                                <span class="text-neutral-500">Dimensions:</span> 
+                                <span>
+                                  {#if part.sizeX}{part.sizeX}{/if}
+                                  {#if part.sizeY}x{part.sizeY}{/if}
+                                  {#if part.sizeZ}x{part.sizeZ}{/if} cm
+                                </span>
+                              </div>
+                            {/if}
+                            {#if part.weight}
+                              <div class="flex justify-between"><span class="text-neutral-500">Weight:</span> <span>{part.weight}g</span></div>
                             {/if}
                           </div>
                         </div>

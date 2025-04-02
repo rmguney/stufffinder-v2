@@ -11,7 +11,8 @@
   import { PUBLIC_API_URL } from "$env/static/public";
   import { processMediaFiles, processCommentMediaFiles } from '$lib/utils/mediaUtils';
   import Resolution from "$lib/components/resolution.svelte";
-
+  import { goto } from '$app/navigation';
+  
   export let data;
   let comment = '';
   let thread;
@@ -122,7 +123,7 @@
           }
         }
       }
-      
+
       // Update thread store with post data and media files
       updateThread({
         id: postData.id,
@@ -492,6 +493,21 @@
         solved={thread.solved}
         variant="thread"
       />
+    {/if}
+
+    {#if thread && $activeUser === thread.author}
+      <div class="mt-4 flex justify-end">
+        <Button 
+          variant="outline"
+          class="text-xs py-1 px-3 hover:bg-rose-900 hover:text-white transition-colors"
+          on:click={() => goto(`/edit/${thread.id}`)}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+          </svg>
+          Edit Post
+        </Button>
+      </div>
     {/if}
     
     {#if !thread.solved && $activeUser}

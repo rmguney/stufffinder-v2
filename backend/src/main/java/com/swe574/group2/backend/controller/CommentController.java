@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
+import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api/comments")
@@ -113,7 +114,6 @@ public class CommentController {
                 mediaFile.setFileName(file.getOriginalFilename());
                 mediaFile.setFileType(file.getContentType());
                 mediaFile.setFileUrl(fileUrl);
-                mediaFile.setFileData(file.getBytes()); // Store locally as well for faster access
                 
                 // Save the media file
                 MediaFile savedFile = mediaFileRepository.save(mediaFile);
@@ -157,5 +157,18 @@ public class CommentController {
         }
         
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/edit/{commentId}")
+    public ResponseEntity<?> editComment(
+            @PathVariable Long commentId,
+            @RequestBody CommentCreateDto commentCreateDto,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            Map<String, Long> response = commentService.editComment(commentId, commentCreateDto, userDetails.getUsername());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 }

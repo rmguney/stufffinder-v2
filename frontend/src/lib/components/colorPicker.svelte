@@ -5,6 +5,7 @@
     export let hexValue = "#ffffff";
     let selectedHexColor = hexValue || "#ffffff";
     let isLoadingColorName = false;
+    let colorInputElement; // Reference to the color input
     
     const dispatch = createEventDispatcher();
     
@@ -60,18 +61,33 @@
         selectedHexColor = sanitizeHexColor(event.target.value);
         fetchColorName(selectedHexColor);
     }
+    
+    // Function to open the color picker
+    function openColorPicker() {
+        if (colorInputElement) {
+            colorInputElement.click();
+        }
+    }
 </script>
 
-<div class="flex flex-col sm:flex-row sm:items-center gap-3">
+<div class="flex items-center gap-3">
     <input 
+        bind:this={colorInputElement}
         type="color"
         id="color-picker"
         value={selectedHexColor}
         on:change={handleColorChange}
-        class="w-full sm:w-14 h-10 border-none p-0 cursor-pointer rounded"
+        class="sr-only"
         aria-label="Select color"
     />
-    <div class="flex items-center gap-2 flex-1 mt-2 sm:mt-0 border rounded p-2 bg-white dark:bg-neutral-800">
+    <div 
+        class="flex items-center gap-2 flex-1 border rounded p-2 bg-white dark:bg-neutral-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-700"
+        on:click={openColorPicker}
+        on:keydown={(e) => e.key === 'Enter' && openColorPicker()}
+        tabindex="0"
+        role="button"
+        aria-label="Open color picker"
+    >
         <div 
             class="w-6 h-6 rounded border"
             style="background-color: {selectedHexColor};"

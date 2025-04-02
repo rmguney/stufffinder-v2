@@ -16,7 +16,7 @@
         title={thread.title}
         description=" "
         tags={thread.tags || []}
-        imageSrc={thread.mysteryObjectImage ? `data:image/png;base64,${thread.mysteryObjectImage}` : ''}
+        imageSrc={thread.mysteryObjectImageUrl ? thread.mysteryObjectImageUrl : ''}
         mediaFiles={thread.mediaFiles || []}
         postedBy={thread.author}
         createdAt={thread.createdAt}

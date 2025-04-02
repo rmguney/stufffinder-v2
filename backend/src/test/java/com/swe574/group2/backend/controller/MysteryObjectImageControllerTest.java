@@ -61,7 +61,7 @@ public class MysteryObjectImageControllerTest {
 
         verify(mysteryObjectRepository).findById(1L);
         verify(mysteryObjectRepository).save(mysteryObject);
-        assertThat(mysteryObject.getImage()).isEqualTo(imageFile.getBytes());
+        assertThat(mysteryObject.getImageUrl()).isNotNull();
     }
 
     @Test

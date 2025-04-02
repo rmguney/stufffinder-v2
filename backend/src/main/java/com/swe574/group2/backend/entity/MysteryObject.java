@@ -2,6 +2,11 @@ package com.swe574.group2.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -104,10 +109,28 @@ public class MysteryObject {
         ANTIQUE
     }
 
-    @Lob
-    @Column(name = "image", columnDefinition = "MEDIUMBLOB")
-    private byte[] image;
-
     @Column(name = "image_url")
     private String imageUrl;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private MysteryObject parent;
+    
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private List<MysteryObject> subParts = new ArrayList<>();
+    
+    // Helper methods for managing relationships
+    public void addSubPart(MysteryObject subPart) {
+        subParts.add(subPart);
+        subPart.setParent(this);
+    }
+    
+    public void removeSubPart(MysteryObject subPart) {
+        subParts.remove(subPart);
+        subPart.setParent(null);
+    }
 }

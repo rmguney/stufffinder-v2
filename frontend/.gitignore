@@ -26,3 +26,11 @@ yarn-error.log*
 *.swp
 *.swo
 .DS_Store
+
+# === Emacs auto-generated files ===
+*~
+\#*\#
+.\#*
+*.elc
+auto-save-list/
+tramp/

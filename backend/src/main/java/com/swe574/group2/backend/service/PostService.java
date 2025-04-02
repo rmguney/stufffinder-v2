@@ -11,6 +11,7 @@ import com.swe574.group2.backend.dto.PostDetailsDto;
 import com.swe574.group2.backend.dto.PostListDto;
 import com.swe574.group2.backend.dto.SearchResultDto;
 import com.swe574.group2.backend.dto.MediaFileDto;
+import com.swe574.group2.backend.dto.MysteryObjectDto;
 import com.swe574.group2.backend.entity.Comment;
 import com.swe574.group2.backend.entity.MediaFile;
 import com.swe574.group2.backend.entity.MysteryObject;
@@ -21,12 +22,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import java.util.stream.Collectors;
-
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -94,13 +96,26 @@ public class PostService {
         post.setUser(userRepository.findByEmail(userName).orElseThrow());
 
         MysteryObject mysteryObject = postCreationDto.getMysteryObject();
-
-        if (mysteryObject.getImage() != null) {
-            // Decode the Base64 image
-            mysteryObject.setImage(Base64.getDecoder().decode(mysteryObject.getImage()));
+        
+        // Handle sub-parts if any
+        List<MysteryObject> subParts = new ArrayList<>();
+        if (mysteryObject.getSubParts() != null && !mysteryObject.getSubParts().isEmpty()) {
+            // Save the sub-parts temporarily
+            subParts.addAll(mysteryObject.getSubParts());
+            // Clear the sub-parts from the object so we can save it first
+            mysteryObject.setSubParts(new ArrayList<>());
         }
 
         mysteryObjectRepository.save(mysteryObject);
+        
+        // Now add sub-parts if any
+        if (!subParts.isEmpty()) {
+            for (MysteryObject subPart : subParts) {
+                mysteryObject.addSubPart(subPart);
+            }
+            mysteryObjectRepository.save(mysteryObject);
+        }
+        
         post.setMysteryObject(mysteryObject);
 
         Post savedPost = postRepository.save(post);
@@ -140,8 +155,6 @@ public class PostService {
         }
 
         postRepository.save(post);
-
-
 
         Map<String, Long> response = new HashMap<>();
         response.put("postId", post.getId());
@@ -300,7 +313,8 @@ public class PostService {
         postDetailsDto.setTitle(post.getTitle());
         postDetailsDto.setDescription(post.getDescription());
         postDetailsDto.setTags(tags);
-        postDetailsDto.setMysteryObject(post.getMysteryObject());
+        postDetailsDto.setMysteryObject(post.getMysteryObject() != null ? 
+                                        MysteryObjectDto.fromEntity(post.getMysteryObject()) : null);
         postDetailsDto.setCreatedAt(post.getCreatedAt());
         postDetailsDto.setUpdatedAt(post.getUpdatedAt());
         postDetailsDto.setUpvotes(post.getUpvotesCount());
@@ -329,8 +343,14 @@ public class PostService {
         return posts.stream()
                 .map(post -> {
                     Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
-                    PostListDto postListDto = new PostListDto(post.getId(), post.getUser().getUsername(),
-                            post.getTitle(), post.getDescription(), post.getMysteryObject().getImage(), post.isSolved());
+                    PostListDto postListDto = new PostListDto(
+                        post.getId(), 
+                        post.getUser().getUsername(),
+                        post.getTitle(), 
+                        post.getDescription(), 
+                        null, // Removed image reference 
+                        post.isSolved()
+                    );
                     postListDto.setTags(tags);
                     postListDto.setCreatedAt(post.getCreatedAt());
                     return postListDto;
@@ -392,5 +412,113 @@ public class PostService {
 
     public MysteryObject saveMysteryObject(MysteryObject mysteryObject) {
         return mysteryObjectRepository.save(mysteryObject);
+    }
+
+    // Add this method to backend/src/main/java/com/swe574/group2/backend/service/PostService.java
+
+    @Transactional
+    public Map<String, Long> updatePost(Long postId, PostCreationDto postUpdateDto, String userName) {
+        User user = userRepository.findByEmail(userName).orElseThrow();
+        Post post = postRepository.findById(postId).orElseThrow();
+        
+        // Verify the user is the owner of the post
+        if (!post.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You don't have permission to update this post");
+        }
+        
+        // Update post details
+        post.setTitle(postUpdateDto.getTitle());
+        post.setDescription(postUpdateDto.getContent());
+        post.setUpdatedAt(LocalDateTime.now());
+        
+        // Handle tags and their labels
+        if (postUpdateDto.getTags() != null && !postUpdateDto.getTags().isEmpty()) {
+            Map<String, String> tagMap = new HashMap<>();
+            Set<String> tags = postUpdateDto.getTags();
+
+            RestTemplate restTemplate = new RestTemplate();
+            ObjectMapper mapper = new ObjectMapper();
+
+            // Process each tag individually
+            for (String tagId : tags) {
+                try {
+                    String url = "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + tagId +
+                            "&props=labels&languages=en&format=json";
+
+                    String response = restTemplate.getForObject(url, String.class);
+                    JsonNode root = mapper.readTree(response);
+                    JsonNode entity = root.path("entities").path(tagId);
+
+                    String label = tagId; // Default fallback
+                    if (!entity.isMissingNode()) {
+                        JsonNode enLabel = entity.path("labels").path("en").path("value");
+                        if (!enLabel.isMissingNode()) {
+                            label = enLabel.asText();
+                        }
+                    }
+
+                    tagMap.put(tagId, label);
+                } catch (Exception e) {
+                    // Log the error and use the tag ID as fallback
+                    System.err.println("Error fetching label for tag " + tagId + ": " + e.getMessage());
+                    tagMap.put(tagId, tagId);
+                }
+            }
+
+            post.setTagMap(tagMap);
+        } else {
+            post.setTagMap(new HashMap<>());
+        }
+        
+        // Update mystery object if provided
+        MysteryObject mysteryObject = post.getMysteryObject();
+        MysteryObject updatedMysteryObject = postUpdateDto.getMysteryObject();
+        
+        if (updatedMysteryObject != null && mysteryObject != null) {
+            // Preserve subparts before updating
+            List<MysteryObject> existingSubParts = new ArrayList<>(mysteryObject.getSubParts());
+            
+            // Update mystery object fields
+            mysteryObject.setDescription(updatedMysteryObject.getDescription());
+            mysteryObject.setMaterial(updatedMysteryObject.getMaterial());
+            mysteryObject.setWrittenText(updatedMysteryObject.getWrittenText());
+            mysteryObject.setColor(updatedMysteryObject.getColor());
+            mysteryObject.setShape(updatedMysteryObject.getShape());
+            mysteryObject.setDescriptionOfParts(updatedMysteryObject.getDescriptionOfParts());
+            mysteryObject.setLocation(updatedMysteryObject.getLocation());
+            mysteryObject.setHardness(updatedMysteryObject.getHardness());
+            mysteryObject.setTimePeriod(updatedMysteryObject.getTimePeriod());
+            mysteryObject.setSmell(updatedMysteryObject.getSmell());
+            mysteryObject.setTaste(updatedMysteryObject.getTaste());
+            mysteryObject.setTexture(updatedMysteryObject.getTexture());
+            mysteryObject.setValue(updatedMysteryObject.getValue());
+            mysteryObject.setOriginOfAcquisition(updatedMysteryObject.getOriginOfAcquisition());
+            mysteryObject.setPattern(updatedMysteryObject.getPattern());
+            mysteryObject.setBrand(updatedMysteryObject.getBrand());
+            mysteryObject.setPrint(updatedMysteryObject.getPrint());
+            mysteryObject.setFunctionality(updatedMysteryObject.getFunctionality());
+            mysteryObject.setImageLicenses(updatedMysteryObject.getImageLicenses());
+            mysteryObject.setMarkings(updatedMysteryObject.getMarkings());
+            mysteryObject.setHandmade(updatedMysteryObject.getHandmade());
+            mysteryObject.setOneOfAKind(updatedMysteryObject.getOneOfAKind());
+            mysteryObject.setSizeX(updatedMysteryObject.getSizeX());
+            mysteryObject.setSizeY(updatedMysteryObject.getSizeY());
+            mysteryObject.setSizeZ(updatedMysteryObject.getSizeZ());
+            mysteryObject.setWeight(updatedMysteryObject.getWeight());
+            mysteryObject.setItem_condition(updatedMysteryObject.getItem_condition());
+            
+            // SubParts are handled separately via MysteryObjectController endpoints
+            // We're not overwriting them here, as they will be managed by separate API calls
+            
+            mysteryObjectRepository.save(mysteryObject);
+        }
+
+        Post savedPost = postRepository.save(post);
+
+        Map<String, Long> response = new HashMap<>();
+        response.put("postId", savedPost.getId());
+        response.put("mysteryObjectId", mysteryObject.getId());
+
+        return response;
     }
 }

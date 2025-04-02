@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 import com.swe574.group2.backend.entity.MysteryObject;
+import com.swe574.group2.backend.dto.MysteryObjectDto;
 
 @Data
 public class SearchResultDto {
@@ -14,7 +15,7 @@ public class SearchResultDto {
     private String title;
     private String description;
     private Set<String> tags;
-    private MysteryObject mysteryObject;
+    private MysteryObjectDto mysteryObject;
     private boolean isSolved;
     private LocalDateTime createdAt;
 
@@ -23,7 +24,7 @@ public class SearchResultDto {
         this.author = author;
         this.title = title;
         this.description = description;
-        this.mysteryObject = mysteryObject;
+        this.mysteryObject = mysteryObject != null ? MysteryObjectDto.fromEntity(mysteryObject) : null;
         this.isSolved = isSolved;
     }
 

@@ -18,6 +18,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import java.util.Optional;
 
 @Service
 public class CommentService {
@@ -185,5 +188,22 @@ public class CommentService {
                 comment.getPost().getId(),
                 comment.isSolving()
         );
+    }
+
+    public Map<String, Long> editComment(Long commentId, CommentCreateDto commentCreateDto, String email) {
+        User user = userRepository.findByEmail(email).orElseThrow();
+        Comment comment = commentRepository.findById(commentId).orElseThrow();
+
+        if (!comment.getUser().equals(user)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not the author of this comment");
+        }
+
+        comment.setContent(commentCreateDto.getContent());
+        Comment savedComment = commentRepository.save(comment);
+
+        Map<String, Long> response = new HashMap<>();
+        response.put("commentId", savedComment.getId());
+
+        return response;
     }
 }

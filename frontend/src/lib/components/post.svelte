@@ -34,6 +34,9 @@
   let isLoadingSubParts = false;
   let subPartsError = null;
 
+  let colorNames = new Map(); // Cache for color names to avoid duplicate API calls
+  let isLoadingColorNames = new Set(); // Track which colors are currently loading
+
   const fetchTagDetails = async () => {
     if (!tags.length) {
       return;
@@ -139,29 +142,46 @@ function isHexColor(str) {
   return /^#([0-9A-Fa-f]{3}){1,2}$/.test(str);
 }
 
-// Get color name or fall back to hex
-function getColorDisplay(color, colorName) {
-  if (!color) return "No color specified";
+// Function to fetch color name from TheColorAPI - similar to colorPicker component
+async function fetchColorName(hexColor) {
+  if (!isHexColor(hexColor)) return null;
   
-  if (colorName) return colorName;
-  
-  if (isHexColor(color)) {
-    try {
-      // Fetch color name on demand if we don't have it
-      getColorNameFromHex(color).then(name => {
-        if (name) {
-          // This is tricky in Svelte, but we'll at least have it for next render
-          if (mysteryObject) mysteryObject._colorName = name;
-        }
-      });
-      // Return hex for now
-      return color;
-    } catch (e) {
-      return color;
-    }
+  // Return from cache if already fetched
+  if (colorNames.has(hexColor)) {
+    return colorNames.get(hexColor);
   }
   
-  return color; // Fall back to whatever was provided
+  isLoadingColorNames.add(hexColor);
+  isLoadingColorNames = isLoadingColorNames; // Trigger reactivity
+  
+  // Remove the # character from hex colors
+  const cleanHex = hexColor.replace('#', '');
+  
+  try {
+    const response = await fetch(`https://www.thecolorapi.com/id?hex=${cleanHex}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch color name');
+    }
+    const data = await response.json();
+    const colorName = data.name?.value || 'Unknown color';
+    
+    // Update cache
+    colorNames.set(hexColor, colorName);
+    
+    // Remove from loading
+    isLoadingColorNames.delete(hexColor);
+    isLoadingColorNames = isLoadingColorNames; // Trigger reactivity
+    
+    return colorName;
+  } catch (error) {
+    console.error('Error fetching color name:', error);
+    
+    // Remove from loading
+    isLoadingColorNames.delete(hexColor);
+    isLoadingColorNames = isLoadingColorNames; // Trigger reactivity
+    
+    return 'Unknown color';
+  }
 }
 
   $: activeUser.subscribe((value) => {
@@ -341,7 +361,7 @@ function getColorDisplay(color, colorName) {
               <div class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {#each Object.entries(mysteryObject) as [key, value]}
-                    {#if value && !['id', 'images', 'imageUrl', 'description', 'subParts', 'parent'].includes(key)}
+                    {#if value && !['id', 'images', 'imageUrl', 'description', 'subParts', 'parent', 'colorName'].includes(key)}
                       <div class="bg-white dark:bg-neutral-950 p-3 rounded-md border border-neutral-100 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors">
                         <span class="block text-xs font-medium text-black dark:text-white mb-1">
                           {key.split(/(?=[A-Z])/).join(' ').replace('_', ' ').toUpperCase()}
@@ -355,6 +375,24 @@ function getColorDisplay(color, colorName) {
                             {value} cm
                           {:else if key === 'weight'}
                             {value}g
+                          {:else if key === 'color' && isHexColor(value)}
+                            <div class="flex items-center gap-2">
+                              <div class="w-4 h-4 rounded border" style="background-color: {value};"></div>
+                              <span class="text-sm">
+                                {#if isLoadingColorNames.has(value)}
+                                  Loading...
+                                {:else}
+                                  {#await fetchColorName(value)}
+                                    Loading...
+                                  {:then colorName}
+                                    {colorName}
+                                    <span class="text-xs opacity-75 ml-1">({value})</span>
+                                  {:catch}
+                                    {value}
+                                  {/await}
+                                {/if}
+                              </span>
+                            </div>
                           {:else}
                             {value}
                           {/if}
@@ -383,11 +421,24 @@ function getColorDisplay(color, colorName) {
                             {#if part.color}
                               <div class="flex justify-between">
                                 <span class="text-neutral-500">Color:</span> 
-                                <span>
+                                <span class="flex items-center gap-1">
                                   {#if isHexColor(part.color)}
-                                    <span class="w-3 h-3 inline-block rounded border mr-1" style="background-color: {part.color};"></span>
+                                    <span class="w-3 h-3 inline-block rounded border" style="background-color: {part.color};"></span>
+                                    {#if isLoadingColorNames.has(part.color)}
+                                      Loading...
+                                    {:else}
+                                      {#await fetchColorName(part.color)}
+                                        Loading...
+                                      {:then colorName}
+                                        {colorName}
+                                        <span class="text-xs opacity-75 ml-1">({part.color})</span>
+                                      {:catch}
+                                        {part.color}
+                                      {/await}
+                                    {/if}
+                                  {:else}
+                                    {part.color}
                                   {/if}
-                                  {part.color}
                                 </span>
                               </div>
                             {/if}
@@ -703,8 +754,21 @@ function getColorDisplay(color, colorName) {
                     <div class="inline-flex items-center gap-2 ml-1">
                       {#if isHexColor(mysteryObject.color)}
                         <span class="w-4 h-4 inline-block rounded border" style="background-color: {mysteryObject.color};"></span>
+                        {#if isLoadingColorNames.has(mysteryObject.color)}
+                          Loading...
+                        {:else}
+                          {#await fetchColorName(mysteryObject.color)}
+                            Loading...
+                          {:then colorName}
+                            {colorName}
+                            <span class="text-xs opacity-75 ml-1">({mysteryObject.color})</span>
+                          {:catch}
+                            {mysteryObject.color}
+                          {/await}
+                        {/if}
+                      {:else}
+                        {mysteryObject.color}
                       {/if}
-                      {getColorDisplay(mysteryObject.color, mysteryObject._colorName)}
                     </div>
                   </li>
                 {/if}

@@ -10,6 +10,7 @@
   import { getAuthHeader } from '$lib/utils/auth';
   import { PUBLIC_API_URL } from "$env/static/public";
   import { processMediaFiles, processCommentMediaFiles } from '$lib/utils/mediaUtils';
+  import Resolution from "$lib/components/resolution.svelte";
 
   export let data;
   let comment = '';
@@ -17,10 +18,19 @@
   let isLoading = false;
   let error = null;
   let comments = [];
+
+  let resolutionDescription = '';
+  let checkedCommentIds = [];
   
   // Simple media upload functionality
   let selectedFiles = [];
   let fileInputRef;
+  //Simple media upload functionality for resolution
+  let selectedResolutionFiles = [];
+  let resolutionFileInputRef;
+
+  let resolution = '';
+  let resolutions = [];
 
   $: commentator = $activeUser || 'Anonymous';
   
@@ -42,6 +52,31 @@
     const files = Array.from(event.target.files);
     if (files.length > 0) {
       selectedFiles = files;
+    }
+  }
+
+  // Reference to the event listener for resolution
+  let refreshResolutionListener;
+
+  // Function to handle file selection for Resolution
+  function handleResolutionFileSelect(event) {
+    const files = Array.from(event.target.files);
+    if (files.length > 0) {
+      selectedResolutionFiles = files;
+    }
+  }
+  
+  function handleToggleSolving(event) {
+    const { commentId, checked } = event.detail;
+    
+    if (checked) {
+      // Add to list if checked
+      if (!checkedCommentIds.includes(commentId)) {
+        checkedCommentIds = [...checkedCommentIds, commentId];
+      }
+    } else {
+      // Remove from list if unchecked
+      checkedCommentIds = checkedCommentIds.filter(id => id !== commentId);
     }
   }
 
@@ -108,7 +143,8 @@
         downvotes: postData.downvotes,
         userUpvoted: postData.userUpvoted,
         userDownvoted: postData.userDownvoted,
-        solved: postData.solved,
+        // solved: postData.solved,
+        solved: thread.solved,
         comments: []
       });
       
@@ -156,6 +192,19 @@
       
       document.addEventListener('refreshComments', refreshCommentListener);
       
+      
+      // Load and organize resolutions
+      await refreshResolutions();
+      
+      // Add event listener for resolution refresh requests
+      refreshResolutionListener = async (event) => {
+        if (event.detail?.threadId === data.id) {
+          await refreshResolutions();
+        }
+      };
+      
+      document.addEventListener('refreshResolutions', refreshResolutionListener);
+      
     } catch (error) {
       console.error('Error fetching thread data:', error);
     }
@@ -165,6 +214,9 @@
     // Clean up the event listener when component is destroyed
     if (refreshCommentListener) {
       document.removeEventListener('refreshComments', refreshCommentListener);
+    }
+    if (refreshResolutionListener) {
+      document.removeEventListener('refreshResolutions', refreshResolutionListener);
     }
   });
 
@@ -215,6 +267,46 @@
       });
     } catch (error) {
       console.error("Error refreshing comments:", error);
+    }
+  }
+
+  // Function to refresh resolutions
+  async function refreshResolutions() {
+    try {
+      const response = await fetch(`${PUBLIC_API_URL}/api/resolution/get/${data.id}`, {
+        headers: {
+          ...getAuthHeader()
+        }
+      });
+      
+      if (!response.ok) throw new Error('Failed to fetch resolutions');
+      const rawResolutions = await response.json();
+
+      resolution = rawResolutions.length > 0 ? {
+        id: rawResolutions[0].id,
+        description: rawResolutions[0].description,
+        createdAt: rawResolutions[0].createdAt,
+        mediaFiles: rawResolutions[0].mediaFiles || []
+      } : null;
+
+      //console.log(resolution);
+      // // Process media files for each resolution
+      // const processResolutionWithMedia = (resolution) => {
+      //   // Process media files for this resolution
+      //   const processedMediaFiles = processResolutionMediaFiles(resolution);
+        
+      //   // Return the resolution with processed media files
+      //   return {
+      //     ...resolution,
+      //     mediaFiles: processedMediaFiles
+      //   };
+      // };
+      
+      // // Process all resolutions
+      // const processedResolutions = rawResolutions.map(resolution => processResolutionWithMedia(resolution));
+      
+    } catch (error) {
+      console.error("Error refreshing resolutions:", error);
     }
   }
 
@@ -291,6 +383,88 @@
       isLoading = false;
     }
   };
+  
+
+  // Enhanced resolution submission with basic media upload
+  let handleResolutionSend = async () => {
+    if (!resolutionDescription.trim() && selectedResolutionFiles.length === 0) {
+      error = "Please write description or attach media";
+      return;
+    }
+
+    isLoading = true;
+    error = null;
+    
+    try {
+      // First, create the resolution description
+      const payload = {
+        description: resolutionDescription,
+        postId: data.id,
+        comments: checkedCommentIds  // This must be an array, NOT a string//selectedCommentIds  // This should be an array of comment IDs
+      };
+      
+      const response = await fetch(`${PUBLIC_API_URL}/api/resolution/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to add resolution: ${errorText}`);
+      }
+      
+      const newResolution = await response.json();
+      const resolutionId = newResolution.resolutionId;
+      
+      // Then, if there are files, upload each one
+      if (selectedResolutionFiles.length > 0) {
+        for (let i = 0; i < selectedResolutionFiles.length; i++) {
+          const file = selectedResolutionFiles[i];
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          try {
+            // Note: This endpoint would need to be implemented on the backend
+            const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/resolution/${resolutionId}/upload-media`, {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (!mediaResponse.ok) {
+              console.error(`Failed to upload file ${i+1} for resolution`);
+            }
+          } catch (mediaError) {
+            console.error(`Error uploading file ${i+1} for resolution:`, mediaError);
+          }
+        }
+      }
+      
+      // Clear the input and files
+      resolutionDescription = '';
+      selectedResolutionFiles = [];
+      if (resolutionFileInputRef) resolutionFileInputRef.value = '';
+      
+      // // Refresh resolution to get updated data including media
+      // await refreshResolutions();
+
+      thread.solved = true;
+      // Fetch post with media files
+      await fetchPostWithMedia(data.id);
+      
+      // Load and organize comments
+      await refreshComments();
+      
+    } catch (err) {
+      console.error('Error submitting resolution:', err);
+      error = err.message || "Failed to submit resolution";
+    } finally {
+      isLoading = false;
+    }
+  };
 
   // Reactive statement to get the current thread from the store
   $: thread = $threadStore.find(thread => thread.id == data.id);
@@ -320,7 +494,7 @@
       />
     {/if}
     
-    {#if $activeUser}
+    {#if !thread.solved && $activeUser}
     <Card.Root class="bg-opacity-90 hover:bg-opacity-100 p-4 mt-4 flex flex-col justify-center items-center">
       <div class="w-full space-y-4">
         <Textarea 
@@ -428,10 +602,17 @@
     {:else}
     <Card.Root class="bg-opacity-90 hover:bg-opacity-100 mt-4">
       <Card.Header>
-        <Card.Title class="text-lg text-center pb-6">Sign in to comment</Card.Title>
+        <Card.Title class="text-lg text-center pb-6">
+          {#if thread.solved}
+            Comments are not allowed for resolved objects.
+          {:else}
+            Sign in to comment
+          {/if}
+        </Card.Title>
       </Card.Header>
     </Card.Root>
     {/if}
+
     <div class="flex flex-col justify-center pt-2">
       <div class="flex items-center mb-1">
         <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-50 dark:bg-neutral-950 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700">
@@ -458,6 +639,9 @@
               userUpvoted={commentItem.userUpvoted}
               userDownvoted={commentItem.userDownvoted}
               mediaFiles={commentItem.mediaFiles || []}
+              solved={thread.solved}
+              solvingComment={commentItem.solving}
+              on:toggleSolving={handleToggleSolving}
             />
           </div>
         {/each}
@@ -472,5 +656,127 @@
         </Card.Root>
       {/if}
     </div>
+
+    
+    {#if !thread.solved && $activeUser == thread.author && comments.length > 0}
+    <Card.Root class="bg-opacity-90 hover:bg-opacity-100 p-4 mt-4 flex flex-col justify-center items-center">
+      <div class="w-full space-y-4">
+        <Textarea 
+          bind:value={resolutionDescription} 
+          class="w-full resize-none p-2" 
+          id="resolution-description"
+          placeholder="Write description explaining the resolution..."
+        />
+        
+        <!-- Simplified file input for resolution media -->
+        <div class="w-full">
+          <div class="flex items-center justify-center gap-2">
+            <div class="flex items-center space-x-2">
+              <input 
+                type="file" 
+                id="resolution-media-upload"
+                bind:this={resolutionFileInputRef}
+                on:change={handleResolutionFileSelect}
+                accept="image/*,video/*,audio/*" 
+                class="hidden" 
+                multiple
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                class="text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                on:click={() => resolutionFileInputRef?.click()}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                </svg>
+                Add Media
+              </Button>
+              {#if selectedResolutionFiles.length > 0}
+                <span class="text-xs text-neutral-500">
+                  {selectedResolutionFiles.length} file{selectedResolutionFiles.length !== 1 ? 's' : ''} selected
+                </span>
+              {/if}
+            </div>
+            
+            <!-- resolution button -->
+            <Button 
+              on:click={handleResolutionSend} 
+              variant="outline"
+              size="sm"
+              class="text-xs hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              disabled={isLoading}
+            >
+              {#if isLoading}
+                <span class="inline-block h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin mr-2"></span>
+                {selectedResolutionFiles.length > 0 ? 'Uploading...' : 'Sending...'}
+              {:else}
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 10-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" clip-rule="evenodd"/>
+              </svg>
+                Resolve Object
+              {/if}
+            </Button>
+          </div>
+          
+          <!-- Simple file preview for resolution -->
+          {#if selectedResolutionFiles.length > 0}
+            <div class="mt-2 flex flex-wrap gap-2">
+              {#each selectedResolutionFiles as file, i}
+                <div class="relative bg-neutral-100 dark:bg-neutral-800 rounded p-1 w-16 h-16 flex items-center justify-center">
+                  {#if file.type.startsWith('image/')}
+                    <img 
+                      src={URL.createObjectURL(file)} 
+                      alt={file.name} 
+                      class="max-w-full max-h-full object-contain"
+                    />
+                  {:else if file.type.startsWith('video/')}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  {:else if file.type.startsWith('audio/')}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                  {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  {/if}
+                  <!-- Remove button -->
+                  <button 
+                    class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs"
+                    on:click={() => {
+                      selectedResolutionFiles = selectedResolutionFiles.filter((_, index) => index !== i);
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              {/each}
+            </div>
+          {/if}
+        </div>
+        
+        {#if error}
+          <p class="text-red-500 text-sm">{error}</p>
+        {/if}
+      </div>
+    </Card.Root>
+    {:else if thread.solved}
+      <div class="flex flex-col justify-center pt-2">
+        <div class="mb-2">
+          <Resolution
+            threadId={data.id}
+            resolutionId={resolution.id}
+            description={resolution.description} 
+            resolutionPostedDate={resolution.createdAt}
+            threadOwner={thread?.author}
+            mediaFiles={resolution.mediaFiles || []}
+          />
+        </div>
+      </div>
+    {/if}
   </div>
 </div>

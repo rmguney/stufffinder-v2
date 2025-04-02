@@ -74,4 +74,7 @@ public class Post {
 
     @Column(nullable = false)
     private boolean solved = false;
+
+    @OneToOne(mappedBy = "post", cascade = CascadeType.ALL)
+    private Resolution resolution;
 }

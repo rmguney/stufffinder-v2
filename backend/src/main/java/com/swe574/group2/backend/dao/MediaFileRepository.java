@@ -7,4 +7,5 @@ import java.util.List;
 public interface MediaFileRepository extends JpaRepository<MediaFile, Long> {
     List<MediaFile> findByMysteryObjectId(Long mysteryObjectId);
     List<MediaFile> findByCommentId(Long commentId);
+    List<MediaFile> findByResolutionId(Long resolutionId);
 }

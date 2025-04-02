@@ -36,4 +36,8 @@ public class MediaFile {
     
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+    
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "resolution_id", nullable = true)
+    private Resolution resolution;
 }

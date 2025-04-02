@@ -66,4 +66,8 @@ public class Comment {
 
     @Column(nullable = false)
     private boolean isBestAnswer = false;
+    
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean solving = false;
+
 }

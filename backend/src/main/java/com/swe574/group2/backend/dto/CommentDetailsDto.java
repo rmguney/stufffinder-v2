@@ -25,10 +25,12 @@ public class CommentDetailsDto {
 
     private Long postId;
 
+    private boolean solving;
+
     public CommentDetailsDto(Long id, String content, String authorName, LocalDateTime createdAt, 
                            LocalDateTime updatedAt, List<CommentDetailsDto> replies, 
                            List<MediaFileDto> mediaFiles, int upvotes, int downvotes, 
-                           boolean userUpvoted, boolean userDownvoted, boolean isBestAnswer, Long postId) {
+                           boolean userUpvoted, boolean userDownvoted, boolean isBestAnswer, Long postId, boolean solving) {
         this.id = id;
         this.content = content;
         this.author = authorName;
@@ -42,6 +44,7 @@ public class CommentDetailsDto {
         this.userDownvoted = userDownvoted;
         this.isBestAnswer = isBestAnswer;
         this.postId = postId;
+        this.solving = solving;
     }
 
     public CommentDetailsDto() {

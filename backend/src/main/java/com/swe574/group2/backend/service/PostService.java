@@ -318,7 +318,9 @@ public class PostService {
 
         postDetailsDto.setUserUpvoted(userUpvoted);
         postDetailsDto.setUserDownvoted(userDownvoted);
-        postDetailsDto.setSolved(post.getBestAnswer() != null);
+        // postDetailsDto.setSolved(post.getBestAnswer() != null);
+        // postDetailsDto.setSolved(post.isSolved());
+        postDetailsDto.setSolved(post.getResolution() != null);
     }
 
     public List<PostListDto> getUserPosts(Long userId) {

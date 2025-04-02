@@ -8,9 +8,11 @@
   import { onMount } from 'svelte';
   import { getAuthHeader } from '$lib/utils/auth';
   import { PUBLIC_API_URL } from "$env/static/public";
+  import { createEventDispatcher } from 'svelte';
 
   // Import Comment for recursion (self-import for recursive component)
   import Comment from "./comment.svelte";
+    import Checkbox from "./ui/checkbox/checkbox.svelte";
 
   // Export props with defaults
   export let commentId;
@@ -25,6 +27,8 @@
   export let downvotes = 0;
   export let userUpvoted = false;
   export let userDownvoted = false;
+  export let solved = false;
+  export let solvingComment = false;
  // export let parentCommentId = null;
   export let mediaFiles = []; // Add mediaFiles array prop
 
@@ -33,6 +37,7 @@
   let replyText = "";
   let replyMediaFiles = []; // Add array for reply media files
   let isUploadingMedia = false;
+
   
   // Add debug variable
   let isOwner = false;
@@ -282,10 +287,16 @@
     console.error("Media failed to load:", event);
 /*     event.target.src = '/placeholder-image.png';
  */  }
+
+  const dispatch = createEventDispatcher();
+  // method for solving comment toggle
+  function toggleSolving(event) {
+    dispatch('toggleSolving', { commentId, checked: event.target.checked });
+  }
 </script>
 
 <div class="flex w-full py-1">
-  <Card.Root class={`w-full bg-opacity-90 hover:bg-opacity-100 relative ${selected ? 'border-2 border-teal-600 dark:border-teal-800' : ''}`}>
+  <Card.Root class={`w-full bg-opacity-90 hover:bg-opacity-100 relative ${selected || solvingComment ? 'border-2 border-teal-600 dark:border-teal-800' : ''}`}>
     <div class="flex flex-col w-full">
       <Card.Header class="p-4">
         <!-- User and metadata header -->
@@ -302,6 +313,15 @@
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
               Best Answer
+            </span>
+          {/if}
+          {#if solvingComment}
+            <span>•</span>
+            <span class="text-teal-800 dark:text-teal-600 font-medium flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              Resolving
             </span>
           {/if}
         </div>
@@ -480,6 +500,17 @@
         >
           {replyInputVisible ? "Cancel" : "Reply"}
         </Button>
+        {#if isOwner && !solved}
+          <div class="form-field">
+            <input 
+              type="checkbox" 
+              id="resolve-by-{commentId}" 
+              on:change={toggleSolving} 
+              checked={solvingComment}
+            >
+            Resolving
+          </div>
+        {/if}
       </div>
 
       <!-- Reply input with media upload -->

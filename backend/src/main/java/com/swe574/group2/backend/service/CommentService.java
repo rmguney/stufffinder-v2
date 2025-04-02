@@ -182,7 +182,8 @@ public class CommentService {
                 userUpvoted,
                 userDownvoted,
                 comment.isBestAnswer(),
-                comment.getPost().getId()
+                comment.getPost().getId(),
+                comment.isSolving()
         );
     }
 }

@@ -37,6 +37,19 @@
   let colorNames = new Map(); // Cache for color names to avoid duplicate API calls
   let isLoadingColorNames = new Set(); // Track which colors are currently loading
 
+  // Updated to include any other possible color name related properties
+  const skipProperties = ['id', 'images', 'imageUrl', 'description', 'subParts', 'parent', 'colorName', 'color_name', 'color_label'];
+
+  // Explicitly check if there's any color name field being generated separately from color
+  function hasColorField(obj) {
+    return Object.keys(obj).some(key => 
+      key === 'color' || 
+      key === 'colorName' || 
+      key === 'color_name' || 
+      key.toLowerCase().includes('colorname')
+    );
+  }
+
   const fetchTagDetails = async () => {
     if (!tags.length) {
       return;
@@ -360,8 +373,13 @@ async function fetchColorName(hexColor) {
             <div class="lg:w-1/2 flex-grow order-2 lg:order-1"> 
               <div class="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {#each Object.entries(mysteryObject) as [key, value]}
-                    {#if value && !['id', 'images', 'imageUrl', 'description', 'subParts', 'parent', 'colorName'].includes(key)}
+                  {#each Object.entries(mysteryObject).filter(([key]) => 
+                    !skipProperties.includes(key) && 
+                    !key.toLowerCase().includes('colorname') && 
+                    key !== 'color_name' &&
+                    key !== 'color_label'
+                  ) as [key, value]}
+                    {#if value}
                       <div class="bg-white dark:bg-neutral-950 p-3 rounded-md border border-neutral-100 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors">
                         <span class="block text-xs font-medium text-black dark:text-white mb-1">
                           {key.split(/(?=[A-Z])/).join(' ').replace('_', ' ').toUpperCase()}
@@ -418,7 +436,7 @@ async function fetchColorName(hexColor) {
                             {#if part.material}
                               <div class="flex justify-between"><span class="text-neutral-500">Material:</span> <span>{part.material}</span></div>
                             {/if}
-                            {#if part.color}
+                            {#if part.color && !key?.toLowerCase?.()?.includes('colorname')}
                               <div class="flex justify-between">
                                 <span class="text-neutral-500">Color:</span> 
                                 <span class="flex items-center gap-1">

@@ -247,7 +247,21 @@ function getColorDisplay(color, colorName) {
               <path d="M5 14l5-5 5 5H5z"/>
             </svg>
           </button>
-          <span class="font-medium text-sm">{upvotes - downvotes}</span>
+          <span class="font-medium text-sm">
+            {#if downvotes > upvotes}
+              <span class="text-rose-600">
+                {downvotes}
+              </span>
+            {:else if upvotes > 0}
+              <span class="text-teal-600">
+                {upvotes}
+              </span>
+            {:else}
+              <span class="text-neutral-500">
+                0
+              </span>
+            {/if}
+          </span>
           <button 
             class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
                    {userDownvoted ? 'text-rose-600' : 'text-neutral-500'}"
@@ -539,20 +553,37 @@ function getColorDisplay(color, colorName) {
               <!-- Voting section -->
               <div class="flex items-center gap-2">
                 <button 
+                  class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
+                         {userUpvoted ? 'text-teal-600' : 'text-neutral-600'}"
+                  on:click={() => handleVote(true)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M5 14l5-5 5 5H5z"/>
                   </svg>
-                  <span>{upvotes}</span>
                 </button>
+                <span class="font-medium text-sm">
+                  {#if downvotes > upvotes}
+                    <span class="text-rose-600">
+                      {downvotes}
+                    </span>
+                  {:else if upvotes > 0}
+                    <span class="text-teal-600">
+                      {upvotes}
+                    </span>
+                  {:else}
+                    <span class="text-neutral-500">
+                      0
+                    </span>
+                  {/if}
+                </span>
                 <button 
-                  class="flex items-center gap-1 {userDownvoted ? 'text-red-600' : ''}"
+                  class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
+                         {userDownvoted ? 'text-rose-600' : 'text-neutral-500'}"
                   on:click={() => handleVote(false)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M5 6l5 5 5-5H5z"/>
                   </svg>
-                  <span>{downvotes}</span>
                 </button>
               </div>
             </div>
@@ -684,10 +715,29 @@ function getColorDisplay(color, colorName) {
           <div class="flex items-center gap-4 text-xs text-neutral-600 dark:text-neutral-400 pt-3 pb-1 border-t border-neutral-100 dark:border-neutral-800 mt-2">
             <!-- Vote count -->
             <div class="flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-              </svg>
-              <span>{upvotes - downvotes} votes</span>
+              {#if downvotes > upvotes}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-rose-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M5 6l5 5 5-5H5z"/>
+                </svg>
+                <span class="text-rose-600">{downvotes} downvotes</span>
+              {:else if upvotes > 0}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-teal-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M5 14l5-5 5 5H5z"/>
+                </svg>
+                <span class="text-teal-600">{upvotes} upvotes</span>
+              {:else}
+                <div class="flex items-center gap-1">
+                  <div class="flex flex-col">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-neutral-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M5 14l5-5 5 5H5z"/>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-neutral-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M5 6l5 5 5-5H5z"/>
+                    </svg>
+                  </div>
+                  <span class="text-neutral-500">0 votes</span>
+                </div>
+              {/if}
             </div>
 
             <!-- Comment count -->

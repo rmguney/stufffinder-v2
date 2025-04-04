@@ -712,9 +712,9 @@ function getColorDisplay(color, colorName) {
 
         <!-- Add comment count and vote count display -->
         {#if variant === "thumb"}
-          <div class="flex items-center gap-4 text-xs text-neutral-600 dark:text-neutral-400 pt-3 pb-1 border-t border-neutral-100 dark:border-neutral-800 mt-2">
+          <div class="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 pt-3 pb-1 border-t border-neutral-100 dark:border-neutral-800 mt-2 min-h-[24px] px-2">
             <!-- Vote count -->
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 h-[24px]">
               {#if downvotes > upvotes}
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-rose-600" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M5 6l5 5 5-5H5z"/>
@@ -727,7 +727,7 @@ function getColorDisplay(color, colorName) {
                 <span class="text-teal-600">{upvotes} upvotes</span>
               {:else}
                 <div class="flex items-center gap-1">
-                  <div class="flex flex-col">
+                  <div class="flex flex-col -my-1 justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-neutral-500" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M5 14l5-5 5 5H5z"/>
                     </svg>
@@ -741,7 +741,7 @@ function getColorDisplay(color, colorName) {
             </div>
 
             <!-- Comment count -->
-            <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1 h-[24px]">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>

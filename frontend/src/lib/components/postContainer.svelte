@@ -14,7 +14,7 @@
       <Post
         id={thread.id}
         title={thread.title}
-        description=" "
+        description={thread.description || ""}
         tags={thread.tags || []}
         imageSrc={thread.mysteryObjectImage ? `data:image/png;base64,${thread.mysteryObjectImage}` : ''}
         mediaFiles={thread.mediaFiles || []}

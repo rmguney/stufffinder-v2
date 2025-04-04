@@ -24,6 +24,7 @@
   export let userDownvoted = false;
   export let createdAt = '';
   export let updatedAt = '';
+  export let commentCount = 0;
 
   let tagDetails = writable([]);
   let currentUser = null; 
@@ -633,38 +634,72 @@ function getColorDisplay(color, colorName) {
           {/if}
         </div>
       {:else}
-        <p class="text-sm line-clamp-2">{description || mysteryObject?.description}</p>
-      {/if}
-
-      <div class={`${variant === "thumb" ? 'overflow-hidden flex justify-center items-center' : ''}`}>
-        <!-- {#if currentUser === postedBy}
-          <Button 
-            on:click={toggleResolved} 
-            class={`${variant === "thumb" ? 'hidden' : 'w-full mt-4 hover:bg-rose-900'}`}>
-            {solved ? "Mark as Unresolved" : "Mark as Resolved"}
-          </Button>
-        {/if} -->
-        
-        {#if thumbnailImage}
-          {#if variant !== "thumb"}
-            <a href={thumbnailImage} target="_blank" rel="noopener noreferrer">
+        <div class={`${variant === "thumb" ? 'overflow-hidden flex justify-center items-center mt-2 rounded-md' : ''}`}>
+          {#if thumbnailImage}
+            {#if variant !== "thumb"}
+              <a href={thumbnailImage} target="_blank" rel="noopener noreferrer">
+                <img 
+                  class="object-cover w-full pt-4" 
+                  src={thumbnailImage} 
+                  alt={title}
+                  on:error={handleImageError}
+                />
+              </a>
+            {:else}
               <img 
-                class="object-cover w-full pt-4" 
+                class="object-cover w-full pt-4 h-48 hover:scale-[1.02] transition-all duration-300" 
                 src={thumbnailImage} 
                 alt={title}
                 on:error={handleImageError}
               />
-            </a>
-          {:else}
-            <img 
-              class="object-cover w-full h-44" 
-              src={thumbnailImage} 
-              alt={title}
-              on:error={handleImageError}
-            />
+            {/if}
           {/if}
+        </div>
+
+      <!-- Add brief description for thumb variant -->
+      {#if variant === "thumb" && description}
+        <div class="pt-3">
+          <p class="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-2">
+            {description}
+          </p>
+        </div>
+      {/if}
+
+        <!-- Add tags display for thumb variant after the image -->
+        {#if variant === "thumb" && $tagDetails.length > 0}
+          <div class="flex flex-wrap gap-1.5 mt-3 mb-1">
+            {#each $tagDetails as tag}
+              <a href={`https://www.wikidata.org/wiki/${tag.id}`} 
+                 target="_blank" 
+                 rel="noopener noreferrer"
+                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800 hover:bg-neutral-200 transition-colors duration-200">
+                {tag.label}
+              </a>
+            {/each}
+          </div>
         {/if}
-      </div>
+
+        <!-- Add comment count and vote count display -->
+        {#if variant === "thumb"}
+          <div class="flex items-center gap-4 text-xs text-neutral-600 dark:text-neutral-400 pt-3 pb-1 border-t border-neutral-100 dark:border-neutral-800 mt-2">
+            <!-- Vote count -->
+            <div class="flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+              </svg>
+              <span>{upvotes - downvotes} votes</span>
+            </div>
+
+            <!-- Comment count -->
+            <div class="flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <span>{commentCount} {commentCount === 1 ? 'comment' : 'comments'}</span>
+            </div>
+          </div>
+        {/if}
+      {/if}
     </Card.Content>
   {/if}
 </Card.Root>

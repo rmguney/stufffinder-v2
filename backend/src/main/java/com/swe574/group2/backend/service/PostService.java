@@ -342,13 +342,17 @@ public class PostService {
                 .map(post -> {
                     Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
                     PostListDto postListDto = new PostListDto(
-                        post.getId(), 
+                        post.getId(),
                         post.getUser().getUsername(),
-                        post.getTitle(), 
-                        post.getDescription(), 
-                        null, // Removed image reference 
-                        post.isSolved()
+                        post.getTitle(),
+                        post.getDescription(),
+                        post.getMysteryObject() != null ? post.getMysteryObject().getImageUrl() : null,
+                        post.isSolved(),
+                        post.getUpvotesCount(),
+                        post.getDownvotesCount(),
+                        (long) post.getComments().size()
                     );
+                    
                     postListDto.setTags(tags);
                     postListDto.setCreatedAt(post.getCreatedAt());
                     return postListDto;

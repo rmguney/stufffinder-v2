@@ -27,6 +27,7 @@
   export let userDownvoted = false;
   export let createdAt = '';
   export let updatedAt = '';
+  export let commentCount = 0;
 
   let tagDetails = writable([]);
   let currentUser = null; 
@@ -296,7 +297,21 @@ async function fetchColorName(hexColor) {
               <path d="M5 14l5-5 5 5H5z"/>
             </svg>
           </button>
-          <span class="font-medium text-sm">{upvotes - downvotes}</span>
+          <span class="font-medium text-sm">
+            {#if downvotes > upvotes}
+              <span class="text-rose-600">
+                {downvotes}
+              </span>
+            {:else if upvotes > 0}
+              <span class="text-teal-600">
+                {upvotes}
+              </span>
+            {:else}
+              <span class="text-neutral-500">
+                0
+              </span>
+            {/if}
+          </span>
           <button 
             class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
                    {userDownvoted ? 'text-rose-600' : 'text-neutral-500'}"
@@ -708,20 +723,37 @@ async function fetchColorName(hexColor) {
               <!-- Voting section -->
               <div class="flex items-center gap-2">
                 <button 
+                  class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
+                         {userUpvoted ? 'text-teal-600' : 'text-neutral-600'}"
+                  on:click={() => handleVote(true)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M5 14l5-5 5 5H5z"/>
                   </svg>
-                  <span>{upvotes}</span>
                 </button>
+                <span class="font-medium text-sm">
+                  {#if downvotes > upvotes}
+                    <span class="text-rose-600">
+                      {downvotes}
+                    </span>
+                  {:else if upvotes > 0}
+                    <span class="text-teal-600">
+                      {upvotes}
+                    </span>
+                  {:else}
+                    <span class="text-neutral-500">
+                      0
+                    </span>
+                  {/if}
+                </span>
                 <button 
-                  class="flex items-center gap-1 {userDownvoted ? 'text-red-600' : ''}"
+                  class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
+                         {userDownvoted ? 'text-rose-600' : 'text-neutral-500'}"
                   on:click={() => handleVote(false)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M5 6l5 5 5-5H5z"/>
                   </svg>
-                  <span>{downvotes}</span>
                 </button>
               </div>
             </div>
@@ -816,38 +848,91 @@ async function fetchColorName(hexColor) {
           {/if}
         </div>
       {:else}
-        <p class="text-sm line-clamp-2">{description || mysteryObject?.description}</p>
-      {/if}
-
-      <div class={`${variant === "thumb" ? 'overflow-hidden flex justify-center items-center' : ''}`}>
-        <!-- {#if currentUser === postedBy}
-          <Button 
-            on:click={toggleResolved} 
-            class={`${variant === "thumb" ? 'hidden' : 'w-full mt-4 hover:bg-rose-900'}`}>
-            {solved ? "Mark as Unresolved" : "Mark as Resolved"}
-          </Button>
-        {/if} -->
-        
-        {#if thumbnailImage}
-          {#if variant !== "thumb"}
-            <a href={thumbnailImage} target="_blank" rel="noopener noreferrer">
+        <div class={`${variant === "thumb" ? 'overflow-hidden flex justify-center items-center mt-2 rounded-md' : ''}`}>
+          {#if thumbnailImage}
+            {#if variant !== "thumb"}
+              <a href={thumbnailImage} target="_blank" rel="noopener noreferrer">
+                <img 
+                  class="object-cover w-full pt-4" 
+                  src={thumbnailImage} 
+                  alt={title}
+                  on:error={handleImageError}
+                />
+              </a>
+            {:else}
               <img 
-                class="object-cover w-full pt-4" 
+                class="object-cover w-full pt-4 h-48 hover:scale-[1.02] transition-all duration-300" 
                 src={thumbnailImage} 
                 alt={title}
                 on:error={handleImageError}
               />
-            </a>
-          {:else}
-            <img 
-              class="object-cover w-full h-44" 
-              src={thumbnailImage} 
-              alt={title}
-              on:error={handleImageError}
-            />
+            {/if}
           {/if}
+        </div>
+
+      <!-- Add brief description for thumb variant -->
+      {#if variant === "thumb" && description}
+        <div class="pt-3">
+          <p class="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-2">
+            {description}
+          </p>
+        </div>
+      {/if}
+
+        <!-- Add tags display for thumb variant after the image -->
+        {#if variant === "thumb" && $tagDetails.length > 0}
+          <div class="flex flex-wrap gap-1.5 mt-3 mb-1">
+            {#each $tagDetails as tag}
+              <a href={`https://www.wikidata.org/wiki/${tag.id}`} 
+                 target="_blank" 
+                 rel="noopener noreferrer"
+                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800 hover:bg-neutral-200 transition-colors duration-200">
+                {tag.label}
+              </a>
+            {/each}
+          </div>
         {/if}
-      </div>
+
+        <!-- Add comment count and vote count display -->
+        {#if variant === "thumb"}
+          <div class="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 pt-3 pb-1 border-t border-neutral-100 dark:border-neutral-800 mt-2 min-h-[24px] px-2">
+            <!-- Vote count -->
+            <div class="flex items-center gap-1.5 h-[24px]">
+              {#if downvotes > upvotes}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-rose-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M5 6l5 5 5-5H5z"/>
+                </svg>
+                <span class="text-rose-600">{downvotes} downvotes</span>
+              {:else if upvotes > 0}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-teal-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M5 14l5-5 5 5H5z"/>
+                </svg>
+                <span class="text-teal-600">{upvotes} upvotes</span>
+              {:else}
+                <div class="flex items-center gap-1">
+                  <div class="flex flex-col -my-1 justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-neutral-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M5 14l5-5 5 5H5z"/>
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-neutral-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M5 6l5 5 5-5H5z"/>
+                    </svg>
+                  </div>
+                  <span class="text-neutral-500">0 votes</span>
+                </div>
+              {/if}
+            </div>
+
+            <!-- Comment count -->
+            <div class="flex items-center gap-1 h-[24px]">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <span>{commentCount} {commentCount === 1 ? 'comment' : 'comments'}</span>
+            </div>
+          </div>
+        {/if}
+      {/if}
     </Card.Content>
   {/if}
 </Card.Root>

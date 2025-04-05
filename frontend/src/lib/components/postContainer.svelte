@@ -14,15 +14,16 @@
       <Post
         id={thread.id}
         title={thread.title}
-        description=" "
+        description={thread.description || ""}
         tags={thread.tags || []}
         imageSrc={thread.mysteryObjectImageUrl ? thread.mysteryObjectImageUrl : ''}
         mediaFiles={thread.mediaFiles || []}
         postedBy={thread.author}
         createdAt={thread.createdAt}
         updatedAt={thread.updatedAt}
-        upvotes={thread.upvotes || 0}
-        downvotes={thread.downvotes || 0}
+        upvotes={thread.upvotesCount || 0}
+        downvotes={thread.downvotesCount || 0}
+        commentCount={thread.commentCount || 0}
         userUpvoted={thread.userUpvoted || false}
         userDownvoted={thread.userDownvoted || false}
         solved={thread.solved}

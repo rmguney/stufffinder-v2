@@ -505,7 +505,7 @@
           </Button>
         {/if}
 
-        {#if currentUser === commentator}
+        {#if currentUser === commentator && !solved}
           <Button
             on:click={() => {
               editMode = !editMode;

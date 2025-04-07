@@ -12,11 +12,13 @@ import java.util.List;
 import java.util.Set;
 
 public interface PostRepository  extends JpaRepository<Post, Long> {
-    @Query("SELECT DISTINCT new com.swe574.group2.backend.dto.PostListDto(p.id, user.username, p.title, p.description, mo.imageUrl, p.solved) " +
-            "FROM Post p " +
-            "LEFT JOIN p.mysteryObject mo " +
-            "LEFT JOIN p.user user")
+    
+    @Query("SELECT DISTINCT new com.swe574.group2.backend.dto.PostListDto(p.id, user.username, p.title, p.description, mo.imageUrl, p.solved, p.upvotesCount, p.downvotesCount, (SELECT COUNT(c) FROM Comment c WHERE c.post = p)) " +
+    "FROM Post p " +
+    "LEFT JOIN p.mysteryObject mo " +
+    "LEFT JOIN p.user user")
     Page<PostListDto> findAllForPostList(Pageable pageable);
+
 
     @Query("SELECT p " +
             "FROM Post p " +

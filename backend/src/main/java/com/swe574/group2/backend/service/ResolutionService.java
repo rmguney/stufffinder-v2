@@ -56,26 +56,27 @@ public class ResolutionService {
             throw new RuntimeException("Some comment IDs are invalid.");
         }
 
+        // Update the post's solved status
+        post.setSolved(true);
+
         Resolution resolution = new Resolution();
         resolution.setDescription(resolutionCreateDto.getDescription());
         resolution.setUser(user);
         resolution.setPost(post);
 
         // Save resolution
-        resolution = resolutionRepository.save(resolution);
+        Resolution savedResolution = resolutionRepository.save(resolution);
 
-        // Update the comments' solved status
-        comments.forEach(comment -> comment.setSolving(true));
+        // Update the comments' resolution id
+        comments.forEach(comment -> comment.setResolution(savedResolution));
 
         // Save updated comments
         commentRepository.saveAll(comments);
-
-        // Update the post's solved status
-        post.setSolved(true);
+        
         postRepository.save(post); // Save the updated post
 
         Map<String, Long> response = new HashMap<>();
-        response.put("resolutionId", resolution.getId());
+        response.put("resolutionId", savedResolution.getId());
 
         return response;
     }

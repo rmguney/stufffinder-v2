@@ -77,4 +77,7 @@ public class Post {
 
     @OneToOne(mappedBy = "post", cascade = CascadeType.ALL)
     private Resolution resolution;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Resolution> resolutions;
 }

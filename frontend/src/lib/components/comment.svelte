@@ -29,7 +29,7 @@
   export let userDownvoted = false;
 
   export let solved = false;
-  export let solvingComment = false;
+  export let resolutionId;
  // export let parentCommentId = null;
 
   export let mediaFiles = []; // Add mediaFiles array prop
@@ -299,8 +299,8 @@
   }
 </script>
 
-<div class="flex w-full py-1">
-  <Card.Root class={`w-full bg-opacity-90 hover:bg-opacity-100 relative ${selected || solvingComment ? 'border-2 border-teal-600 dark:border-teal-800' : ''}`}>
+<div class="flex w-full py-1" id="comment-{commentId}">
+  <Card.Root class={`w-full bg-opacity-90 hover:bg-opacity-100 relative ${selected || resolutionId ? 'border-2 border-teal-600 dark:border-teal-800' : ''}`}>
     <div class="flex flex-col w-full">
       <Card.Header class="p-4">
         <!-- User and metadata header -->
@@ -319,7 +319,7 @@
               Best Answer
             </span>
           {/if}
-          {#if solvingComment}
+          {#if resolutionId}
             <span>•</span>
             <span class="text-teal-800 dark:text-teal-600 font-medium flex items-center gap-1">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -585,8 +585,7 @@
             <input 
               type="checkbox" 
               id="resolve-by-{commentId}" 
-              on:change={toggleSolving} 
-              checked={solvingComment}
+              on:change={toggleSolving}
             >
             Resolving
           </div>

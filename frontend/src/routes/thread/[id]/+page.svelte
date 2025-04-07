@@ -9,7 +9,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { getAuthHeader } from '$lib/utils/auth';
   import { PUBLIC_API_URL } from "$env/static/public";
-  import { processMediaFiles, processCommentMediaFiles } from '$lib/utils/mediaUtils';
+  import { processMediaFiles, processCommentMediaFiles, processResolutionMediaFiles } from '$lib/utils/mediaUtils';
   import ShowResolution from "$lib/components/resolution/show_resolution.svelte";
   import AddNewResolution from "$lib/components/resolution/add_new_resolution.svelte";
   import { goto } from '$app/navigation';
@@ -278,11 +278,19 @@
       if (!response.ok) throw new Error('Failed to fetch resolutions');
       const rawResolutions = await response.json();
 
+      // resolution = rawResolutions.length > 0 ? {
+      //   id: rawResolutions[0].id,
+      //   description: rawResolutions[0].description,
+      //   createdAt: rawResolutions[0].createdAt,
+      //   mediaFiles: rawResolutions[0].mediaFiles || []
+      // } : null;
       resolution = rawResolutions.length > 0 ? {
         id: rawResolutions[0].id,
         description: rawResolutions[0].description,
         createdAt: rawResolutions[0].createdAt,
-        mediaFiles: rawResolutions[0].mediaFiles || []
+        mediaFiles: processResolutionMediaFiles({
+          mediaFiles: rawResolutions[0].mediaFiles || []
+        })
       } : null;
       
     } catch (error) {
@@ -368,10 +376,10 @@
   // resolution submission with media upload
   let handleResolutionSubmit = async (e) => {
     try {
-      const resolution = e.detail;
-      resolutionDescription = resolution.resolutionDescription;
-      selectedResolutionFiles = resolution.selectedResolutionFiles;
-      // First, create the resolution description
+      const tempResolution = e.detail;
+      resolutionDescription = tempResolution.resolutionDescription;
+      selectedResolutionFiles = tempResolution.selectedResolutionFiles;
+      
       const payload = {
         description: resolutionDescription,
         postId: data.id,
@@ -606,7 +614,7 @@
           </svg>
           Comments: {comments.length}
         </div>
-      </div>
+      </div>{@debug comments}
       {#if comments.length > 0}
         {#each comments as commentItem (commentItem.id)}
           <div class="mb-2">
@@ -625,7 +633,7 @@
               userDownvoted={commentItem.userDownvoted}
               mediaFiles={commentItem.mediaFiles || []}
               solved={thread.solved}
-              solvingComment={commentItem.solving}
+              resolutionId={commentItem.resolutionId}
               on:toggleSolving={handleToggleSolving}
             />
           </div>
@@ -660,6 +668,7 @@
         resolutionPostedDate={resolution.createdAt}
         threadOwner={thread?.author}
         mediaFiles={resolution.mediaFiles || []}
+        comments={comments}
       />
     {/if}
   </div>

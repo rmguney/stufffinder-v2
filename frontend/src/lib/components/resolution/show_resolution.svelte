@@ -3,7 +3,6 @@
   import { activeUser } from "../../../userStore";
   import { Button } from "$lib/components/ui/button";
   import { Separator } from "$lib/components/ui/separator";
-  import { createEventDispatcher } from 'svelte';
 
 
   // Export props with defaults
@@ -13,10 +12,10 @@
   export let threadOwner;
   export let threadId;
   
-  export let mediaFiles = []; // Add mediaFiles array prop
+  export let mediaFiles; // Add mediaFiles array prop
+  export let comments;
 
   let currentUser = null;
-  let isUploadingMedia = false;
 
   
   // Add debug variable
@@ -77,9 +76,6 @@
     console.error("Media failed to load:", event);
 /*     event.target.src = '/placeholder-image.png';
  */  }
-
-  //use dispatch for unresolving the post
-  const dispatch = createEventDispatcher();
 </script>
 
 <div class="flex flex-col justify-center pt-2">
@@ -101,7 +97,14 @@
             <div class="text-neutral-900 dark:text-neutral-100">
               {description || "No description"}
             </div>
-
+            {#if comments.length > 0}
+              <span>Resolved by the following comments:</span>
+            {/if}
+            {#each comments as comment}
+              {#if comment.resolutionId == resolutionId}
+                <a href={`#comment-${comment.id}`}>{comment.content}</a>
+              {/if}
+            {/each}
             <!-- Media display section -->
             {#if mediaFiles && mediaFiles.length > 0}
               <div class="mt-4 bg-neutral-100 dark:bg-neutral-900 rounded-lg overflow-hidden">

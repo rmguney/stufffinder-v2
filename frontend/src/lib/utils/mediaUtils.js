@@ -54,3 +54,24 @@ export function processCommentMediaFiles(comment) {
     };
   });
 }
+
+// Process media files for resolutions specifically
+export function processResolutionMediaFiles(resolution) {
+  if (!resolution || !resolution.mediaFiles) return [];
+  
+  return resolution.mediaFiles.map(media => {
+    const fileTypeParts = media.fileType ? media.fileType.split('/') : ['unknown'];
+    const type = fileTypeParts[0] === 'image' ? 'image' : 
+                 fileTypeParts[0] === 'video' ? 'video' : 
+                 fileTypeParts[0] === 'audio' ? 'audio' : 'unknown';
+    
+    return {
+      id: media.id,
+      type: type,
+      // FIX: Change from /api/resolutions/media/ to /api/mysteryObjects/media/
+      url: `${PUBLIC_API_URL}/api/mysteryObjects/media/${media.id}`,
+      name: media.fileName || `Media ${media.id}`,
+      fileType: media.fileType
+    };
+  });
+}

@@ -186,7 +186,7 @@ public class CommentService {
                 userDownvoted,
                 comment.isBestAnswer(),
                 comment.getPost().getId(),
-                comment.isSolving()
+                (comment.getResolution() != null ? comment.getResolution().getId() : null)
         );
     }
 

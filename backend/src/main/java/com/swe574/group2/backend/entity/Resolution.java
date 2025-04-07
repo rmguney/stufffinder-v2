@@ -33,10 +33,13 @@ public class Resolution {
         updatedAt = LocalDateTime.now();
     }
 
-    @OneToOne
-    @JoinColumn(name = "post_id", referencedColumnName = "id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
     @OneToMany(mappedBy = "resolution", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MediaFile> mediaFiles;
+
+    @OneToMany(mappedBy = "resolution", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments;
 }

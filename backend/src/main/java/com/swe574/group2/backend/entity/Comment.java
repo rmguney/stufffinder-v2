@@ -70,4 +70,8 @@ public class Comment {
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean solving = false;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "resolution_id", nullable = true)
+    private Resolution resolution;
+
 }

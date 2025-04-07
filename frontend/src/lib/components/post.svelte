@@ -451,7 +451,7 @@ async function fetchColorName(hexColor) {
                             {#if part.material}
                               <div class="flex justify-between"><span class="text-neutral-500">Material:</span> <span>{part.material}</span></div>
                             {/if}
-                            {#if part.color && !key?.toLowerCase?.()?.includes('colorname')}
+                            {#if part.color && !Object.keys(part).some(k => k.toLowerCase().includes('colorname') && k !== 'color')}
                               <div class="flex justify-between">
                                 <span class="text-neutral-500">Color:</span> 
                                 <span class="flex items-center gap-1">

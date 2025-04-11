@@ -853,7 +853,7 @@ async function fetchColorName(hexColor) {
             {#if variant !== "thumb"}
               <a href={thumbnailImage} target="_blank" rel="noopener noreferrer">
                 <img 
-                  class="object-cover w-full pt-4" 
+                  class="object-cover w-full aspect-[4/3] hover:scale-[1.02] transition-all duration-300"
                   src={thumbnailImage} 
                   alt={title}
                   on:error={handleImageError}
@@ -861,7 +861,7 @@ async function fetchColorName(hexColor) {
               </a>
             {:else}
               <img 
-                class="object-cover w-full pt-4 h-48 hover:scale-[1.02] transition-all duration-300" 
+                class="object-cover w-full aspect-[4/3] hover:scale-[1.02] transition-all duration-300"
                 src={thumbnailImage} 
                 alt={title}
                 on:error={handleImageError}
@@ -873,7 +873,7 @@ async function fetchColorName(hexColor) {
       <!-- Add brief description for thumb variant -->
       {#if variant === "thumb" && description}
         <div class="pt-3">
-          <p class="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-2">
+          <p class="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-1">
             {description}
           </p>
         </div>

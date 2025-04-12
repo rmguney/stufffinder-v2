@@ -6,6 +6,10 @@
     import * as Checkbox from "$lib/components/ui/checkbox";
     import { PUBLIC_API_URL } from "$env/static/public";
     import { onMount, onDestroy } from 'svelte';
+    import { page } from '$app/stores';
+    import PostContainer from '$lib/components/postContainer.svelte';
+    import Pagination from '$lib/components/ui/pagination/pagination.svelte';
+    import { forceRefreshThreads, initializeThreadStore, isLoading } from '../../threadStore.js';
 
     let searchQuery = "";
     let searchResults = [];
@@ -25,6 +29,21 @@
     let selectedExpansions = [];
     let showExpansions = false;
     let allVisibleExpansions = []; // This will hold all expansions that should be visible
+
+    let currentPage = 1;
+    let totalPages = 1;
+    const resultsPerPage = 5;
+    let paginatedResults = [];
+
+    $: {
+        const searchQuery = $page.url.searchParams.get('q');
+        if (searchQuery) {
+            // Arama sonuçlarını getir ve sayfalama yap
+            const startIndex = (currentPage - 1) * resultsPerPage;
+            const endIndex = startIndex + resultsPerPage;
+            // Burada arama sonuçlarını filtreleme ve sayfalama işlemleri yapılacak
+        }
+    }
 
     // Define a list of mystery object attributes to check for matches
     const mysteryObjectAttributes = [
@@ -64,6 +83,8 @@
         } else {
             isInitialLoad = false;
         }
+
+        initializeThreadStore();
     });
 
     // Clean up timeouts when component is destroyed
@@ -311,6 +332,7 @@
             // Only search if query has at least 3 characters
             if (!searchQuery || searchQuery.trim().length < 3) {
                 searchResults = [];
+                paginatedResults = [];
                 loading = false;
                 return;
             }
@@ -337,7 +359,10 @@
                     const data = await response.json();
                     searchResults = data.content || [];
                     
-                    // Collect all unique tag IDs that we haven't fetched yet
+                    totalPages = Math.ceil(searchResults.length / resultsPerPage);
+                    updatePaginatedResults();
+                    
+                    // Collect all unique tag IDs
                     const tagIds = new Set();
                     searchResults.forEach(post => {
                         if (post.tags && Array.isArray(post.tags) && post.tags.length > 0) {
@@ -359,11 +384,22 @@
             } catch (error) {
                 console.error("Error searching posts:", error);
                 searchResults = [];
+                paginatedResults = [];
             }
         } finally {
             loading = false;
             searchPending = false;
         }
+    }
+
+    function updatePaginatedResults() {
+        const startIndex = (currentPage - 1) * resultsPerPage;
+        const endIndex = startIndex + resultsPerPage;
+        paginatedResults = searchResults.slice(startIndex, endIndex);
+    }
+
+    $: if (currentPage) {
+        updatePaginatedResults();
     }
 
     // FIXED: Improved updateSemanticSearch with better state management
@@ -761,7 +797,7 @@
                             <p class="text-gray-500">Type at least 3 characters to search</p>
                         </div>
                     {:else}
-                        {#each searchResults as post}
+                        {#each paginatedResults as post}
                             <a 
                                 href={`/thread/${post.id}`} 
                                 class="block p-4 border rounded-lg hover:border-rose-900 transition-colors duration-200"
@@ -819,6 +855,16 @@
                                 </div>
                             </a>
                         {/each}
+                        
+                        {#if searchResults.length > resultsPerPage}
+                            <div class="mt-8 flex justify-center">
+                                <Pagination 
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={(page) => currentPage = page}
+                                />
+                            </div>
+                        {/if}
                     {/if}
                 </div>
             </div>

@@ -10,18 +10,18 @@
     { value: 'none', label: 'None' },
     { value: 'recent', label: 'Recent' },
     { value: 'oldest', label: 'Oldest' },
-    { value: 'trending', label: 'Most Trending' },
+    { value: 'trending', label: 'Trending' },
     { value: 'resolved', label: 'Resolved' },
     { value: 'unresolved', label: 'Unresolved' },
   ];
+
+  $: selectedOption = sortOptions.find(opt => opt.value === value) || sortOptions[0];
 
   function handleSortChange(newValue) {
     value = newValue;
     onSortChange(newValue);
     isOpen = false;
   }
-
-  $: currentLabel = sortOptions.find(option => option.value === value)?.label || 'None';
 
   // Close dropdown when clicking outside
   let dropdownRef;
@@ -43,9 +43,9 @@
   <button
     type="button"
     on:click|stopPropagation={() => isOpen = !isOpen}
-    class="inline-flex items-center justify-between w-32 px-3 py-1.5 text-xs font-medium bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 focus:outline-none"
+    class="inline-flex items-center justify-between w-40 px-3 py-1.5 text-xs font-medium bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm hover:bg-neutral-50 dark:hover:bg-neutral-800 focus:outline-none"
   >
-    <span class="truncate">{currentLabel}</span>
+    <span class="truncate">Sort by: {selectedOption.label}</span>
     <svg
       class="w-4 h-4 ml-1 text-gray-500 dark:text-gray-400"
       xmlns="http://www.w3.org/2000/svg"
@@ -62,7 +62,7 @@
 
   {#if isOpen}
     <div 
-      class="absolute right-0 z-50 w-32 mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-lg"
+      class="absolute right-0 z-50 w-40 mt-1 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-lg"
     >
       {#each sortOptions as option}
         <button

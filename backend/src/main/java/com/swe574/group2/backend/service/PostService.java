@@ -286,6 +286,8 @@ public class PostService {
                     post.isSolved()
                 );
                 searchResultDto.setTags(tags);
+                searchResultDto.setUpvotesCount(post.getUpvotesCount());
+                searchResultDto.setDownvotesCount(post.getDownvotesCount());
                 return searchResultDto;
             });
         } else {
@@ -302,6 +304,8 @@ public class PostService {
                     post.isSolved()
                 );
                 searchResultDto.setTags(tags);
+                searchResultDto.setUpvotesCount(post.getUpvotesCount());
+                searchResultDto.setDownvotesCount(post.getDownvotesCount());
                 return searchResultDto;
             });
         }

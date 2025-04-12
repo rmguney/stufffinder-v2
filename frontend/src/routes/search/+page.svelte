@@ -10,9 +10,11 @@
     import PostContainer from '$lib/components/postContainer.svelte';
     import Pagination from '$lib/components/ui/pagination/pagination.svelte';
     import { forceRefreshThreads, initializeThreadStore, isLoading } from '../../threadStore.js';
+    import SortDropdown from '$lib/components/SortDropdown.svelte';
 
     let searchQuery = "";
     let searchResults = [];
+    let sortedResults = []; // Sıralanmış sonuçları tutacak yeni array
     let loading = false;
     let semanticLoading = false;
     let searchDebounceTimeout;
@@ -23,6 +25,7 @@
     let browserSide = false; // Flag to check if we're in the browser
     let isInitialLoad = true; // Track if this is the initial load
     let searchPending = false; // Track if a search is already pending
+    let sortValue = 'none';
     
     // Semantic search additions
     let semanticExpansions = [];
@@ -196,7 +199,6 @@
             
             // Process multiple entities to get more diverse results
             const topEntities = searchData.search.slice(0, 3);
-            console.log("Top Wikidata entities found:", topEntities.map(e => `${e.id} (${e.label})`));
             
             // Create a map to track unique results and avoid duplicates
             const uniqueResults = new Map();
@@ -299,7 +301,6 @@
                 .sort((a, b) => b.score - a.score)
                 .slice(0, 10); // Limit to top 10 most relevant results
             
-            console.log("Found semantic expansions:", results);
             return results;
         } catch (error) {
             console.error('Error expanding search terms:', error);
@@ -344,7 +345,6 @@
             
             // Build the expanded search query
             const expandedQuery = buildExpandedQuery();
-            console.log("Searching with expanded query:", expandedQuery);
             
             try {
                 // Use the backend endpoint
@@ -357,7 +357,13 @@
                 // Only update if the query is still the same
                 if (currentQuery === searchQuery.trim()) {
                     const data = await response.json();
-                    searchResults = data.content || [];
+                    
+                    searchResults = (data.content || []).map(post => {
+                        return {
+                            ...post,
+                            isSolved: post.solved === true || post.solved === 'true' || post.solved === 1 || post.solved === '1'
+                        };
+                    });
                     
                     totalPages = Math.ceil(searchResults.length / resultsPerPage);
                     updatePaginatedResults();
@@ -379,7 +385,6 @@
                         await fetchTagLabels(Array.from(tagIds));
                     }
                     
-                    console.log("Search results:", searchResults);
                 }
             } catch (error) {
                 console.error("Error searching posts:", error);
@@ -392,14 +397,73 @@
         }
     }
 
-    function updatePaginatedResults() {
-        const startIndex = (currentPage - 1) * resultsPerPage;
-        const endIndex = startIndex + resultsPerPage;
-        paginatedResults = searchResults.slice(startIndex, endIndex);
+    $: if (searchResults.length > 0) {
+        switch (sortValue) {
+            case 'recent':
+                sortedResults = [...searchResults].sort((a, b) => {
+                    const dateA = new Date(a.createdAt).getTime();
+                    const dateB = new Date(b.createdAt).getTime();
+                    if (dateA === dateB) {
+                        return b.id - a.id;
+                    }
+                    return dateB - dateA;
+                });
+                break;
+            case 'oldest':
+                sortedResults = [...searchResults].sort((a, b) => {
+                    const dateA = new Date(a.createdAt).getTime();
+                    const dateB = new Date(b.createdAt).getTime();
+                    if (dateA === dateB) {
+                        return a.id - b.id;
+                    }
+                    return dateA - dateB;
+                });
+                break;
+            case 'trending':
+                sortedResults = [...searchResults].sort((a, b) => {
+                    const scoreA = (a.upvotesCount || 0) - (a.downvotesCount || 0);
+                    const scoreB = (b.upvotesCount || 0) - (b.downvotesCount || 0);
+                    if (scoreA === scoreB) {
+                        const dateA = new Date(a.createdAt).getTime();
+                        const dateB = new Date(b.createdAt).getTime();
+                        return dateB - dateA;
+                    }
+                    return scoreB - scoreA;
+                });
+                break;
+            case 'resolved':
+                sortedResults = searchResults.filter(post => {
+                    return post.isSolved === true || post.isSolved === 'true' || post.isSolved === 1 || post.isSolved === '1';
+                });
+                break;
+            case 'unresolved':
+                sortedResults = searchResults.filter(post => {
+                    return !(post.isSolved === true || post.isSolved === 'true' || post.isSolved === 1 || post.isSolved === '1');
+                });
+                break;
+            default:
+                sortedResults = [...searchResults];
+        }
+        totalPages = Math.ceil(sortedResults.length / resultsPerPage);
+        updatePaginatedResults();
     }
 
-    $: if (currentPage) {
+    // Sıralama değiştiğinde ilk sayfaya dön
+    $: if (sortValue) {
+        currentPage = 1;
+    }
+
+    // Sayfa değişim fonksiyonu
+    function handlePageChange(newPage) {
+        currentPage = newPage;
         updatePaginatedResults();
+    }
+
+    function updatePaginatedResults() {
+        const start = (currentPage - 1) * resultsPerPage;
+        const end = start + resultsPerPage;
+        paginatedResults = sortedResults.slice(start, end);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // FIXED: Improved updateSemanticSearch with better state management
@@ -664,29 +728,40 @@
     }
     // Initialize lastUrlUpdate
     let lastUrlUpdate = '';
+
+    function handleSortChange(value) {
+        sortValue = value;
+    }
 </script>
 
-<div class="flex justify-center p-6 lg:py-10 bg-change dark:bg-dark shifting">
+<div class="flex justify-center p-4 lg:p-6 lg:py-10 bg-change dark:bg-dark shifting">
     <div class="w-full lg:w-2/3">
         <Card.Root class="bg-opacity-90">
-            <Card.Title class="p-4 text-2xl mt-6 text-center">
+            <Card.Title class="p-4 text-xl lg:text-2xl mt-4 lg:mt-6 text-center">
                 Enhanced Semantic Search
                 <small class="block text-sm mt-2 font-normal opacity-75">
                     Discover objects while leveraging semantic search with Wikidata
                 </small>
             </Card.Title>
             
-            <div class="bg-opacity-95 rounded-lg shadow-lg p-6">
+            <div class="bg-opacity-95 rounded-lg shadow-lg p-4 lg:p-6">
                 <!-- Search Form with submission handling -->
                 <form on:submit={handleSubmit} class="mb-6">
-                    <Input
-                        type="search"
-                        placeholder="Enter search terms..."
-                        bind:value={searchQuery}
-                        class="w-full"
-                        aria-label="Search terms"
-                    />
-                    <button type="submit" class="sr-only">Search</button>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                        <div class="w-full">
+                            <Input
+                                type="search"
+                                placeholder="Enter search terms..."
+                                bind:value={searchQuery}
+                                class="w-full"
+                                aria-label="Search terms"
+                            />
+                            <button type="submit" class="sr-only">Search</button>
+                        </div>
+                        <div class="w-full sm:w-auto">
+                            <SortDropdown bind:value={sortValue} onSortChange={handleSortChange} />
+                        </div>
+                    </div>
                 </form>
                 
                 <!-- IMPROVEMENT 2: Enhanced Semantic Expansions Section with Relevance Indicators -->
@@ -800,52 +875,45 @@
                         {#each paginatedResults as post}
                             <a 
                                 href={`/thread/${post.id}`} 
-                                class="block p-4 border rounded-lg hover:border-rose-900 transition-colors duration-200"
+                                class="block p-3 lg:p-4 border rounded-lg hover:border-rose-900 transition-colors duration-200 mb-4"
                             >
-                                <div class="flex justify-between items-start">
-                                    <h2 class="text-xl font-semibold mb-2">
+                                <div class="flex flex-col sm:flex-row justify-between items-start gap-2">
+                                    <h2 class="text-lg lg:text-xl font-semibold">
                                         {@html highlightMatches(post.title || '')}
                                     </h2>
-                                    {#if post.isSolved}
-                                        <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-xs px-2 py-1 rounded-full font-medium">
-                                            Solved
-                                        </span>
-                                    {/if}
+                                    <div class="flex gap-2">
+                                        {#if post.isSolved}
+                                            <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">
+                                                Solved
+                                            </span>
+                                        {:else}
+                                            <span class="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100 text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">
+                                                Unresolved
+                                            </span>
+                                        {/if}
+                                    </div>
                                 </div>
                                 
-                                <!-- Post description -->
-                                {#if post.description}
-                                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                                        {@html highlightMatches(post.description)}
-                                    </p>
-                                {/if}
-                                
-                                <!-- Mystery object matched attributes -->
-                                {#if post.mysteryObject}
-                                    <div class="mt-3 text-sm">
-                                        <div class="space-y-1.5">
-                                            {#each mysteryObjectAttributes as attr}
-                                                {#if post.mysteryObject[attr.key] && containsAnySearchTerms(post.mysteryObject[attr.key])}
-                                                    <div class="bg-gray-50 dark:bg-gray-800 p-2 rounded">
-                                                        <span class="font-medium text-gray-700 dark:text-gray-300">{attr.label}:</span>
-                                                        <span class="text-gray-800 dark:text-gray-200">
-                                                            {@html highlightMatches(post.mysteryObject[attr.key])}
-                                                        </span>
-                                                    </div>
-                                                {/if}
-                                            {/each}
+                                <!-- Post metadata -->
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-3 text-xs gap-2">
+                                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                                        <p class="text-gray-500">Posted by: {post.author || 'Anonymous'}</p>
+                                        <div class="flex items-center gap-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                            </svg>
+                                            <span class="text-green-500">{post.upvotesCount || 0}</span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                            <span class="text-red-500">{post.downvotesCount || 0}</span>
                                         </div>
                                     </div>
-                                {/if}
-                                
-                                <!-- Post metadata -->
-                                <div class="flex justify-between items-center mt-3 text-xs">
-                                    <p class="text-gray-500">Posted by: {post.author || 'Anonymous'}</p>
                                     {#if post.tags && Array.isArray(post.tags) && post.tags.length > 0}
-                                        <div class="flex gap-1 flex-wrap">
+                                        <div class="flex flex-wrap gap-1">
                                             {#each post.tags as tag}
                                                 {#if tag}
-                                                    <span class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                                                    <span class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-xs">
                                                         {@html highlightMatches(getTagLabel(tag))}
                                                     </span>
                                                 {/if}
@@ -856,12 +924,12 @@
                             </a>
                         {/each}
                         
-                        {#if searchResults.length > resultsPerPage}
+                        {#if sortedResults.length > 5}
                             <div class="mt-8 flex justify-center">
                                 <Pagination 
                                     currentPage={currentPage}
                                     totalPages={totalPages}
-                                    onPageChange={(page) => currentPage = page}
+                                    onPageChange={handlePageChange}
                                 />
                             </div>
                         {/if}

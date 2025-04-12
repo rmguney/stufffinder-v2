@@ -32,20 +32,27 @@
   });
 
   $: sortedPosts = filteredPosts.sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    
     switch (sortBy) {
       case 'recent':
-        return b.id - a.id; // Yüksek ID (yeni) önce
+        if (dateA === dateB) return b.id - a.id;
+        return dateB - dateA;
       case 'oldest':
-        return a.id - b.id; // Düşük ID (eski) önce
+        if (dateA === dateB) return a.id - b.id;
+        return dateA - dateB;
       case 'trending':
         const scoreA = (a.upvotesCount || 0) - (a.downvotesCount || 0);
         const scoreB = (b.upvotesCount || 0) - (b.downvotesCount || 0);
         if (scoreA === scoreB) {
-          return b.id - a.id;
+          if (dateA === dateB) return b.id - a.id;
+          return dateB - dateA;
         }
         return scoreB - scoreA;
       default:
-        return b.id - a.id;
+        if (dateA === dateB) return b.id - a.id;
+        return dateB - dateA;
     }
   });
 

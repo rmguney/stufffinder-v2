@@ -312,8 +312,8 @@
                             <div class="flex justify-between"><span class="text-neutral-500">Material:</span> <span>{part.material}</span></div>
                         {/if}
                         {#if part.color}
-                            <div class="flex justify-between"><span class="text-neutral-500">Color:</span> <span>{part.color}</span></div>
-                        {/if}
+                        <span class="w-3 h-3 inline-block rounded border" style="background-color: {part.color};"></span>
+                        <span>{part.color}</span>                        {/if}
                         {#if part.shape}
                             <div class="flex justify-between"><span class="text-neutral-500">Shape:</span> <span>{part.shape}</span></div>
                         {/if}

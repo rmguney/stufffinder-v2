@@ -21,16 +21,15 @@ public class MediaFile {
     @JoinColumn(name = "comment_id", nullable = true)
     private Comment comment;
     
-    @Column(nullable = false)
+    @Column(nullable = false, name = "file_name")
     private String fileName;
     
-    @Column(nullable = false)
+    @Column(nullable = false, name = "file_type")
     private String fileType;
     
-    @Column(nullable = false)
+    @Column(nullable = false, name = "file_url")
     private String fileUrl;
-    
-    
-    @Column(nullable = false, updatable = false)
+
+    @Column(nullable = false, updatable = false, name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 }

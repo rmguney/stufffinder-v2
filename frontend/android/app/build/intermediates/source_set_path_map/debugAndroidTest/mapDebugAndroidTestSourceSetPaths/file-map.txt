@@ -1,6 +1,6 @@
 app.vercel.stufffinder.test.app-core-1.6.1-0 C:\Users\rmgun\.gradle\caches\8.11.1\transforms\0dfb94e8e9f7930d0d4cbce98a17f1aa\transformed\core-1.6.1\res
 app.vercel.stufffinder.test.app-tracing-1.2.0-1 C:\Users\rmgun\.gradle\caches\8.11.1\transforms\640934fa0c2deb02232fb188bbe4540c\transformed\tracing-1.2.0\res
-app.vercel.stufffinder.test.app-androidTest-2 C:\code\574 Dev Prac\swe574-2025s-g2\frontend\android\app\build\generated\res\resValues\androidTest\debug
-app.vercel.stufffinder.test.app-mergeDebugAndroidTestResources-3 C:\code\574 Dev Prac\swe574-2025s-g2\frontend\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
-app.vercel.stufffinder.test.app-mergeDebugAndroidTestResources-4 C:\code\574 Dev Prac\swe574-2025s-g2\frontend\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
-app.vercel.stufffinder.test.app-debugAndroidTest-5 C:\code\574 Dev Prac\swe574-2025s-g2\frontend\android\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources
+app.vercel.stufffinder.test.app-androidTest-2 C:\code\574 Dev\swe574-2025s-g2\frontend\android\app\build\generated\res\resValues\androidTest\debug
+app.vercel.stufffinder.test.app-mergeDebugAndroidTestResources-3 C:\code\574 Dev\swe574-2025s-g2\frontend\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+app.vercel.stufffinder.test.app-mergeDebugAndroidTestResources-4 C:\code\574 Dev\swe574-2025s-g2\frontend\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+app.vercel.stufffinder.test.app-debugAndroidTest-5 C:\code\574 Dev\swe574-2025s-g2\frontend\android\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources

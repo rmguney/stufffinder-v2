@@ -4,6 +4,23 @@
             "outputFile": "app.vercel.stufffinder.app-mergeDebugResources-25:/values/values.xml",
             "map": [
                 {
+                    "source": "C:\\code\\574 Dev\\swe574-2025s-g2\\frontend\\node_modules\\@capacitor\\android\\capacitor\\build\\intermediates\\packaged_res\\debug\\packageDebugResources\\values\\values.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "100,175,251,331",
+                        "endColumns": "74,75,79,79",
+                        "endOffsets": "170,246,326,406"
+                    },
+                    "to": {
+                        "startLines": "39,40,41,327",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "2725,2800,2876,21429",
+                        "endColumns": "74,75,79,79",
+                        "endOffsets": "2795,2871,2951,21504"
+                    }
+                },
+                {
                     "source": "C:\\Users\\rmgun\\.gradle\\caches\\8.11.1\\transforms\\0c35e3b0c2fe34519a603108fedf6f64\\transformed\\startup-runtime-1.1.1\\res\\values\\values.xml",
                     "from": {
                         "startLines": "2",
@@ -95,22 +112,20 @@
                     }
                 },
                 {
-                    "source": "C:\\code\\574 Dev Prac\\swe574-2025s-g2\\frontend\\android\\app\\src\\main\\res\\values\\styles.xml",
+                    "source": "C:\\code\\574 Dev\\swe574-2025s-g2\\frontend\\android\\app\\src\\main\\res\\values\\strings.xml",
                     "from": {
-                        "startLines": "4,11,18",
-                        "startColumns": "4,4,4",
-                        "startOffsets": "97,424,682",
-                        "endLines": "9,15,20",
-                        "endColumns": "12,12,12",
-                        "endOffsets": "416,672,830"
+                        "startLines": "2,5,4,3",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,228,164,104",
+                        "endColumns": "48,68,63,59",
+                        "endOffsets": "99,292,223,159"
                     },
                     "to": {
-                        "startLines": "337,343,348",
-                        "startColumns": "4,4,4",
-                        "startOffsets": "22199,22483,22732",
-                        "endLines": "342,347,350",
-                        "endColumns": "12,12,12",
-                        "endOffsets": "22478,22727,22878"
+                        "startLines": "318,326,328,331",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "20800,21360,21509,21697",
+                        "endColumns": "48,68,63,59",
+                        "endOffsets": "20844,21424,21568,21752"
                     }
                 },
                 {
@@ -171,40 +186,6 @@
                     }
                 },
                 {
-                    "source": "C:\\code\\574 Dev Prac\\swe574-2025s-g2\\frontend\\android\\app\\src\\main\\res\\values\\strings.xml",
-                    "from": {
-                        "startLines": "2,5,4,3",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "57,233,168,107",
-                        "endColumns": "48,68,63,59",
-                        "endOffsets": "101,297,227,162"
-                    },
-                    "to": {
-                        "startLines": "318,326,328,331",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "20800,21360,21509,21697",
-                        "endColumns": "48,68,63,59",
-                        "endOffsets": "20844,21424,21568,21752"
-                    }
-                },
-                {
-                    "source": "C:\\code\\574 Dev Prac\\swe574-2025s-g2\\frontend\\node_modules\\@capacitor\\android\\capacitor\\build\\intermediates\\packaged_res\\debug\\packageDebugResources\\values\\values.xml",
-                    "from": {
-                        "startLines": "2,3,4,5",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "100,175,251,331",
-                        "endColumns": "74,75,79,79",
-                        "endOffsets": "170,246,326,406"
-                    },
-                    "to": {
-                        "startLines": "39,40,41,327",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "2725,2800,2876,21429",
-                        "endColumns": "74,75,79,79",
-                        "endOffsets": "2795,2871,2951,21504"
-                    }
-                },
-                {
                     "source": "C:\\Users\\rmgun\\.gradle\\caches\\8.11.1\\transforms\\998c918bf96ae2f6a4f5c8c644413a6f\\transformed\\savedstate-1.2.1\\res\\values\\values.xml",
                     "from": {
                         "startLines": "2",
@@ -256,13 +237,32 @@
                     }
                 },
                 {
-                    "source": "C:\\code\\574 Dev Prac\\swe574-2025s-g2\\frontend\\android\\app\\src\\main\\res\\values\\ic_launcher_background.xml",
+                    "source": "C:\\code\\574 Dev\\swe574-2025s-g2\\frontend\\android\\app\\src\\main\\res\\values\\styles.xml",
+                    "from": {
+                        "startLines": "4,11,18",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "93,413,664",
+                        "endLines": "9,15,20",
+                        "endColumns": "12,12,12",
+                        "endOffsets": "407,657,810"
+                    },
+                    "to": {
+                        "startLines": "337,343,348",
+                        "startColumns": "4,4,4",
+                        "startOffsets": "22199,22483,22732",
+                        "endLines": "342,347,350",
+                        "endColumns": "12,12,12",
+                        "endOffsets": "22478,22727,22878"
+                    }
+                },
+                {
+                    "source": "C:\\code\\574 Dev\\swe574-2025s-g2\\frontend\\android\\app\\src\\main\\res\\values\\ic_launcher_background.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
-                        "startOffsets": "57",
+                        "startOffsets": "55",
                         "endColumns": "56",
-                        "endOffsets": "109"
+                        "endOffsets": "107"
                     },
                     "to": {
                         "startLines": "52",

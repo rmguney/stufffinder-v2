@@ -72,13 +72,13 @@
       loadingComments = true;
       
       // First get the userId from the username
-      const userResponse = await fetch(`${PUBLIC_API_URL}/api/auth/username/${userName}`);
+      const userResponse = await fetch(`https://backend-310608491068.europe-west1.run.app/api/auth/username/${userName}`);
       if (!userResponse.ok) throw new Error('User not found');
       const userData = await userResponse.json();
       userId = userData.userId;
       
       // Fetch user's posts (threads)
-      const postsResponse = await fetch(`${PUBLIC_API_URL}/api/auth/${userId}/posts`);
+      const postsResponse = await fetch(`https://backend-310608491068.europe-west1.run.app/api/auth/${userId}/posts`);
       if (!postsResponse.ok) throw new Error('Failed to fetch posts');
       const postsData = await postsResponse.json();
 
@@ -100,7 +100,7 @@
       await updateTags();
       
       // Fetch user's comments
-      const commentsResponse = await fetch(`${PUBLIC_API_URL}/api/auth/${userId}/comments`);
+      const commentsResponse = await fetch(`https://backend-310608491068.europe-west1.run.app/api/auth/${userId}/comments`);
       if (!commentsResponse.ok) throw new Error('Failed to fetch comments');
       const commentsData = await commentsResponse.json();
       

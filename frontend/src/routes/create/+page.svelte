@@ -243,7 +243,7 @@
 
             // First create the post without files
             console.log("Creating post with JSON data");
-            const createResponse = await fetch(`${PUBLIC_API_URL}/api/posts/create-json`, {
+            const createResponse = await fetch(`https://backend-310608491068.europe-west1.run.app/api/posts/create-json`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -275,7 +275,7 @@
 
                 console.log("Uploading main image");
                 try {
-                    await fetch(`${PUBLIC_API_URL}/api/posts/${responseData.postId}/mysteryObjects/${responseData.mysteryObjectId}/set-image`, {
+                    await fetch(`https://backend-310608491068.europe-west1.run.app/api/posts/${responseData.postId}/mysteryObjects/${responseData.mysteryObjectId}/set-image`, {
                         method: 'POST',
                         body: imageFormData,
                         credentials: 'include'
@@ -299,7 +299,7 @@
 
                     try {
                         console.log(`Uploading media file ${i+1}/${mediaFiles.length}`);
-                        const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/upload-media`, {
+                        const mediaResponse = await fetch(`https://backend-310608491068.europe-west1.run.app/api/mysteryObjects/${responseData.mysteryObjectId}/upload-media`, {
                             method: 'POST',
                             body: mediaFormData,
                             credentials: 'include'
@@ -328,7 +328,7 @@
                         // Create a clean object suitable for the API
                         const cleanSubPart = prepareSubPartForApi(mysteryObjectSubParts[i]);
 
-                        const subPartResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/subParts`, {
+                        const subPartResponse = await fetch(`https://backend-310608491068.europe-west1.run.app/api/mysteryObjects/${responseData.mysteryObjectId}/subParts`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

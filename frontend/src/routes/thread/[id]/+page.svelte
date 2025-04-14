@@ -66,7 +66,7 @@
   async function fetchPostWithMedia(postId) {
     try {
       // Fetch post details
-      const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostDetails/${postId}`);
+      const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/posts/getForPostDetails/${postId}`);
       if (!response.ok) throw new Error('Failed to fetch post details');
       const postData = await response.json();
       
@@ -172,7 +172,7 @@
   // Function to refresh comments
   async function refreshComments() {
     try {
-      const response = await fetch(`${PUBLIC_API_URL}/api/comments/get/${data.id}`, {
+      const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/comments/get/${data.id}`, {
         headers: {
           ...getAuthHeader()
         }
@@ -237,7 +237,7 @@
         parentCommentId: null
       };
       
-      const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
+      const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/comments/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -263,7 +263,7 @@
           
           try {
             // Note: This endpoint would need to be implemented on the backend
-            const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/comments/${commentId}/upload-media`, {
+            const mediaResponse = await fetch(`https://backend-310608491068.europe-west1.run.app/api/comments/${commentId}/upload-media`, {
               method: 'POST',
               body: formData
             });

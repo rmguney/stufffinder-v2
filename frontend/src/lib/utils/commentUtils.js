@@ -64,7 +64,7 @@ export function printCommentHierarchy(comments, depth = 0) {
 
 // Test function to visualize comment structure in console
 export function debugCommentStructure(threadId) {
-  fetch(`${PUBLIC_API_URL}/api/comments/get/${threadId}`)
+  fetch(`https://backend-310608491068.europe-west1.run.app/api/comments/get/${threadId}`)
     .then(response => response.json())
     .then(comments => {
       // console.log('Raw comments:', comments);

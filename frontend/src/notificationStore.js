@@ -32,7 +32,7 @@ export async function fetchNotifications() {
         if (!username) return;
 
         // Get user ID from username
-        const userIdResponse = await fetch(`${PUBLIC_API_URL}/api/auth/username/${username}`, {
+        const userIdResponse = await fetch(`https://backend-310608491068.europe-west1.run.app/api/auth/username/${username}`, {
             headers: getAuthHeader()
         });
         
@@ -44,7 +44,7 @@ export async function fetchNotifications() {
         const userId = userData.userId;
         
         // Fetch notifications for this user
-        const notificationsResponse = await fetch(`${PUBLIC_API_URL}/api/notifications/${userId}`, {
+        const notificationsResponse = await fetch(`https://backend-310608491068.europe-west1.run.app/api/notifications/${userId}`, {
             headers: getAuthHeader()
         });
         
@@ -65,7 +65,7 @@ export async function fetchNotifications() {
 // Function to mark a notification as read
 export async function markAsRead(notificationId) {
     try {
-        const response = await fetch(`${PUBLIC_API_URL}/api/notifications/${notificationId}/read`, {
+        const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/notifications/${notificationId}/read`, {
             method: 'PUT',
             headers: getAuthHeader()
         });

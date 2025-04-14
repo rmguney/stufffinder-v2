@@ -85,7 +85,7 @@ function shouldRefreshCache() {
 export async function fetchThreadsPage(page = 0) {
     try {
         isLoading.set(true);
-        const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostList?page=${page}&size=${PAGE_SIZE}`);
+        const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/posts/getForPostList?page=${page}&size=${PAGE_SIZE}`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -180,7 +180,7 @@ export function updateThread(updatedThread) {
 
 // Update vote count for a thread
 export async function updateThreadVote(threadId, isUpvote) {
-    const endpoint = `${PUBLIC_API_URL}/api/posts/${isUpvote ? 'upvote' : 'downvote'}/${threadId}`;
+    const endpoint = `https://backend-310608491068.europe-west1.run.app/api/posts/${isUpvote ? 'upvote' : 'downvote'}/${threadId}`;
     try {
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -227,7 +227,7 @@ export async function addCommentToThread(threadId, content, parentCommentId = nu
         };
 
         const authToken = getCookie('tokenKey');
-        const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
+        const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/comments/create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -309,7 +309,7 @@ function updateCommentRecursively(comments, commentId, updateFn) {
 
 // Update vote count for a comment
 export async function updateCommentVote(commentId, isUpvote) {
-    const endpoint = `${PUBLIC_API_URL}/api/comments/${isUpvote ? 'upvote' : 'downvote'}/${commentId}`;
+    const endpoint = `https://backend-310608491068.europe-west1.run.app/api/comments/${isUpvote ? 'upvote' : 'downvote'}/${commentId}`;
     try {
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -354,7 +354,7 @@ export async function updateCommentVote(commentId, isUpvote) {
 // Mark a comment as the best answer
 export async function markBestAnswer(postId, commentId) {
     try {
-        const response = await fetch(`${PUBLIC_API_URL}/api/posts/${postId}/markBestAnswer/${commentId}`, {
+        const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/posts/${postId}/markBestAnswer/${commentId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
@@ -398,7 +398,7 @@ export async function loadCommentsForThread(threadId) {
             return commentCache.get(threadId);
         }
         
-        const response = await fetch(`${PUBLIC_API_URL}/api/comments/get/${threadId}`);
+        const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/comments/get/${threadId}`);
         if (!response.ok) throw new Error('Failed to fetch comments');
         
         const rawComments = await response.json();

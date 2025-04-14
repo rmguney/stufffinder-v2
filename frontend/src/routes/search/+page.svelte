@@ -326,7 +326,7 @@
             
             try {
                 // Use the backend endpoint
-                const response = await fetch(`${PUBLIC_API_URL}/api/posts/searchForPosts?q=${encodeURIComponent(expandedQuery)}`);
+                const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/posts/searchForPosts?q=${encodeURIComponent(expandedQuery)}`);
                 
                 if (!response.ok) {
                     throw new Error(`Search request failed: ${response.status}`);

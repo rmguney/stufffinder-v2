@@ -120,7 +120,7 @@
         password: registerPassword
       };
 
-      const response = await fetch(`${PUBLIC_API_URL}/api/auth/register`, {
+      const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -187,7 +187,7 @@
         password: password
       };
 
-      const response = await fetch(`${PUBLIC_API_URL}/api/auth/login`, {
+      const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

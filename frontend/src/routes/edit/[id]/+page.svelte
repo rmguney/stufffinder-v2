@@ -80,7 +80,7 @@
             postId = data.id;
             
             // Fetch post details
-            const response = await fetch(`${PUBLIC_API_URL}/api/posts/getForPostDetails/${postId}`, {
+            const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/posts/getForPostDetails/${postId}`, {
                 headers: getAuthHeader()
             });
             
@@ -301,7 +301,7 @@
             };
 
             // Make the API call to update the post
-            const updateResponse = await fetch(`${PUBLIC_API_URL}/api/posts/update`, {
+            const updateResponse = await fetch(`https://backend-310608491068.europe-west1.run.app/api/posts/update`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -323,7 +323,7 @@
                 const imageFormData = new FormData();
                 imageFormData.append('file', mediaFiles[0].file);
 
-                await fetch(`${PUBLIC_API_URL}/api/posts/${postId}/mysteryObjects/${mysteryObjectId}/set-image`, {
+                await fetch(`https://backend-310608491068.europe-west1.run.app/api/posts/${postId}/mysteryObjects/${mysteryObjectId}/set-image`, {
                     method: 'POST',
                     headers: getAuthHeader(),
                     body: imageFormData
@@ -341,7 +341,7 @@
                 mediaFormData.append('file', mediaItem.file);
                 mediaFormData.append('type', mediaItem.type || 'image');
 
-                await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/upload-media`, {
+                await fetch(`https://backend-310608491068.europe-west1.run.app/api/mysteryObjects/${mysteryObjectId}/upload-media`, {
                     method: 'POST',
                     headers: getAuthHeader(),
                     body: mediaFormData
@@ -357,7 +357,7 @@
                     
                     if (subPart.id) {
                         // Update existing sub-part
-                        await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/subParts/${subPart.id}`, {
+                        await fetch(`https://backend-310608491068.europe-west1.run.app/api/mysteryObjects/${mysteryObjectId}/subParts/${subPart.id}`, {
                             method: 'PUT',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -367,7 +367,7 @@
                         });
                     } else {
                         // Create new sub-part
-                        await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/subParts`, {
+                        await fetch(`https://backend-310608491068.europe-west1.run.app/api/mysteryObjects/${mysteryObjectId}/subParts`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -387,7 +387,7 @@
                     for (const id of originalSubPartIds) {
                         if (!currentSubPartIds.has(id)) {
                             // Delete this sub-part
-                            await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/subParts/${id}`, {
+                            await fetch(`https://backend-310608491068.europe-west1.run.app/api/mysteryObjects/${mysteryObjectId}/subParts/${id}`, {
                                 method: 'DELETE',
                                 headers: getAuthHeader()
                             });

@@ -75,7 +75,7 @@
   const toggleResolved = async () => {
     if (currentUser !== postedBy) return;
     try {
-        const response = await fetch(`${PUBLIC_API_URL}/api/posts/${id}/markSolved`, {
+        const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/posts/${id}/markSolved`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
@@ -222,7 +222,7 @@ async function fetchColorName(hexColor) {
     if (!currentUser) return; // Must be logged in to vote
     
     try {
-      const response = await fetch(`${PUBLIC_API_URL}/api/posts/${isUpvote ? 'upvote' : 'downvote'}/${id}`, {
+      const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/posts/${isUpvote ? 'upvote' : 'downvote'}/${id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

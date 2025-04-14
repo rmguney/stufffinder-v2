@@ -16,7 +16,7 @@ export function processMediaFiles(item) {
       mediaFiles.push({
         id: media.id,
         type: type,
-        url: `${PUBLIC_API_URL}/api/mysteryObjects/media/${media.id}`,
+        url: `https://backend-310608491068.europe-west1.run.app/api/mysteryObjects/media/${media.id}`,
         name: media.fileName || `Media ${media.id}`,
         fileType: media.fileType
       });
@@ -48,7 +48,7 @@ export function processCommentMediaFiles(comment) {
       id: media.id,
       type: type,
       // FIX: Change from /api/comments/media/ to /api/mysteryObjects/media/
-      url: `${PUBLIC_API_URL}/api/mysteryObjects/media/${media.id}`,
+      url: `https://backend-310608491068.europe-west1.run.app/api/mysteryObjects/media/${media.id}`,
       name: media.fileName || `Media ${media.id}`,
       fileType: media.fileType
     };

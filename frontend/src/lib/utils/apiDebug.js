@@ -5,7 +5,7 @@ const debugCommentAPI = {
   async getComments(postId) {
     try {
       // console.log(`Fetching comments for post ${postId}...`);
-      const response = await fetch(`${PUBLIC_API_URL}/api/comments/get/${postId}`);
+      const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/comments/get/${postId}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -39,7 +39,7 @@ const debugCommentAPI = {
       
       // console.log('Payload:', payload);
       
-      const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
+      const response = await fetch(`https://backend-310608491068.europe-west1.run.app/api/comments/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

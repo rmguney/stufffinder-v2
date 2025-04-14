@@ -27,6 +27,9 @@
   export let userDownvoted = false;
   export let mediaFiles = []; // Add mediaFiles array prop
 
+  // Add comment type prop with default value
+  export let commentType = 'QUESTION';
+
   let currentUser = null;
   let replyInputVisible = false;
   let editMode = false;
@@ -284,7 +287,12 @@
 </script>
 
 <div class="flex w-full py-1">
-  <Card.Root class={`w-full bg-opacity-90 hover:bg-opacity-100 relative ${selected ? 'border-2 border-teal-600 dark:border-teal-800' : ''}`}>
+  <Card.Root class={`w-full bg-opacity-90 hover:bg-opacity-100 relative 
+    ${selected ? 'border-2 border-teal-600 dark:border-teal-800' : ''}
+    ${commentType === 'QUESTION' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' : ''}
+    ${commentType === 'SUGGESTION' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}
+    ${commentType === 'STORY' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}
+  `}>
     <div class="flex flex-col w-full">
       <Card.Header class="p-4">
         <!-- User and metadata header -->
@@ -294,6 +302,12 @@
           </a>
           <span>•</span>
           <span>{formatDate(postedDateComment)}</span>
+          <span>•</span>
+          <span class={`capitalize ${commentType === 'QUESTION' ? 'text-yellow-700 dark:text-yellow-300' : 
+            commentType === 'SUGGESTION' ? 'text-green-700 dark:text-green-300' : 
+            'text-blue-700 dark:text-blue-300'}`}>
+            {commentType.toLowerCase()}
+          </span>
           {#if selected}
             <span>•</span>
             <span class="text-teal-800 dark:text-teal-600 font-medium flex items-center gap-1">

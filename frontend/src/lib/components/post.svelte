@@ -438,89 +438,127 @@ async function fetchColorName(hexColor) {
                 <!-- Show Sub-Parts Section if there are any parts to show -->
                 {#if mysteryObjectSubParts && mysteryObjectSubParts.length > 0}
                   <div class="mt-6">
-                    <h4 class="font-medium text-base mb-3">Object Parts</h4>
-                    <div class="space-y-3">
+                    <h4 class="font-medium text-base mb-3 text-neutral-700 dark:text-neutral-300 px-1">Object Parts</h4>
+                    <div class="space-y-4">
                       {#each mysteryObjectSubParts as part (part.id)}
-                        <div class="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md p-3">
-                          <div class="flex justify-between items-start mb-2">
-                            <h5 class="font-medium text-sm">{part.description || 'Unnamed Part'}</h5>
+                        <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow duration-200">
+                          <div class="flex justify-between items-center mb-3 border-b border-neutral-100 dark:border-neutral-800 pb-2">
+                            <h5 class="font-medium text-sm text-neutral-800 dark:text-neutral-200">{part.description || 'Unnamed Part'}</h5>
                           </div>
                           
                           <!-- Attribute summary -->
-                          <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mt-2">
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                             {#if part.material}
-                              <div class="flex justify-between"><span class="text-neutral-500">Material:</span> <span>{part.material}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">MATERIAL</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.material}</span>
+                              </div>
                             {/if}
                             {#if part.color && !Object.keys(part).some(k => k.toLowerCase().includes('colorname') && k !== 'color')}
-                              <div class="flex justify-between">
-                                <span class="text-neutral-500">Color:</span> 
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">COLOR</span>
                                 <span class="flex items-center gap-1">
-                                  {#if isHexColor(part.color)}
-                                    <span class="w-3 h-3 inline-block rounded border" style="background-color: {part.color};"></span>
-                                    {#if isLoadingColorNames.has(part.color)}
-                                      Loading...
-                                    {:else}
-                                      {#await fetchColorName(part.color)}
-                                        Loading...
-                                      {:then colorName}
-                                        {colorName}
-                                        <span class="text-xs opacity-75 ml-1">({part.color})</span>
-                                      {:catch}
-                                        {part.color}
+                                  <span class="w-4 h-4 inline-block rounded border border-neutral-400" style="background-color: {part.color};"></span>
+                                  <span class="text-neutral-900 dark:text-neutral-100">
+                                    {#if isHexColor(part.color) && !isLoadingColorNames.has(part.color)}
+                                      {#await fetchColorName(part.color) then colorName}
+                                        {colorName || part.color}
                                       {/await}
+                                    {:else}
+                                      {part.color}
                                     {/if}
-                                  {:else}
-                                    {part.color}
-                                  {/if}
+                                  </span>
                                 </span>
                               </div>
                             {/if}
                             {#if part.shape}
-                              <div class="flex justify-between"><span class="text-neutral-500">Shape:</span> <span>{part.shape}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">SHAPE</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.shape}</span>
+                              </div>
                             {/if}
                             {#if part.texture}
-                              <div class="flex justify-between"><span class="text-neutral-500">Texture:</span> <span>{part.texture}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">TEXTURE</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.texture}</span>
+                              </div>
                             {/if}
                             {#if part.writtenText}
-                              <div class="flex justify-between"><span class="text-neutral-500">Written Text:</span> <span>{part.writtenText}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">WRITTEN TEXT</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.writtenText}</span>
+                              </div>
                             {/if}
                             {#if part.hardness}
-                              <div class="flex justify-between"><span class="text-neutral-500">Hardness:</span> <span>{part.hardness}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">HARDNESS</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.hardness}</span>
+                              </div>
                             {/if}
                             {#if part.timePeriod}
-                              <div class="flex justify-between"><span class="text-neutral-500">Time Period:</span> <span>{part.timePeriod}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">TIME PERIOD</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.timePeriod}</span>
+                              </div>
                             {/if}
                             {#if part.smell}
-                              <div class="flex justify-between"><span class="text-neutral-500">Smell:</span> <span>{part.smell}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">SMELL</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.smell}</span>
+                              </div>
                             {/if}
                             {#if part.taste}
-                              <div class="flex justify-between"><span class="text-neutral-500">Taste:</span> <span>{part.taste}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">TASTE</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.taste}</span>
+                              </div>
                             {/if}
                             {#if part.value}
-                              <div class="flex justify-between"><span class="text-neutral-500">Value:</span> <span>${part.value}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">VALUE</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">${part.value}</span>
+                              </div>
                             {/if}
                             {#if part.pattern}
-                              <div class="flex justify-between"><span class="text-neutral-500">Pattern:</span> <span>{part.pattern}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">PATTERN</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.pattern}</span>
+                              </div>
                             {/if}
                             {#if part.brand}
-                              <div class="flex justify-between"><span class="text-neutral-500">Brand:</span> <span>{part.brand}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">BRAND</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.brand}</span>
+                              </div>
                             {/if}
                             {#if part.print}
-                              <div class="flex justify-between"><span class="text-neutral-500">Print:</span> <span>{part.print}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">PRINT</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.print}</span>
+                              </div>
                             {/if}
                             {#if part.handmade}
-                              <div class="flex justify-between"><span class="text-neutral-500">Handmade:</span> <span>Yes</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">HANDMADE</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">Yes</span>
+                              </div>
                             {/if}
                             {#if part.oneOfAKind}
-                              <div class="flex justify-between"><span class="text-neutral-500">One of a Kind:</span> <span>Yes</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">ONE OF A KIND</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">Yes</span>
+                              </div>
                             {/if}
                             {#if part.item_condition}
-                              <div class="flex justify-between"><span class="text-neutral-500">Condition:</span> <span>{part.item_condition}</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">CONDITION</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.item_condition}</span>
+                              </div>
                             {/if}
                             {#if part.sizeX || part.sizeY || part.sizeZ}
-                              <div class="flex justify-between">
-                                <span class="text-neutral-500">Dimensions:</span> 
-                                <span>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">DIMENSIONS</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">
                                   {#if part.sizeX}{part.sizeX}{/if}
                                   {#if part.sizeY}x{part.sizeY}{/if}
                                   {#if part.sizeZ}x{part.sizeZ}{/if} cm
@@ -528,7 +566,10 @@ async function fetchColorName(hexColor) {
                               </div>
                             {/if}
                             {#if part.weight}
-                              <div class="flex justify-between"><span class="text-neutral-500">Weight:</span> <span>{part.weight}g</span></div>
+                              <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
+                                <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">WEIGHT</span>
+                                <span class="text-neutral-900 dark:text-neutral-100">{part.weight}g</span>
+                              </div>
                             {/if}
                           </div>
                         </div>
@@ -566,7 +607,7 @@ async function fetchColorName(hexColor) {
                     aria-label="Next media"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7-7" />
                     </svg>
                   </button>
                 </div>

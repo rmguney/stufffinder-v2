@@ -2,6 +2,8 @@ package com.swe574.group2.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -9,6 +11,8 @@ import java.util.Set;
 @Entity
 @Table(name = "users")
 @Data
+@EqualsAndHashCode(exclude = {"createdPosts", "comments", "upvotedPosts", "downvotedPosts", "upvotedComments", "downvotedComments", "notifications"})
+@ToString(exclude = {"createdPosts", "comments", "upvotedPosts", "downvotedPosts", "upvotedComments", "downvotedComments", "notifications"})
 public class User {
 
     @Id

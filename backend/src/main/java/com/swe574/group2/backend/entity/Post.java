@@ -2,6 +2,8 @@ package com.swe574.group2.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +13,8 @@ import java.util.Set;
 @Entity
 @Table(name = "posts")
 @Data
+@EqualsAndHashCode(exclude = {"comments", "upvotedBy", "downvotedBy", "contributingComments"})
+@ToString(exclude = {"comments", "upvotedBy", "downvotedBy", "contributingComments"})
 public class Post {
 
     @Id
@@ -62,9 +66,19 @@ public class Post {
     )
     private Set<User> downvotedBy;
 
-    @OneToOne
-    @JoinColumn(name = "best_answer_id")
-    private Comment bestAnswer;
+    @Column(length = 1000)
+    private String resolutionDescription;
+    
+    @Column(nullable = true)
+    private LocalDateTime resolvedAt;
+    
+    @ManyToMany
+    @JoinTable(
+            name = "post_contributing_comments",
+            joinColumns = @JoinColumn(name = "post_id"),
+            inverseJoinColumns = @JoinColumn(name = "comment_id")
+    )
+    private Set<Comment> contributingComments;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

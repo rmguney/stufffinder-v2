@@ -27,6 +27,9 @@ public class PostDetailsDto {
     private boolean userDownvoted;
 
     private boolean solved;
+    private String resolutionDescription;
+    private LocalDateTime resolvedAt;
+    private List<Long> contributingCommentIds;
 
     public PostDetailsDto(Long id, String author, String title, String description, Set<String> tags, 
                             MysteryObject mysteryObject, LocalDateTime createdAt, LocalDateTime updatedAt, int upvotes, 

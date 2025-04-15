@@ -4,7 +4,7 @@
   import * as Card from "$lib/components/ui/card";
   import Post from '$lib/components/post.svelte';
   import Comment from '$lib/components/comment.svelte';
-  import { threadStore, updateThread, addCommentToThread, loadCommentsForThread } from '../../../threadStore';
+  import { threadStore, updateThread, addCommentToThread, loadCommentsForThread, resolvePost, unresolvePost } from '../../../threadStore';
   import { activeUser } from '../../../userStore';
   import { onMount, onDestroy } from 'svelte';
   import { getAuthHeader } from '$lib/utils/auth';
@@ -36,8 +36,70 @@
     }
   }
 
-  // Reference to the event listener
+  // References to event listeners
   let refreshCommentListener;
+  let refreshPostListener;
+  
+  // Resolution state
+  let showResolutionModal = false;
+  let resolutionDescription = '';
+  let selectedCommentIds = [];
+  let resolutionError = null;
+  
+  // Function to open resolution modal
+  function openResolutionModal() {
+    if ($activeUser !== thread?.author) return;
+    
+    showResolutionModal = true;
+    resolutionDescription = thread?.resolution?.description || '';
+    selectedCommentIds = thread?.resolution?.contributingComments || [];
+  }
+  
+  // Function to handle resolution submission
+  async function handleResolvePost() {
+    if (!resolutionDescription.trim()) {
+      resolutionError = "Please provide a resolution description";
+      return;
+    }
+    
+    try {
+      resolutionError = null;
+      
+      const resolutionData = {
+        description: resolutionDescription,
+        contributingCommentIds: selectedCommentIds
+      };
+      
+      await resolvePost(data.id, resolutionData);
+      
+      // Close modal and refresh
+      showResolutionModal = false;
+      await fetchPostWithMedia(data.id);
+      
+    } catch (error) {
+      console.error('Error resolving post:', error);
+      resolutionError = error.message || 'Failed to resolve post';
+    }
+  }
+  
+  // Function to handle unresolve
+  async function handleUnresolvePost() {
+    try {
+      await unresolvePost(data.id);
+      await fetchPostWithMedia(data.id);
+    } catch (error) {
+      console.error('Error unresolving post:', error);
+    }
+  }
+  
+  // Toggle comment selection for resolution
+  function toggleCommentSelection(commentId) {
+    if (selectedCommentIds.includes(commentId)) {
+      selectedCommentIds = selectedCommentIds.filter(id => id !== commentId);
+    } else {
+      selectedCommentIds = [...selectedCommentIds, commentId];
+    }
+  }
 
   // Function to handle file selection
   function handleFileSelect(event) {
@@ -90,6 +152,16 @@
         }
       }
 
+      // Create resolution object if post is solved
+      let resolution = null;
+      if (postData.solved && postData.resolutionDescription) {
+        resolution = {
+          description: postData.resolutionDescription,
+          resolvedAt: postData.resolvedAt,
+          contributingComments: postData.contributingCommentIds || []
+        };
+      }
+      
       // Update thread store with post data and media files
       updateThread({
         id: postData.id,
@@ -111,6 +183,7 @@
         userUpvoted: postData.userUpvoted,
         userDownvoted: postData.userDownvoted,
         solved: postData.solved,
+        resolution: resolution,
         comments: []
       });
       
@@ -156,7 +229,15 @@
         }
       };
       
+      // Add event listener for post refresh requests
+      refreshPostListener = async (event) => {
+        if (event.detail?.postId === data.id) {
+          await fetchPostWithMedia(data.id);
+        }
+      };
+      
       document.addEventListener('refreshComments', refreshCommentListener);
+      document.addEventListener('refreshPost', refreshPostListener);
       
     } catch (error) {
       console.error('Error fetching thread data:', error);
@@ -164,9 +245,12 @@
   });
   
   onDestroy(() => {
-    // Clean up the event listener when component is destroyed
+    // Clean up the event listeners when component is destroyed
     if (refreshCommentListener) {
       document.removeEventListener('refreshComments', refreshCommentListener);
+    }
+    if (refreshPostListener) {
+      document.removeEventListener('refreshPost', refreshPostListener);
     }
   });
 
@@ -299,6 +383,100 @@
   $: thread = $threadStore.find(thread => thread.id == data.id);
 </script>
 
+<!-- Resolution Modal -->
+{#if showResolutionModal}
+  <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-neutral-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6">
+        <h2 class="text-xl font-semibold mb-4">Resolve Mystery Object</h2>
+        
+        {#if resolutionError}
+          <div class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-md mb-4">
+            {resolutionError}
+          </div>
+        {/if}
+        
+        <div class="mb-4">
+          <label for="resolution-description" class="block text-sm font-medium mb-1.5">Resolution Description*</label>
+          <Textarea 
+            id="resolution-description" 
+            bind:value={resolutionDescription} 
+            class="w-full p-2 border rounded-lg text-sm bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
+            placeholder="Explain how this mystery object was resolved..."
+            rows="4"
+          />
+        </div>
+        
+        <div class="mb-4">
+          <h3 class="text-sm font-medium mb-2">Contributing Comments</h3>
+          <p class="text-xs text-neutral-600 dark:text-neutral-400 mb-2">
+            Select comments that contributed to the resolution:
+          </p>
+          
+          {#if comments.length > 0}
+            <div class="max-h-60 overflow-y-auto border border-neutral-200 dark:border-neutral-700 rounded-lg p-2">
+              {#each comments as comment}
+                <div class="flex items-center gap-2 p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md">
+                  <input 
+                    type="checkbox" 
+                    id={`comment-${comment.id}`}
+                    checked={selectedCommentIds.includes(comment.id)}
+                    on:change={() => toggleCommentSelection(comment.id)}
+                    class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-neutral-300 rounded"
+                  />
+                  <label for={`comment-${comment.id}`} class="flex-1 cursor-pointer">
+                    <div class="text-sm font-medium">{comment.author}</div>
+                    <div class="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-1">{comment.content}</div>
+                  </label>
+                </div>
+                
+                {#if comment.replies && comment.replies.length > 0}
+                  {#each comment.replies as reply}
+                    <div class="flex items-center gap-2 p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md ml-6 border-l-2 border-neutral-200 dark:border-neutral-700 pl-4">
+                      <input 
+                        type="checkbox" 
+                        id={`comment-${reply.id}`}
+                        checked={selectedCommentIds.includes(reply.id)}
+                        on:change={() => toggleCommentSelection(reply.id)}
+                        class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-neutral-300 rounded"
+                      />
+                      <label for={`comment-${reply.id}`} class="flex-1 cursor-pointer">
+                        <div class="text-sm font-medium">{reply.author} <span class="text-xs text-neutral-500">(reply)</span></div>
+                        <div class="text-xs text-neutral-600 dark:text-neutral-400 line-clamp-1">{reply.content}</div>
+                      </label>
+                    </div>
+                  {/each}
+                {/if}
+              {/each}
+            </div>
+          {:else}
+            <div class="text-sm text-neutral-500 dark:text-neutral-400 italic">
+              No comments available to select
+            </div>
+          {/if}
+        </div>
+        
+        <div class="flex justify-end gap-2 mt-6">
+          <Button 
+            variant="outline" 
+            on:click={() => showResolutionModal = false}
+            class="text-sm"
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="default" 
+            on:click={handleResolvePost}
+            class="text-sm bg-teal-600 hover:bg-teal-700"
+          >
+            Resolve
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <div class="flex flex-col items-center bg-change dark:bg-dark shifting p-4 lg:p-8">
   <div class="w-full lg:w-2/3">
     {#if thread}
@@ -319,12 +497,13 @@
         createdAt={thread.createdAt}
         updatedAt={thread.updatedAt}
         solved={thread.solved}
+        resolution={thread.resolution}
         variant="thread"
       />
     {/if}
 
     {#if thread && $activeUser === thread.author}
-      <div class="mt-4 flex justify-end">
+      <div class="mt-4 flex justify-end gap-2">
         <Button 
           variant="outline"
           class="text-xs py-1 px-3 hover:bg-rose-900 hover:text-white transition-colors"
@@ -335,6 +514,30 @@
           </svg>
           Edit Post
         </Button>
+        
+        {#if !thread.solved}
+          <Button 
+            variant="outline"
+            class="text-xs py-1 px-3 border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+            on:click={openResolutionModal}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            Mark as Resolved
+          </Button>
+        {:else}
+          <Button 
+            variant="outline"
+            class="text-xs py-1 px-3 border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+            on:click={handleUnresolvePost}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+            Revert Resolution
+          </Button>
+        {/if}
       </div>
     {/if}
     
@@ -483,7 +686,7 @@
               comment={commentItem.content} 
               commentator={commentItem.author}
               postedDateComment={commentItem.createdAt}
-              selected={commentItem.bestAnswer || false}
+              contributingToResolution={thread?.resolution?.contributingComments?.includes(commentItem.id) || false}
               threadOwner={thread?.author}
               replies={commentItem.replies || []}
               upvotes={commentItem.upvotes}

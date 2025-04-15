@@ -26,6 +26,7 @@
   export let userUpvoted = false;
   export let userDownvoted = false;
   export let mediaFiles = []; // Add mediaFiles array prop
+  export let parentCommentId = null; // Add parentCommentId prop
 
   // Add comment type prop with default value
   export let commentType = 'QUESTION';
@@ -82,11 +83,6 @@
       replyMediaFiles = [];
     }
   };
-
-  // Handle media update for reply
-  function handleReplyMediaUpdate(event) {
-    replyMediaFiles = event.detail.mediaFiles;
-  }
 
   // Add a reply to this comment using the backend API
   const addReply = async () => {
@@ -303,12 +299,14 @@
           </a>
           <span>•</span>
           <span>{formatDate(postedDateComment)}</span>
-          <span>•</span>
-          <span class={`capitalize ${commentType === 'QUESTION' ? 'text-yellow-700 dark:text-yellow-300' : 
-            commentType === 'SUGGESTION' ? 'text-green-700 dark:text-green-300' : 
-            'text-blue-700 dark:text-blue-300'}`}>
-            {commentType.toLowerCase()}
-          </span>
+          {#if !parentCommentId} 
+            <span>•</span>
+            <span class={`capitalize ${commentType === 'QUESTION' ? 'text-yellow-700 dark:text-yellow-300' : 
+              commentType === 'SUGGESTION' ? 'text-green-700 dark:text-green-300' : 
+              'text-blue-700 dark:text-blue-300'}`}>
+              {commentType.toLowerCase()}
+            </span>
+          {/if}
           {#if selected}
             <span>•</span>
             <span class="text-teal-800 dark:text-teal-600 font-medium flex items-center gap-1">
@@ -583,7 +581,6 @@
           <div class="my-3">
             <MediaUploader
               bind:mediaFiles={replyMediaFiles}
-              on:update={handleReplyMediaUpdate}
             />
           </div>
 

@@ -55,6 +55,11 @@ public class CommentService {
         comment.setUser(user);
         comment.setPost(post);
         comment.setParentComment(parentComment);
+        
+        // Set the comment type from the DTO or use default QUESTION if not provided
+        comment.setCommentType(commentCreateDto.getCommentType() != null ? 
+                commentCreateDto.getCommentType() : 
+                com.swe574.group2.backend.enums.CommentType.QUESTION);
 
         Comment savedComment = commentRepository.save(comment);
 
@@ -185,7 +190,8 @@ public class CommentService {
                 userUpvoted,
                 userDownvoted,
                 comment.isBestAnswer(),
-                comment.getPost().getId()
+                comment.getPost().getId(),
+                comment.getCommentType()
         );
     }
 
@@ -198,6 +204,13 @@ public class CommentService {
         }
 
         comment.setContent(commentCreateDto.getContent());
+        
+        // Update comment type if provided in the DTO
+        if (commentCreateDto.getCommentType() != null) {
+            comment.setCommentType(commentCreateDto.getCommentType());
+        }
+        
+        comment.setUpdatedAt(java.time.LocalDateTime.now());
         Comment savedComment = commentRepository.save(comment);
 
         Map<String, Long> response = new HashMap<>();

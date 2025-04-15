@@ -1,5 +1,6 @@
 package com.swe574.group2.backend.entity;
 
+import com.swe574.group2.backend.enums.CommentType;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -17,6 +18,10 @@ public class Comment {
 
     @Column(nullable = false, length = 1000)
     private String content;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "comment_type", columnDefinition = "VARCHAR(50) DEFAULT 'QUESTION'")
+    private CommentType commentType = CommentType.QUESTION;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

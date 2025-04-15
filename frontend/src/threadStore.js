@@ -218,12 +218,13 @@ function getCookie(name) {
 }
 
 // Add a comment to a thread - optimized
-export async function addCommentToThread(threadId, content, parentCommentId = null) {
+export async function addCommentToThread(threadId, content, parentCommentId = null, commentType) {
     try {
         const payload = {
             content: content,
             postId: threadId,
-            parentCommentId: parentCommentId
+            parentCommentId: parentCommentId,
+            commentType: commentType
         };
 
         const authToken = getCookie('tokenKey');

@@ -1,5 +1,6 @@
 package com.swe574.group2.backend.dto;
 
+import com.swe574.group2.backend.enums.CommentType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -14,6 +15,7 @@ public class CommentDetailsDto {
     private LocalDateTime updatedAt;
     private List<CommentDetailsDto> replies; // Nested replies
     private List<MediaFileDto> mediaFiles; // Added media files
+    private CommentType commentType;
 
     private int upvotes;
     private int downvotes;
@@ -28,7 +30,8 @@ public class CommentDetailsDto {
     public CommentDetailsDto(Long id, String content, String authorName, LocalDateTime createdAt, 
                            LocalDateTime updatedAt, List<CommentDetailsDto> replies, 
                            List<MediaFileDto> mediaFiles, int upvotes, int downvotes, 
-                           boolean userUpvoted, boolean userDownvoted, boolean isBestAnswer, Long postId) {
+                           boolean userUpvoted, boolean userDownvoted, boolean isBestAnswer, Long postId,
+                           CommentType commentType) {
         this.id = id;
         this.content = content;
         this.author = authorName;
@@ -42,6 +45,7 @@ public class CommentDetailsDto {
         this.userDownvoted = userDownvoted;
         this.isBestAnswer = isBestAnswer;
         this.postId = postId;
+        this.commentType = commentType;
     }
 
     public CommentDetailsDto() {

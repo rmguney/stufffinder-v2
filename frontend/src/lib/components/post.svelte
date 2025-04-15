@@ -565,7 +565,7 @@ async function fetchColorName(hexColor) {
       {/if}
       
       <!-- Resolution button for post owner if not resolved -->
-      {#if !solved && currentUser === postedBy}
+<!--       {#if !solved && currentUser === postedBy}
         <div class="mt-2 mb-4">
           <Button 
             variant="outline" 
@@ -578,7 +578,7 @@ async function fetchColorName(hexColor) {
             Mark as Resolved
           </Button>
         </div>
-      {/if}
+      {/if} -->
       
       <!-- Separator between main content and details -->
       <Separator class="my-4" />

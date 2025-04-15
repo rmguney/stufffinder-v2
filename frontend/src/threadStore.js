@@ -352,17 +352,18 @@ export async function updateCommentVote(commentId, isUpvote) {
     }
 }
 
-// Mark a comment as the best answer
-export async function markBestAnswer(postId, commentId) {
+// Mark a post as resolved with explanation and contributing comments
+export async function resolvePost(postId, resolutionData) {
     try {
-        const response = await fetch(`${PUBLIC_API_URL}/api/posts/${postId}/markBestAnswer/${commentId}`, {
+        const response = await fetch(`${PUBLIC_API_URL}/api/posts/${postId}/resolve`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify(resolutionData)
         });
         
-        if (!response.ok) throw new Error('Failed to mark best answer');
+        if (!response.ok) throw new Error('Failed to resolve post');
         const data = await response.json();
         
         // Clear cache for this thread
@@ -373,20 +374,53 @@ export async function markBestAnswer(postId, commentId) {
                 thread.id === postId
                     ? {
                         ...thread,
-                        comments: thread.comments?.map(comment => ({
-                            ...comment,
-                            bestAnswer: comment.id === commentId
-                        })) || []
+                        solved: true,
+                        resolution: resolutionData
                       }
                     : thread
             );
-            //debouncedSaveToLocalStorage(updatedThreads);
             return updatedThreads;
         });
         
         return data;
     } catch (error) {
-        console.error('Error marking best answer:', error);
+        console.error('Error resolving post:', error);
+        throw error;
+    }
+}
+
+// Revert a post's resolution status
+export async function unresolvePost(postId) {
+    try {
+        const response = await fetch(`${PUBLIC_API_URL}/api/posts/${postId}/unresolve`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to unresolve post');
+        const data = await response.json();
+        
+        // Clear cache for this thread
+        commentCache.delete(postId);
+        
+        threadStore.update(threads => {
+            const updatedThreads = threads.map(thread => 
+                thread.id === postId
+                    ? {
+                        ...thread,
+                        solved: false,
+                        resolution: null
+                      }
+                    : thread
+            );
+            return updatedThreads;
+        });
+        
+        return data;
+    } catch (error) {
+        console.error('Error unresolving post:', error);
         throw error;
     }
 }

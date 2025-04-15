@@ -4,6 +4,7 @@
   import { writable } from "svelte/store";
   import { activeUser } from "../../userStore";
   import { Button } from "$lib/components/ui/button";
+  import { Textarea } from "$lib/components/ui/textarea";
   import { Separator } from "$lib/components/ui/separator";
   import { PUBLIC_API_URL } from "$env/static/public";
   import MysteryObjectSubParts from "./mysteryObjectSubParts.svelte";
@@ -16,6 +17,7 @@
   export let imageSrc = ''; // Keep for backward compatibility
   export let mediaFiles = []; // New prop for multiple media files
   export let solved = false;
+  export let resolution = null;
   export let variant = "thumb";
   export let mysteryObject = null;  // Changed from object with defaults to null
   let mysteryObjectSubParts = mysteryObject?.subParts || [];
@@ -72,23 +74,105 @@
     }
   };
   
-  const toggleResolved = async () => {
+  // Resolution modal state
+  let showResolutionModal = false;
+  let resolutionDescription = "";
+  let selectedComments = [];
+  let resolutionError = null;
+  
+  // Function to open resolution modal
+  const openResolutionModal = () => {
     if (currentUser !== postedBy) return;
-    try {
-        const response = await fetch(`${PUBLIC_API_URL}/api/posts/${id}/markSolved`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-            }
-        });
-
-        if (!response.ok) throw new Error('Failed to toggle resolved status');
-        const data = await response.json();
-        solved = data.solved;
-    } catch (error) {
-        console.error("Error toggling resolved status:", error);
+    showResolutionModal = true;
+    resolutionDescription = resolution?.description || "";
+    selectedComments = resolution?.contributingComments || [];
+  };
+  
+  // Function to resolve a post
+  const resolvePost = async () => {
+    if (currentUser !== postedBy) return;
+    if (!resolutionDescription.trim()) {
+      resolutionError = "Please provide a resolution description";
+      return;
     }
-};
+    
+    try {
+      resolutionError = null;
+      const resolutionData = {
+        description: resolutionDescription,
+        contributingCommentIds: selectedComments
+      };
+      
+      const response = await fetch(`${PUBLIC_API_URL}/api/posts/${id}/resolve`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(resolutionData)
+      });
+
+      if (!response.ok) throw new Error('Failed to resolve post');
+      const data = await response.json();
+      
+      // Update local state
+      solved = true;
+      resolution = {
+        description: resolutionDescription,
+        contributingComments: selectedComments,
+        resolvedAt: new Date().toISOString()
+      };
+      
+      // Close modal
+      showResolutionModal = false;
+      
+      // Refresh the page to show updated state
+      document.dispatchEvent(new CustomEvent('refreshPost', {
+        bubbles: true,
+        detail: { postId: id }
+      }));
+    } catch (error) {
+      console.error("Error resolving post:", error);
+      resolutionError = error.message || "Failed to resolve post";
+    }
+  };
+  
+  // Function to unresolve a post
+  const unresolvePost = async () => {
+    if (currentUser !== postedBy) return;
+    
+    try {
+      const response = await fetch(`${PUBLIC_API_URL}/api/posts/${id}/unresolve`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to unresolve post');
+      const data = await response.json();
+      
+      // Update local state
+      solved = false;
+      resolution = null;
+      
+      // Refresh the page to show updated state
+      document.dispatchEvent(new CustomEvent('refreshPost', {
+        bubbles: true,
+        detail: { postId: id }
+      }));
+    } catch (error) {
+      console.error("Error unresolving post:", error);
+    }
+  };
+  
+  // Toggle comment selection for resolution
+  const toggleCommentSelection = (commentId) => {
+    if (selectedComments.includes(commentId)) {
+      selectedComments = selectedComments.filter(id => id !== commentId);
+    } else {
+      selectedComments = [...selectedComments, commentId];
+    }
+  };
 
 // More robust date formatting
 const formatDate = (isoDate) => {
@@ -279,6 +363,62 @@ async function fetchColorName(hexColor) {
   };
 </script>
 
+<!-- Resolution Modal -->
+{#if showResolutionModal}
+  <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-neutral-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6">
+        <h2 class="text-xl font-semibold mb-4">Resolve Mystery Object</h2>
+        
+        {#if resolutionError}
+          <div class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-md mb-4">
+            {resolutionError}
+          </div>
+        {/if}
+        
+        <div class="mb-4">
+          <label for="resolution-description" class="block text-sm font-medium mb-1.5">Resolution Description*</label>
+          <Textarea 
+            id="resolution-description" 
+            bind:value={resolutionDescription} 
+            class="w-full p-2 border rounded-lg text-sm bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
+            placeholder="Explain how this mystery object was resolved..."
+            rows="4"
+          />
+        </div>
+        
+        <div class="mb-4">
+          <h3 class="text-sm font-medium mb-2">Contributing Comments</h3>
+          <p class="text-xs text-neutral-600 dark:text-neutral-400 mb-2">
+            Select comments that contributed to the resolution:
+          </p>
+          
+          <div id="comment-selection-placeholder" class="text-sm text-neutral-500 dark:text-neutral-400 italic">
+            Comment selection will be handled by the thread page component
+          </div>
+        </div>
+        
+        <div class="flex justify-end gap-2 mt-6">
+          <Button 
+            variant="outline" 
+            on:click={() => showResolutionModal = false}
+            class="text-sm"
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="default" 
+            on:click={resolvePost}
+            class="text-sm bg-teal-600 hover:bg-teal-700"
+          >
+            Resolve
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <Card.Root class={`shadow-md hover:shadow-xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
   ${variant === "thumb" ? 'bg-opacity-90 hover:bg-opacity-100 w-70 h-70 lg:hover:scale-[1.02] hover:-translate-y-1' : 'bg-opacity-90 hover:bg-opacity-100'}`}>
   {#if variant === "thread"}
@@ -378,6 +518,68 @@ async function fetchColorName(hexColor) {
         </div>
       </div>
 
+      <!-- Resolution section if resolved -->
+      {#if solved && resolution}
+        <div class="mt-2 mb-4 bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-lg p-4">
+          <div class="flex items-start gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-600 dark:text-teal-400 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <div class="flex-1">
+              <h3 class="font-medium text-teal-800 dark:text-teal-300 mb-1">Resolution</h3>
+              <p class="text-neutral-800 dark:text-neutral-200 mb-3">{resolution.description}</p>
+              
+              {#if resolution.resolvedAt}
+                <p class="text-xs text-neutral-500 dark:text-neutral-400 mb-2">
+                  Resolved on {formatDate(resolution.resolvedAt)}
+                </p>
+              {/if}
+              
+              {#if resolution.contributingComments && resolution.contributingComments.length > 0}
+                <div class="mt-2">
+                  <h4 class="text-sm font-medium text-teal-800 dark:text-teal-300 mb-1">Contributing Comments</h4>
+                  <p class="text-xs text-neutral-600 dark:text-neutral-400">
+                    {resolution.contributingComments.length} comment{resolution.contributingComments.length !== 1 ? 's' : ''} contributed to this resolution
+                  </p>
+                </div>
+              {/if}
+              
+              {#if currentUser === postedBy}
+                <div class="mt-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    on:click={unresolvePost}
+                    class="text-xs py-1 px-2 border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    Revert Resolution
+                  </Button>
+                </div>
+              {/if}
+            </div>
+          </div>
+        </div>
+      {/if}
+      
+      <!-- Resolution button for post owner if not resolved -->
+      {#if !solved && currentUser === postedBy}
+        <div class="mt-2 mb-4">
+          <Button 
+            variant="outline" 
+            on:click={openResolutionModal}
+            class="text-sm border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            Mark as Resolved
+          </Button>
+        </div>
+      {/if}
+      
       <!-- Separator between main content and details -->
       <Separator class="my-4" />
 

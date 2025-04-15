@@ -231,9 +231,30 @@
     error = null;
     
     try {
-      const newComment = addCommentToThread(data.id, comment, selectedCommentType, null);
-      console.log(newComment)
-      const commentId = newComment.id;
+      // First, create the comment
+      const payload = {
+        content: comment,
+        postId: data.id,
+        parentCommentId: null,
+        commentType: selectedCommentType,
+      };
+      
+      const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeader()
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to add comment: ${errorText}`);
+      }
+      
+      const newComment = await response.json();
+      const commentId = newComment.commentId;
       
       // Then, if there are files, upload each one
       if (selectedFiles.length > 0) {

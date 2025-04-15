@@ -103,7 +103,8 @@
       const payload = {
         content: replyText,
         postId: threadId,
-        parentCommentId: commentId
+        parentCommentId: commentId,
+        commentType: commentType // Inherit type from parent
       };
       
       const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
@@ -622,6 +623,7 @@
                 userDownvoted={reply.userDownvoted}
                 parentCommentId={commentId}
                 mediaFiles={reply.mediaFiles || []}
+                commentType={reply.commentType || 'QUESTION'}
               />
             </div>
           {/each}

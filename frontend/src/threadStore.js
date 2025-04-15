@@ -217,17 +217,18 @@ function getCookie(name) {
     return null;
 }
 
-export function addCommentToThread(threadId, content, commentType, parentCommentId = null) {
+// Add a comment to a thread - optimized
+export async function addCommentToThread(threadId, content, parentCommentId = null, commentType) {
     try {
         const payload = {
-            content,
+            content: content,
             postId: threadId,
-            parentCommentId,
-            commentType
+            parentCommentId: parentCommentId,
+            commentType: commentType
         };
 
         const authToken = getCookie('tokenKey');
-        const response = fetch(`${PUBLIC_API_URL}/api/comments/create`, {
+        const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -237,11 +238,11 @@ export function addCommentToThread(threadId, content, commentType, parentComment
         });
 
         if (!response.ok) {
-            const errorText = response.text();
+            const errorText = await response.text();
             throw new Error(`Failed to add comment: ${errorText}`);
         }
         
-        const newComment = response.json();
+        const newComment = await response.json();
         
         // Invalidate comment cache for this thread
         commentCache.delete(threadId);

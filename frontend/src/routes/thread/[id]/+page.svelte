@@ -18,6 +18,7 @@
   let isLoading = false;
   let error = null;
   let comments = [];
+  let selectedCommentType = 'QUESTION';
   
   // Simple media upload functionality
   let selectedFiles = [];
@@ -234,7 +235,8 @@
       const payload = {
         content: comment,
         postId: data.id,
-        parentCommentId: null
+        parentCommentId: null,
+        commentType: selectedCommentType,
       };
       
       const response = await fetch(`${PUBLIC_API_URL}/api/comments/create`, {
@@ -339,6 +341,21 @@
     {#if $activeUser}
     <Card.Root class="bg-opacity-90 hover:bg-opacity-100 p-4 mt-4 flex flex-col justify-center items-center">
       <div class="w-full space-y-4">
+        <div class="flex justify-center gap-4 mb-2">
+          <div class="flex items-center space-x-2">
+            <input type="radio" id="question" bind:group={selectedCommentType} value="QUESTION" class="mr-1" />
+            <label for="question" class="text-sm">Question</label>
+          </div>
+          <div class="flex items-center space-x-2">
+            <input type="radio" id="suggestion" bind:group={selectedCommentType} value="SUGGESTION" class="mr-1" />
+            <label for="suggestion" class="text-sm">Suggestion</label>
+          </div>
+          <div class="flex items-center space-x-2">
+            <input type="radio" id="story" bind:group={selectedCommentType} value="STORY" class="mr-1" />
+            <label for="story" class="text-sm">Story</label>
+          </div>
+        </div>
+
         <Textarea 
           bind:value={comment} 
           class="w-full resize-none p-2" 
@@ -474,6 +491,7 @@
               userUpvoted={commentItem.userUpvoted}
               userDownvoted={commentItem.userDownvoted}
               mediaFiles={commentItem.mediaFiles || []}
+              commentType={commentItem.commentType}
             />
           </div>
         {/each}

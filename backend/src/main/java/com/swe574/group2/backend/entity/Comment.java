@@ -3,6 +3,8 @@ package com.swe574.group2.backend.entity;
 import com.swe574.group2.backend.enums.CommentType;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -10,6 +12,8 @@ import java.util.Set;
 @Entity
 @Table(name = "comments")
 @Data
+@EqualsAndHashCode(exclude = {"post", "parentComment", "replies", "mediaFiles", "upvotedBy", "downvotedBy"})
+@ToString(exclude = {"post", "parentComment", "replies", "mediaFiles", "upvotedBy", "downvotedBy"})
 public class Comment {
 
     @Id

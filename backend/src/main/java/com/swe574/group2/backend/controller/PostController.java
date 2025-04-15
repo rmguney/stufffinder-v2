@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.io.IOException;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import com.swe574.group2.backend.dto.ResolutionDto;
 import org.springframework.http.MediaType;
 
 @RestController
@@ -238,14 +240,39 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{postId}/markBestAnswer/{commentId}")
-    public ResponseEntity<Map<String, Long>> markBestAnswer(@PathVariable Long postId, @PathVariable Long commentId, @AuthenticationPrincipal UserDetails userDetails) {
-        boolean success = postService.markBestAnswer(postId, commentId, userDetails.getUsername());
+    @PutMapping("/{postId}/resolve")
+    public ResponseEntity<Map<String, Object>> resolvePost(
+            @PathVariable Long postId, 
+            @RequestBody ResolutionDto resolutionDto, 
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        boolean success = postService.resolvePost(postId, resolutionDto, userDetails.getUsername());
+        
         if (success) {
-            Map<String, Long> response = Map.of("postId", postId, "commentId", commentId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("postId", postId);
+            response.put("resolved", true);
+            response.put("description", resolutionDto.getDescription());
+            response.put("contributingCommentIds", resolutionDto.getContributingCommentIds());
             return ResponseEntity.ok(response);
         } else {
-            Map<String, Long> response = Map.of("postId", postId, "commentId", commentId);
+            Map<String, Object> response = Map.of("postId", postId, "error", "Not authorized");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        }
+    }
+    
+    @PutMapping("/{postId}/unresolve")
+    public ResponseEntity<Map<String, Object>> unresolvePost(
+            @PathVariable Long postId, 
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        boolean success = postService.unresolvePost(postId, userDetails.getUsername());
+        
+        if (success) {
+            Map<String, Object> response = Map.of("postId", postId, "resolved", false);
+            return ResponseEntity.ok(response);
+        } else {
+            Map<String, Object> response = Map.of("postId", postId, "error", "Not authorized");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
     }

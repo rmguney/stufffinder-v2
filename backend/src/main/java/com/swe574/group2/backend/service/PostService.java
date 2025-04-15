@@ -9,6 +9,7 @@ import com.swe574.group2.backend.dao.UserRepository;
 import com.swe574.group2.backend.dto.PostCreationDto;
 import com.swe574.group2.backend.dto.PostDetailsDto;
 import com.swe574.group2.backend.dto.PostListDto;
+import com.swe574.group2.backend.dto.ResolutionDto;
 import com.swe574.group2.backend.dto.SearchResultDto;
 import com.swe574.group2.backend.dto.MediaFileDto;
 import com.swe574.group2.backend.dto.MysteryObjectDto;
@@ -217,34 +218,62 @@ public class PostService {
         return postDetailsDto;
     }
 
-    public boolean markBestAnswer(Long postId, Long commentId, String username) {
+    @Transactional
+    public boolean resolvePost(Long postId, ResolutionDto resolutionDto, String username) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new IllegalArgumentException("Post not found."));
-        Comment comment = commentRepository.findById(commentId).orElseThrow(() -> new IllegalArgumentException("Comment not found."));
-
+        
         // Check if the logged-in user is the creator of the post
         if (!post.getUser().getEmail().equals(username)) {
             return false; // Not authorized
         }
-
-        // Mark the comment as the best answer
-        if (post.getBestAnswer() != null) {
-            // Reset the previous best answer
-            Comment previousBestAnswer = post.getBestAnswer();
-            previousBestAnswer.setBestAnswer(false);
-            commentRepository.save(previousBestAnswer);
-        }
-
-        comment.setBestAnswer(true);
-        post.setBestAnswer(comment);
+        
+        // Set resolution details
+        post.setResolutionDescription(resolutionDto.getDescription());
+        post.setResolvedAt(LocalDateTime.now());
         post.setSolved(true);
-
-        // Save the updated entities
-        commentRepository.save(comment);
+        
+        // Add contributing comments
+        if (resolutionDto.getContributingCommentIds() != null && !resolutionDto.getContributingCommentIds().isEmpty()) {
+            Set<Comment> contributingComments = new HashSet<>();
+            for (Long commentId : resolutionDto.getContributingCommentIds()) {
+                Comment comment = commentRepository.findById(commentId)
+                    .orElseThrow(() -> new IllegalArgumentException("Comment not found with ID: " + commentId));
+                contributingComments.add(comment);
+                
+                // Send notification to comment author
+                notificationService.sendContributingCommentNotification(comment.getUser().getId(), post, comment);
+            }
+            post.setContributingComments(contributingComments);
+        }
+        
+        // Save the updated post
         postRepository.save(post);
-
-        // Send a notification to the comment author
-        notificationService.sendBestAnswerNotification(comment.getUser().getId(), post, comment);
-
+        
+        return true;
+    }
+    
+    @Transactional
+    public boolean unresolvePost(Long postId, String username) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new IllegalArgumentException("Post not found."));
+        
+        // Check if the logged-in user is the creator of the post
+        if (!post.getUser().getEmail().equals(username)) {
+            return false; // Not authorized
+        }
+        
+        // Clear resolution details
+        post.setResolutionDescription(null);
+        post.setResolvedAt(null);
+        post.setSolved(false);
+        
+        // Clear contributing comments
+        if (post.getContributingComments() != null) {
+            post.getContributingComments().clear();
+        }
+        
+        // Save the updated post
+        postRepository.save(post);
+        
         return true;
     }
 
@@ -319,20 +348,35 @@ public class PostService {
         postDetailsDto.setUpdatedAt(post.getUpdatedAt());
         postDetailsDto.setUpvotes(post.getUpvotesCount());
         postDetailsDto.setDownvotes(post.getDownvotesCount());
+        postDetailsDto.setSolved(post.isSolved()); // Set solved status regardless of authentication
+
+        // Add resolution information if post is solved (moved before auth check)
+        if (post.isSolved()) {
+            postDetailsDto.setResolutionDescription(post.getResolutionDescription());
+            postDetailsDto.setResolvedAt(post.getResolvedAt());
+
+            // Convert contributing comments to IDs
+            if (post.getContributingComments() != null && !post.getContributingComments().isEmpty()) {
+                List<Long> contributingCommentIds = post.getContributingComments().stream()
+                    .map(Comment::getId)
+                    .collect(Collectors.toList());
+                postDetailsDto.setContributingCommentIds(contributingCommentIds);
+            }
+        }
 
         if (currentUser == null) {
             postDetailsDto.setUserUpvoted(false);
             postDetailsDto.setUserDownvoted(false);
-            return;
+            return; // Return after setting basic info + resolution (if solved)
         }
 
-        // Check if the user has upvoted or downvoted the post
+        // Check if the user has upvoted or downvoted the post (only for authenticated users)
         boolean userUpvoted = post.getUpvotedBy().contains(currentUser);
         boolean userDownvoted = post.getDownvotedBy().contains(currentUser);
 
         postDetailsDto.setUserUpvoted(userUpvoted);
         postDetailsDto.setUserDownvoted(userDownvoted);
-        postDetailsDto.setSolved(post.getBestAnswer() != null);
+        // Solved status is already set above
     }
 
     public List<PostListDto> getUserPosts(Long userId) {
@@ -415,8 +459,6 @@ public class PostService {
     public MysteryObject saveMysteryObject(MysteryObject mysteryObject) {
         return mysteryObjectRepository.save(mysteryObject);
     }
-
-    // Add this method to backend/src/main/java/com/swe574/group2/backend/service/PostService.java
 
     @Transactional
     public Map<String, Long> updatePost(Long postId, PostCreationDto postUpdateDto, String userName) {

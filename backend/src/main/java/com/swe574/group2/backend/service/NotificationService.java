@@ -54,6 +54,17 @@ public class NotificationService {
         notification.setComment(comment);
         notificationRepository.save(notification);
     }
+    
+    public void sendContributingCommentNotification(Long userId, Post post, Comment comment) {
+        User user = userRepository.findById(userId).orElseThrow();
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setMessage("Your comment was selected as contributing to the resolution.");
+        notification.setType(Notification.NotificationType.BEST_ANSWER); // Reusing existing type
+        notification.setPost(post);
+        notification.setComment(comment);
+        notificationRepository.save(notification);
+    }
 
     public List<NotificationDto> getUserNotifications(Long userId) {
         List<NotificationDto> response =

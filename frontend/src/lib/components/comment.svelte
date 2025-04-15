@@ -17,7 +17,7 @@
   export let comment;
   export let commentator;
   export let postedDateComment;
-  export let selected = false;
+  export let contributingToResolution = false;
   export let threadOwner;
   export let replies = [];
   export let threadId;
@@ -223,50 +223,6 @@
     return `${timeString}, ${day} ${shortMonth} ${fullYear}`;
   };
 
-  // Function to toggle the best answer status
-  const toggleBestAnswer = async () => {
-    try {
-      if (!isOwner) {
-        console.error("Only the thread owner can mark best answers");
-        return;
-      }
-
-      const token = getCookie('tokenKey');
-      if (!token) {
-        console.error("No auth token found");
-        return;
-      }
-
-      const response = await fetch(`${PUBLIC_API_URL}/api/posts/${threadId}/markBestAnswer/${commentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      // console.log('Mark best answer response:', response.status);
-      
-      if (response.status === 403) {
-        console.error("You don't have permission to mark best answers");
-        return;
-      }
-      
-      if (!response.ok) {
-        throw new Error(`Failed to mark best answer: ${response.status}`);
-      }
-
-      // Update the UI and refresh
-      selected = !selected;
-      document.dispatchEvent(new CustomEvent('refreshComments', {
-        bubbles: true,
-        detail: { threadId }
-      }));
-      
-    } catch (error) {
-      console.error("Error toggling best answer status:", error);
-    }
-  };
 
   // Functions to control the media carousel
   const nextMedia = () => {
@@ -290,7 +246,7 @@
 
 <div class="flex w-full py-1">
   <Card.Root class={`w-full bg-opacity-90 hover:bg-opacity-100 relative 
-    ${selected ? 'border-2 border-teal-600 dark:border-teal-800' : ''}
+    ${contributingToResolution ? 'border-2 border-teal-600 dark:border-teal-800' : ''}
     ${commentType === 'QUESTION' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' : ''}
     ${commentType === 'SUGGESTION' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}
     ${commentType === 'STORY' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}
@@ -312,13 +268,13 @@
               {commentType.toLowerCase()}
             </span>
           {/if}
-          {#if selected}
+          {#if contributingToResolution}
             <span>•</span>
             <span class="text-teal-800 dark:text-teal-600 font-medium flex items-center gap-1">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
-              Best Answer
+              Contributing to Resolution
             </span>
           {/if}
         </div>
@@ -488,15 +444,6 @@
 
       <!-- Actions section -->
       <div class="p-4 flex flex-wrap gap-2">
-        {#if isOwner && !selected}
-          <Button
-            on:click={toggleBestAnswer}
-            variant="outline"
-            class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800"
-          >
-            Mark as Best Answer
-          </Button>
-        {/if}
 
         {#if currentUser === commentator}
           <Button

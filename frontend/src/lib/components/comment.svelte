@@ -131,11 +131,16 @@
           mediaFormData.append('type', mediaItem.type || 'image');
           
           try {
+            // Create specific headers for FormData upload, only including Authorization
+            const mediaUploadHeaders = new Headers();
+            if (headers.Authorization) {
+              mediaUploadHeaders.append('Authorization', headers.Authorization);
+            }
+            // DO NOT set Content-Type; browser handles it for FormData
+
             const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/comments/${replyId}/upload-media`, {
               method: 'POST',
-              headers: {
-                ...headers
-              },
+              headers: mediaUploadHeaders, // Use the specific headers for media upload
               body: mediaFormData
             });
             

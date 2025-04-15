@@ -1,10 +1,16 @@
 <script>
-    import { onDestroy, createEventDispatcher } from 'svelte';
+    import { onDestroy, createEventDispatcher, onMount } from 'svelte';
     
     export let mediaFiles = [];
     export let errors = { media: '' };
     
     const dispatch = createEventDispatcher();
+    let uniqueId = '';
+
+    onMount(() => {
+      // Generate a unique ID for this instance
+      uniqueId = `media-upload-${Math.random().toString(36).substring(2, 9)}`;
+    });
     
     // Function to handle media file selection
     function handleMediaAdd(event) {
@@ -53,12 +59,12 @@
 
 <div class="mb-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
-        <label for="media-upload" class="block text-sm font-medium">Upload Media Files*</label>
+        <label for={uniqueId} class="block text-sm font-medium">Upload Media Files*</label>
         <span class="text-xs text-gray-500 mt-1 sm:mt-0">{mediaFiles.length} files selected</span>
     </div>
     
     <div class="border-2 border-dashed rounded-lg p-4 text-center mb-3 bg-gray-50 dark:bg-neutral-900 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors">
-        <label for="media-upload" class="cursor-pointer block">
+        <label for={uniqueId} class="cursor-pointer block">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
@@ -69,7 +75,7 @@
             <p class="text-xs text-gray-500 mt-1">Images, videos, or audio files</p>
             <input 
                 type="file" 
-                id="media-upload" 
+                id={uniqueId} 
                 accept="image/*,video/*,audio/*" 
                 on:change={handleMediaAdd}
                 class="hidden"

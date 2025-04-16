@@ -714,7 +714,7 @@
                 <div class="flex flex-wrap items-center gap-3">
                   <div class="flex items-center bg-neutral-100 dark:bg-neutral-950 rounded-full p-1 border border-neutral-200 dark:border-neutral-700">
                     <label class="inline-flex items-center px-2.5 py-1 rounded-full cursor-pointer transition-all text-xs
-                                  {selectedCommentType === 'QUESTION' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'}">
+                                  {selectedCommentType === 'QUESTION' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-900'}">
                       <input type="radio" id="question" bind:group={selectedCommentType} value="QUESTION" class="sr-only" />
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
@@ -723,7 +723,7 @@
                     </label>
                     
                     <label class="inline-flex items-center px-2.5 py-1 rounded-full cursor-pointer transition-all text-xs
-                                  {selectedCommentType === 'SUGGESTION' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'}">
+                                  {selectedCommentType === 'SUGGESTION' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-900'}">
                       <input type="radio" id="suggestion" bind:group={selectedCommentType} value="SUGGESTION" class="sr-only" />
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
@@ -732,7 +732,7 @@
                     </label>
                     
                     <label class="inline-flex items-center px-2.5 py-1 rounded-full cursor-pointer transition-all text-xs
-                                  {selectedCommentType === 'STORY' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'}">
+                                  {selectedCommentType === 'STORY' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-900'}">
                       <input type="radio" id="story" bind:group={selectedCommentType} value="STORY" class="sr-only" />
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
@@ -755,7 +755,7 @@
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      class="text-xs bg-white dark:dark:bg-neutral-950 hover:bg-neutral-100 dark:bg-neutral-950 hover:dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 rounded-full"
+                      class="text-xs bg-white dark:dark:bg-neutral-950 hover:bg-neutral-100 dark:bg-neutral-950 hover:dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700 rounded-full"
                       on:click={() => fileInputRef?.click()}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
@@ -918,8 +918,8 @@
                   <button 
                     class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border transition-colors
                       {commentTypeFilter === 'ALL' 
-                        ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                        ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                        : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
                     on:click={() => commentTypeFilter = 'ALL'}
                   >
                     <span class="flex items-center">All</span>
@@ -976,8 +976,8 @@
                   <button 
                     class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
                       {sortMethod === 'newest' 
-                        ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                        ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                        : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
                     on:click={() => sortMethod = 'newest'}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -989,8 +989,8 @@
                   <button 
                     class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
                       {sortMethod === 'oldest' 
-                        ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                        ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                        : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
                     on:click={() => sortMethod = 'oldest'}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -1002,8 +1002,8 @@
                   <button 
                     class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
                       {sortMethod === 'votes' 
-                        ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                        ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                        : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
                     on:click={() => sortMethod = 'votes'}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -1015,8 +1015,8 @@
                   <button 
                     class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
                       {sortMethod === 'type' 
-                        ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                        ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                        : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
                     on:click={() => sortMethod = 'type'}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">

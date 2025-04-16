@@ -9,13 +9,14 @@
 </div>
 
 ## 🌐 Live Environments
-- **🖥️ Latest Build:** https://latest---frontend-tqnach2kdq-ew.a.run.app/
+- **🖥️ Latest Build:** https://frontend-310608491068.europe-west1.run.app/
+- **⚙️ Alpha v0.2.0:** 
 - **⚙️ Alpha v0.1.0:** https://alpha---frontend-tqnach2kdq-ew.a.run.app/
 
 ## 💻 Technology Stack
 | Component | Technology |
 |-----------|------------|
-| Frontend | Svelte-kit |
+| Frontend | SvelteKit |
 | Backend | Java Spring Boot |
 | Database | AWS RDS MySQL |
 | Deployment | Google Cloud Run |

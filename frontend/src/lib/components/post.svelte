@@ -645,7 +645,7 @@ async function fetchColorHexFromName(colorName) {
           {#if solved}
             <span>•</span>
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/50">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
               Resolved
@@ -653,8 +653,8 @@ async function fetchColorHexFromName(colorName) {
           {:else}
             <span>•</span>
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8 7a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
               </svg>
               Unresolved
             </span>
@@ -766,9 +766,25 @@ async function fetchColorHexFromName(colorName) {
                   
                   <!-- Display contributing comment objects if available -->
                   {#if contributingCommentObjects && contributingCommentObjects.length > 0}
-                    <div class="space-y-2 mt-2 max-h-60 overflow-y-auto border border-teal-200 dark:border-teal-800/50 rounded-md p-2 bg-white/50 dark:bg-neutral-900/50">
+                    <div class="space-y-2 mt-2 max-h-60 overflow-y-auto border border-teal-200 dark:border-teal-800/50 rounded-md p-2 bg-white/50 dark:bg-neutral-950/50">
+                      {#each contributingCommentObjects as commentObj (commentObj.id)}
+                        <div class="p-2 rounded-md bg-white dark:bg-neutral-950 shadow-sm border border-neutral-100 dark:border-neutral-800 hover:border-teal-300 dark:hover:border-teal-700 transition-colors">
+                          <div class="text-xs font-medium mb-1 flex items-center justify-between">
+                            <span class="text-neutral-700 dark:text-neutral-300">
+                              {commentObj.author}
+                              {#if commentObj.commentType}
+                                <span class="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+                                  {commentObj.commentType.toLowerCase()}
+                                </span>
+                              {/if}
+                            </span>
+                            <span class="text-neutral-500 text-[10px]">{formatDate(commentObj.createdAt)}</span>
+                          </div>
+                          <p class="text-xs text-neutral-800 dark:text-neutral-200 line-clamp-2">{commentObj.content}</p>
+                        </div>
+                      {/each}
                       {#each contributingCommentObjects as commentObj}
-                        <div class="p-2 rounded-md bg-white dark:bg-neutral-900 shadow-sm border border-neutral-100 dark:border-neutral-800 hover:border-teal-300 dark:hover:border-teal-700 transition-colors">
+                        <div class="p-2 rounded-md bg-white dark:bg-neutral-950 shadow-sm border border-neutral-100 dark:border-neutral-800 hover:border-teal-300 dark:hover:border-teal-700 transition-colors">
                           <div class="text-xs font-medium mb-1 flex items-center justify-between">
                             <span class="text-neutral-700 dark:text-neutral-300">
                               {commentObj.author}
@@ -1162,19 +1178,19 @@ async function fetchColorHexFromName(colorName) {
               </div>
               <div class={`${variant === "thumb" ? 'mt-1' : 'mt-1.5'}`}>
                 {#if solved}
-                  <div class="flex items-center text-teal-800 font-semibold">
-                    <span class="text-teal-800 font-bold">Resolved</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  <span class="inline-flex items-center px-2.5 py-1 mt-1 rounded-full text-xs font-medium bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                     </svg>
-                  </div>
+                    Resolved
+                  </span>
                 {:else}
-                  <div class="flex items-center text-rose-900 font-semibold">
-                    <span class="text-rose-900 font-bold">Unresolved</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 24 24" stroke-width="2" stroke="currentColor" class="size-5">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  <span class="inline-flex items-center px-2.5 py-1 mt-1 rounded-full text-xs font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
                     </svg>
-                  </div>
+                    Unresolved
+                  </span>
                 {/if}
               </div>
             </div>
@@ -1362,7 +1378,7 @@ async function fetchColorHexFromName(colorName) {
 
         <!-- Add comment count and vote count display -->
         {#if variant === "thumb"}
-          <div class="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 pt-3 pb-1 border-t border-neutral-100 dark:border-neutral-800 mt-2 min-h-[24px] px-2">
+          <div class="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 pt-3 border-t border-neutral-100 dark:border-neutral-800 mt-2">
             <!-- Vote count -->
             <div class="flex items-center gap-1.5 h-[24px]">
               {#if downvotes > upvotes}
@@ -1391,7 +1407,7 @@ async function fetchColorHexFromName(colorName) {
             </div>
 
             <!-- Comment count -->
-            <div class="flex items-center gap-1 h-[24px]">
+            <div class="flex items-center gap-1">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>

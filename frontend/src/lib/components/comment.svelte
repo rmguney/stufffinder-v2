@@ -256,7 +256,7 @@
       <div class="flex flex-col items-center justify-center px-4 py-4 border-r border-neutral-100 dark:border-neutral-800">
         <!-- Same padding as post for consistency -->
         <button 
-          class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
+          class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-900 rounded-full w-8 h-8 transition-colors
                 {userUpvoted ? 'text-teal-600' : 'text-neutral-600'}"
           on:click={() => voteOnComment(true)}
         >
@@ -280,7 +280,7 @@
           {/if}
         </span>
         <button 
-          class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
+          class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-900 rounded-full w-8 h-8 transition-colors
                 {userDownvoted ? 'text-rose-600' : 'text-neutral-500'}"
           on:click={() => voteOnComment(false)}
         >
@@ -355,7 +355,7 @@
 
           <!-- Media display section -->
           {#if mediaFiles && mediaFiles.length > 0}
-            <div class="mt-3 bg-neutral-100 dark:bg-neutral-800 rounded-md overflow-hidden">
+            <div class="mt-3 bg-neutral-100 dark:bg-neutral-900 rounded-md overflow-hidden">
               <!-- Media carousel -->
               <div class="relative">
                 <!-- Navigation buttons for media carousel -->
@@ -414,7 +414,7 @@
                         Your browser does not support the video tag.
                       </video>
                     {:else if media.type === 'audio'}
-                      <div class="flex flex-col items-center justify-center p-4 bg-neutral-200 dark:bg-neutral-800">
+                      <div class="flex flex-col items-center justify-center p-4 bg-neutral-200 dark:bg-neutral-900">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-neutral-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                         </svg>
@@ -429,7 +429,7 @@
                         <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">{media.name || "Audio file"}</p>
                       </div>
                     {:else}
-                      <div class="p-4 bg-neutral-200 dark:bg-neutral-800 text-center">
+                      <div class="p-4 bg-neutral-200 dark:bg-neutral-900 text-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-neutral-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
@@ -442,7 +442,7 @@
               
               <!-- Thumbnail navigation for multiple media - ensure left alignment -->
               {#if mediaFiles.length > 1}
-                <div class="flex justify-start overflow-x-auto gap-1 p-1 bg-neutral-200 dark:bg-neutral-800">
+                <div class="flex justify-start overflow-x-auto gap-1 p-1 bg-neutral-200 dark:bg-neutral-900">
                   {#each mediaFiles as media, i}
                     <button 
                       on:click|stopPropagation={() => currentMediaIndex = i}
@@ -451,20 +451,20 @@
                       {#if media.type === 'image'}
                         <img src={media.url} alt="thumbnail" class="w-full h-full object-cover" />
                       {:else if media.type === 'video'}
-                        <div class="w-full h-full bg-neutral-300 dark:bg-neutral-700 flex items-center justify-center">
+                        <div class="w-full h-full bg-neutral-300 dark:bg-neutral-900 flex items-center justify-center">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
                       {:else if media.type === 'audio'}
-                        <div class="w-full h-full bg-neutral-300 dark:bg-neutral-700 flex items-center justify-center">
+                        <div class="w-full h-full bg-neutral-300 dark:bg-neutral-900 flex items-center justify-center">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                           </svg>
                         </div>
                       {:else}
-                        <div class="w-full h-full bg-neutral-300 dark:bg-neutral-700 flex items-center justify-center">
+                        <div class="w-full h-full bg-neutral-300 dark:bg-neutral-900 flex items-center justify-center">
                           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
@@ -489,7 +489,7 @@
               }}
               variant="outline"
               size="sm"
-              class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800 border-neutral-300 dark:border-neutral-700 rounded-full"
+              class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-900 border-neutral-300 dark:border-neutral-700 rounded-full"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -502,7 +502,7 @@
             on:click={toggleReplyInput}
             variant="outline"
             size="sm"
-            class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800 border-neutral-300 dark:border-neutral-700 rounded-full"
+            class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-900 border-neutral-300 dark:border-neutral-700 rounded-full"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />

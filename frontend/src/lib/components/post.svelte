@@ -448,6 +448,83 @@ async function fetchColorHexFromName(colorName) {
   };
 
   const dispatch = createEventDispatcher();
+
+  // Add state for the tag tooltip
+  let hoveredTag = null;
+  let tagImageLoading = false;
+  let tagImage = null;
+  let tooltipVisible = false;
+  let tooltipPosition = { x: 0, y: 0 };
+  
+  // Function to fetch Wikidata image for a tag
+  async function fetchTagImage(tag) {
+    if (!tag || !tag.id) return null;
+    
+    try {
+      tagImageLoading = true;
+      
+      // First fetch the Wikidata entity to get the image property
+      const entityResponse = await fetch(
+        `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${tag.id}&format=json&props=claims&origin=*`
+      );
+      
+      if (!entityResponse.ok) {
+        throw new Error('Failed to fetch entity data');
+      }
+      
+      const entityData = await entityResponse.json();
+      const entity = entityData.entities[tag.id];
+      
+      // Check if entity has image (P18) property
+      if (entity && 
+          entity.claims && 
+          entity.claims.P18 && 
+          entity.claims.P18.length > 0) {
+        
+        // Get the image filename
+        const imageFilename = entity.claims.P18[0].mainsnak.datavalue.value;
+        
+        // Convert to URL using Wikimedia Commons
+        // We need to MD5 hash the filename for the URL path, but for simplicity
+        // we'll use the direct filename which works for most common cases
+        const encodedFilename = encodeURIComponent(imageFilename.replace(/ /g, '_'));
+        
+        // Return the Commons thumbnail URL
+        return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodedFilename}?width=300`;
+      }
+      
+      return null;
+    } catch (error) {
+      console.error("Error fetching tag image:", error);
+      return null;
+    } finally {
+      tagImageLoading = false;
+    }
+  }
+  
+  // Handle tag hover
+  async function handleTagHover(event, tag) {
+    if (variant === "thumb") return; // Do nothing for thumb variant
+    
+    hoveredTag = tag;
+    tooltipVisible = true;
+    
+    // Position the tooltip relative to the mouse pointer
+    const rect = event.target.getBoundingClientRect();
+    tooltipPosition = {
+      x: rect.left + window.scrollX,
+      y: rect.bottom + window.scrollY + 5 // 5px offset from the bottom of the tag
+    };
+    
+    // Fetch image if needed
+    tagImage = await fetchTagImage(tag);
+  }
+  
+  // Hide tooltip when mouse leaves
+  function handleTagLeave() {
+    tooltipVisible = false;
+    tagImage = null;
+  }
 </script>
 
 <!-- Resolution Modal -->
@@ -596,12 +673,13 @@ async function fetchColorHexFromName(colorName) {
         {#if $tagDetails.length > 0}
           <div class="flex flex-wrap gap-2 mt-2">
             {#each $tagDetails as tag}
-              <a href={`https://www.wikidata.org/wiki/${tag.id}`} 
-                 target="_blank" 
-                 rel="noopener noreferrer"
-                 class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors border border-neutral-200 dark:border-neutral-700">
+              <span 
+                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors border border-neutral-200 dark:border-neutral-700 cursor-pointer"
+                on:mouseenter={(e) => handleTagHover(e, tag)}
+                on:mouseleave={handleTagLeave}
+              >
                 {tag.label}
-              </a>
+              </span>
             {/each}
           </div>
         {/if}
@@ -1002,7 +1080,7 @@ async function fetchColorHexFromName(colorName) {
               {:else}
                 <div class="flex flex-col items-center justify-center p-10 h-[300px]">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-rose-500 dark:text-rose-400 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2zM9 10l12-3" />
                   </svg>
                   <audio 
                     src={media.url} 
@@ -1039,7 +1117,7 @@ async function fetchColorHexFromName(colorName) {
                   {:else if media.type === 'audio'}
                     <div class="w-full h-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2zM9 10l12-3" />
                       </svg>
                     </div>
                   {:else}
@@ -1172,12 +1250,13 @@ async function fetchColorHexFromName(colorName) {
               <span class="text-md font-semibold text-black dark:text-white">Tags:</span>
               {#each $tagDetails as tag}
                 <li>
-                  <a href={`https://www.wikidata.org/wiki/${tag.id}`} 
-                     target="_blank" 
-                     rel="noopener noreferrer"
-                     class="hover:underline text-black dark:text-white hover:text-rose-700 dark:hover:text-rose-900 text-md">
+                  <span 
+                    class="hover:underline text-black dark:text-white hover:text-rose-700 dark:hover:text-rose-500 text-md cursor-pointer"
+                    on:mouseenter={(e) => handleTagHover(e, tag)}
+                    on:mouseleave={handleTagLeave}
+                  >
                     {tag.label}: {tag.description}
-                  </a>
+                  </span>
                 </li>
               {/each}
             </ul>
@@ -1274,12 +1353,9 @@ async function fetchColorHexFromName(colorName) {
         {#if variant === "thumb" && $tagDetails.length > 0}
           <div class="flex flex-wrap gap-1.5 mt-3 mb-1">
             {#each $tagDetails as tag}
-              <a href={`https://www.wikidata.org/wiki/${tag.id}`} 
-                 target="_blank" 
-                 rel="noopener noreferrer"
-                 class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800 hover:bg-neutral-200 transition-colors duration-200">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800 transition-colors duration-200">
                 {tag.label}
-              </a>
+              </span>
             {/each}
           </div>
         {/if}
@@ -1328,6 +1404,27 @@ async function fetchColorHexFromName(colorName) {
   {/if}
 </Card.Root>
 
+<!-- Add the tag tooltip/modal -->
+{#if tooltipVisible && hoveredTag}
+  <div class="tag-tooltip" style="left: {tooltipPosition.x}px; top: {tooltipPosition.y}px;">
+    <div class="tag-tooltip-content">
+      <div class="tag-tooltip-header">
+        <span class="font-medium">{hoveredTag.label}</span>
+      </div>
+      <div class="tag-tooltip-body">
+        {#if tagImageLoading}
+          <div class="tag-image-placeholder">
+            <div class="inline-block h-8 w-8 border-4 border-neutral-200 dark:border-neutral-800 border-t-teal-600 dark:border-t-teal-500 rounded-full animate-spin"></div>
+          </div>
+        {:else if tagImage}
+          <img src={tagImage} alt={hoveredTag.label} class="tag-image" />
+        {/if}
+        <p class="tag-description">{hoveredTag.description || 'No description available'}</p>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <style>
   /* Modern transitions and animations */
   .carousel-container {
@@ -1343,4 +1440,82 @@ async function fetchColorHexFromName(colorName) {
   .card-animate {
     animation: fadeIn 0.4s ease-out;
   }
+
+  /* Tag tooltip styles - improved to match design system */
+  .tag-tooltip {
+    position: absolute;
+    z-index: 100;
+    max-width: 300px;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  :global(.dark) .tag-tooltip {
+    background-color: #171717;
+    border-color: #262626;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  }
+  
+  .tag-tooltip-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .tag-tooltip-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 14px;
+    color: #171717;
+  }
+  
+  :global(.dark) .tag-tooltip-header {
+    border-color: #262626;
+    color: #e5e5e5;
+  }
+  
+  .tag-tooltip-body {
+    padding: 12px;
+  }
+  
+  .tag-image {
+    max-width: 100%;
+    max-height: 150px;
+    margin-bottom: 10px;
+    border-radius: 0.375rem;
+    object-fit: contain;
+  }
+  
+  .tag-image-placeholder {
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f5f5f5;
+    border-radius: 0.375rem;
+    margin-bottom: 10px;
+  }
+  
+  :global(.dark) .tag-image-placeholder {
+    background-color: #262626;
+  }
+  
+  .tag-description {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #525252;
+  }
+  
+  :global(.dark) .tag-description {
+    color: #a3a3a3;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
 </style>

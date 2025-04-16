@@ -244,13 +244,12 @@
  */  }
 </script>
 
+<!-- Ensure dark/light mode consistency in comment component -->
 <div class="flex w-full py-1">
-  <Card.Root class={`w-full bg-opacity-90 hover:bg-opacity-100 relative
-    ${contributingToResolution ? 'border-2 border-teal-600 dark:border-teal-800' : ''}
-    ${commentType === 'QUESTION' ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' : ''}
-    ${commentType === 'SUGGESTION' ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : ''}
-    ${commentType === 'STORY' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''}
-  `}>
+  <Card.Root class="w-full bg-white dark:bg-neutral-950 shadow-sm relative rounded-md
+    ${contributingToResolution ? 'border-l-4 border-teal-600 dark:border-teal-500' : 'border border-neutral-200 dark:border-neutral-800'}
+    ${commentType === 'QUESTION' ? 'question-comment' : commentType === 'SUGGESTION' ? 'suggestion-comment' : commentType === 'STORY' ? 'story-comment' : ''}"
+  >
     <div class="flex flex-col w-full">
       <Card.Header class="p-4">
         <!-- User and metadata header -->
@@ -262,19 +261,37 @@
           <span>{formatDate(postedDateComment)}</span>
           {#if !parentCommentId}
             <span>•</span>
-            <span class={`capitalize ${commentType === 'QUESTION' ? 'text-yellow-700 dark:text-yellow-300' :
-              commentType === 'SUGGESTION' ? 'text-green-700 dark:text-green-300' :
-              'text-blue-700 dark:text-blue-300'}`}>
-              {commentType.toLowerCase()}
-            </span>
+            <!-- More distinctive comment type indicators with rounded-full instead of rounded-md -->
+            {#if commentType === 'QUESTION'}
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                </svg>
+                Question
+              </span>
+            {:else if commentType === 'SUGGESTION'}
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+                </svg>
+                Suggestion
+              </span>
+            {:else}
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                </svg>
+                Story
+              </span>
+            {/if}
           {/if}
           {#if contributingToResolution}
             <span>•</span>
-            <span class="text-teal-800 dark:text-teal-600 font-medium flex items-center gap-1">
+            <span class="text-teal-800 dark:text-teal-400 font-medium flex items-center gap-1">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
-              Contributing to Resolution
+              Contributing
             </span>
           {/if}
         </div>
@@ -283,18 +300,18 @@
         {#if editMode}
           <Textarea
             bind:value={commentText}
-            class="w-full p-2 border rounded-lg text-sm bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
+            class="w-full p-3 border rounded-md text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-teal-500/30"
             placeholder="Edit your comment..."
           />
         {:else}
-          <div class="text-neutral-900 dark:text-neutral-100">
+          <div class="text-neutral-900 dark:text-neutral-100 leading-relaxed">
             {comment || "No content"}
           </div>
         {/if}
 
         <!-- Media display section -->
         {#if mediaFiles && mediaFiles.length > 0}
-          <div class="mt-4 bg-neutral-100 dark:bg-neutral-900 rounded-lg overflow-hidden">
+          <div class="mt-4 bg-neutral-100 dark:bg-neutral-800 rounded-md overflow-hidden">
             <!-- Media carousel -->
             <div class="relative">
               <!-- Navigation buttons for media carousel -->
@@ -442,9 +459,8 @@
 
       <Separator />
 
-      <!-- Actions section -->
-      <div class="p-4 flex flex-wrap gap-2">
-
+      <!-- Actions section - aligned to the left -->
+      <div class="p-4 flex flex-wrap items-start gap-2 justify-start">
         {#if currentUser === commentator}
           <Button
             on:click={() => {
@@ -452,8 +468,11 @@
               commentText = comment;
             }}
             variant="outline"
-            class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            class="text-xs py-1.5 px-4 hover:bg-neutral-100 dark:hover:bg-neutral-800 border-neutral-300 dark:border-neutral-700 rounded-full"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+            </svg>
             {editMode ? "Cancel Edit" : "Edit"}
           </Button>
         {/if}
@@ -461,10 +480,14 @@
         <Button
           on:click={toggleReplyInput}
           variant="outline"
-          class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+          class="text-xs py-1.5 px-4 hover:bg-neutral-100 dark:hover:bg-neutral-800 border-neutral-300 dark:border-neutral-700 rounded-full"
         >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
           {replyInputVisible ? "Cancel" : "Reply"}
         </Button>
+        
         {#if editMode}
           <Button
             on:click={async () => {
@@ -512,9 +535,12 @@
                 console.error("Error editing comment:", error);
               }
             }}
-            variant="outline"
-            class="text-xs py-1 px-3 hover:bg-rose-900 hover:text-white transition-colors"
+            variant="default"
+            class="text-xs py-1.5 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-full"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
             Save Edit
           </Button>
         {/if}
@@ -525,7 +551,7 @@
         <div class="p-4 pt-0">
           <Textarea
             bind:value={replyText}
-            class="w-full p-2 border rounded-lg text-sm bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700"
+            class="w-full p-3 border rounded-md text-sm bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-teal-500/30"
             placeholder="Write your reply..."
           />
 
@@ -536,19 +562,25 @@
             />
           </div>
 
-          <Button
-            on:click={addReply}
-            variant="outline"
-            class="mt-2 text-xs py-1 px-3 hover:bg-rose-900 hover:text-white transition-colors"
-            disabled={isUploadingMedia}
-          >
-            {#if isUploadingMedia}
-              <span class="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
-              Uploading...
-            {:else}
-              Submit Reply
-            {/if}
-          </Button>
+          <!-- Left-aligned reply button -->
+          <div class="flex justify-start">
+            <Button
+              on:click={addReply}
+              variant="default"
+              class="mt-2 text-xs py-1.5 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-full"
+              disabled={isUploadingMedia}
+            >
+              {#if isUploadingMedia}
+                <span class="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                Uploading...
+              {:else}
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+                Submit Reply
+              {/if}
+            </Button>
+          </div>
         </div>
       {/if}
 
@@ -581,3 +613,44 @@
     </div>
   </Card.Root>
 </div>
+
+<style>
+  .question-comment {
+    border-left: 3px solid rgb(251 191 36); /* amber-400 */
+  }
+  
+  .suggestion-comment {
+    border-left: 3px solid rgb(52 211 153); /* emerald-400 */
+  }
+  
+  .story-comment {
+    border-left: 3px solid rgb(96 165 250); /* blue-400 */
+  }
+  
+  /* When a comment is contributing to resolution, the contribution border takes precedence */
+  .question-comment.border-l-4,
+  .suggestion-comment.border-l-4,
+  .story-comment.border-l-4 {
+    border-left-width: 4px !important;
+    border-left-color: rgb(13 148 136) !important; /* teal-600 */
+  }
+  
+  /* Dark mode adjustments with better contrast */
+  :global(.dark) .question-comment {
+    border-left-color: rgb(251 191 36 / 0.6); /* amber-400 at 60% for better visibility */
+  }
+  
+  :global(.dark) .suggestion-comment {
+    border-left-color: rgb(52 211 153 / 0.6); /* emerald-400 at 60% */
+  }
+  
+  :global(.dark) .story-comment {
+    border-left-color: rgb(96 165 250 / 0.6); /* blue-400 at 60% */
+  }
+  
+  :global(.dark) .question-comment.border-l-4,
+  :global(.dark) .suggestion-comment.border-l-4,
+  :global(.dark) .story-comment.border-l-4 {
+    border-left-color: rgb(20 184 166 / 0.8) !important; /* teal-500 at 80% for better visibility */
+  }
+</style>

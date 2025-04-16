@@ -11,5 +11,5 @@
 </script>
 
 <div class="flex justify-center items-center">
-  <div class={`${sizeClass} border-4 border-neutral-200 border-t-rose-800 rounded-full animate-spin`}></div>
+  <div class={`${sizeClass} border-4 border-neutral-200 dark:border-neutral-800 border-t-teal-600 dark:border-t-teal-500 rounded-full animate-spin`}></div>
 </div>

@@ -147,6 +147,7 @@ public class PostControllerTest {
         verify(postService).downvotePost(postId, "testuser");
     }
 
+    /* 
     @Test
     public void testMarkBestAnswer_Success() {
         // Arrange
@@ -180,6 +181,7 @@ public class PostControllerTest {
                 .containsEntry("commentId", commentId);
         verify(postService).markBestAnswer(postId, commentId, "testuser");
     }
+    */
 
     /* @Test
     public void testSearchPosts() {

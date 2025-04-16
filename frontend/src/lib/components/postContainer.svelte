@@ -169,7 +169,35 @@
     tagImage = null;
   }
 
-  // Simplified sort function with only comments and alphabetical options
+  // Function to safely parse dates for sorting
+  function parseDateSafe(dateString) {
+    if (!dateString) {
+      console.log("Warning: Empty date string received in sorting");
+      return 0; // Default to oldest date equivalent (epoch)
+    }
+    
+    try {
+      // Log the raw date string for debugging
+      console.log("Parsing date string:", dateString);
+      
+      const date = new Date(dateString);
+      
+      // Check if the date is valid
+      if (isNaN(date.getTime())) {
+        console.warn("Warning: Invalid date format in sorting:", dateString);
+        return 0;
+      }
+      
+      const timestamp = date.getTime();
+      console.log(`Date ${dateString} parsed to timestamp: ${timestamp}`);
+      return timestamp; // Return timestamp for consistent comparison
+    } catch (error) {
+      console.error("Date parsing error in sorting:", error, "for date:", dateString);
+      return 0;
+    }
+  }
+
+  // Sort function with comments, alphabetical, and recent options
   function sortThreads(threads, method) {
     if (!threads || !Array.isArray(threads)) return [];
     
@@ -178,13 +206,44 @@
     
     console.log(`Sorting ${sorted.length} threads by method: ${method}`);
     
-    // Sort function with only comments and alphabetical options
+    if (method === "recent") {
+      // Log sample dates for debugging
+      if (sorted.length > 0) {
+        const sampleThreads = sorted.slice(0, Math.min(3, sorted.length));
+        console.log("Sample thread created dates before sorting:", 
+          sampleThreads.map(t => ({ id: t.id, title: t.title.substring(0, 20), createdAt: t.createdAt }))
+        );
+      }
+    }
+    
+    // Sort function with comments, alphabetical, and recent options
     switch (method) {
       case "comments":
         sorted.sort((a, b) => (b.commentCount || 0) - (a.commentCount || 0));
         break;
       case "alphabetical":
         sorted.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case "recent":
+        // Use more robust date parsing with error handling
+        sorted.sort((a, b) => {
+          const dateA = parseDateSafe(b.createdAt); // Note: b first for descending order
+          const dateB = parseDateSafe(a.createdAt);
+          console.log(`Comparing dates: ${b.createdAt} (${dateA}) vs ${a.createdAt} (${dateB})`);
+          return dateA - dateB;
+        });
+        
+        // Log the first few sorted items to verify ordering
+        if (sorted.length > 0) {
+          console.log("First three threads after sorting by recent:", 
+            sorted.slice(0, Math.min(3, sorted.length)).map(t => ({ 
+              id: t.id, 
+              title: t.title.substring(0, 20), 
+              createdAt: t.createdAt,
+              parsed: parseDateSafe(t.createdAt)
+            }))
+          );
+        }
         break;
       default:
         // No explicit default sort - let the array stay in its original order
@@ -385,6 +444,20 @@
             <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
           </svg>
           Alphabetical
+        </button>
+        
+        <button 
+          class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
+            {sortMethod === 'recent' 
+              ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+          on:click={() => sortMethod = 'recent'}
+        >
+          <!-- Replaced with a better clock icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Most Recent
         </button>
       </div>
       

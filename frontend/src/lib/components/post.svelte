@@ -783,22 +783,6 @@ async function fetchColorHexFromName(colorName) {
                           <p class="text-xs text-neutral-800 dark:text-neutral-200 line-clamp-2">{commentObj.content}</p>
                         </div>
                       {/each}
-                      {#each contributingCommentObjects as commentObj}
-                        <div class="p-2 rounded-md bg-white dark:bg-neutral-950 shadow-sm border border-neutral-100 dark:border-neutral-800 hover:border-teal-300 dark:hover:border-teal-700 transition-colors">
-                          <div class="text-xs font-medium mb-1 flex items-center justify-between">
-                            <span class="text-neutral-700 dark:text-neutral-300">
-                              {commentObj.author}
-                              {#if commentObj.commentType}
-                                <span class="ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
-                                  {commentObj.commentType.toLowerCase()}
-                                </span>
-                              {/if}
-                            </span>
-                            <span class="text-neutral-500 text-[10px]">{formatDate(commentObj.createdAt)}</span>
-                          </div>
-                          <p class="text-xs text-neutral-800 dark:text-neutral-200 line-clamp-2">{commentObj.content}</p>
-                        </div>
-                      {/each}
                     </div>
                   {:else}
                     <p class="text-xs text-neutral-600 dark:text-neutral-400 italic">

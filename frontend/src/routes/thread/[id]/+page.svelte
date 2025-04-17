@@ -875,7 +875,15 @@
       <!-- Filter component with consistent styling -->
       <div class="lg:col-span-5">
         <div class="flex flex-col h-full">
-          <div class="w-full bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 h-full p-4">
+          <div class="w-full bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 h-full p-4 pb-3">
+            <!-- Title for the discussions section -->
+            <h3 class="text-md font-medium text-neutral-900 dark:text-white mb-2 -mt-1 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              Discussions
+            </h3>
+            
             <!-- Comment count and filter badges with consistent styling -->
             <div class="flex flex-wrap items-center gap-2 mb-4">
               <span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Filter by:</span>
@@ -935,7 +943,7 @@
             </div>
             
             <!-- Sort controls with button styling instead of dropdown -->
-            <div class="flex flex-wrap items-center gap-2 mb-4">
+            <div class="flex flex-wrap items-center gap-2 mb-2.5">
               <span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Sort by:</span>
               
               <button 
@@ -991,19 +999,19 @@
               </button>
             </div>
             
-            <div class="flex items-center mb-3">
+            <div class="flex items-center mb-2">
               <label class="inline-flex items-center text-sm text-neutral-500 dark:text-neutral-400">
                 <input 
                   type="checkbox" 
                   bind:checked={sortReplies} 
-                  class="h-3.5 w-3.5 text-teal-600 focus:ring-teal-500 mr-1.5 rounded-full"
+                  class="h-3 w-3 text-teal-600 focus:ring-teal-500 mr-1.5 rounded-full"
                 />
                 Also sort replies
               </label>
             </div>
             
             <!-- Results info with consistent styling -->
-            <div class="pt-3 text-neutral-500 dark:text-neutral-400 border-t border-neutral-100 dark:border-neutral-800 text-xs">
+            <div class="pt-2 text-neutral-500 dark:text-neutral-400 border-t border-neutral-100 dark:border-neutral-800 text-xs">
               {#if commentTypeFilter === 'ALL'}
                 Showing all comments
               {:else if commentTypeFilter !== 'ALL' && filteredAndSortedComments.length !== comments.length}

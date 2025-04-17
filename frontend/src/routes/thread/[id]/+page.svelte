@@ -531,13 +531,6 @@
     ? findContributingComments(comments, thread.resolution.contributingComments) 
     : [];
 
-  // Collapsible filter state
-  let isFilterExpanded = true;
-  
-  // Function to toggle filter section
-  function toggleFilterSection() {
-    isFilterExpanded = !isFilterExpanded;
-  }
 </script>
 
 {#if showResolutionModal}
@@ -882,177 +875,147 @@
       <!-- Filter component with consistent styling -->
       <div class="lg:col-span-5">
         <div class="flex flex-col h-full">
-          <div class="w-full bg-white dark:bg-neutral-950 shadow-sm rounded-md border border-neutral-200 dark:border-neutral-800 h-full">
-            <!-- Collapsible header with toggle button -->
-            <div class="p-4 flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 cursor-pointer" on:click={toggleFilterSection}>
-              <div class="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-neutral-600 dark:text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                <h3 class="font-medium text-neutral-800 dark:text-neutral-200">Filter & Sort</h3>
-                
-                <!-- Display filter/sort summary when collapsed -->
-                {#if !isFilterExpanded}
-                  <div class="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
-                    {commentTypeFilter !== 'ALL' ? 
-                      `Filter: ${commentTypeFilter.toLowerCase()}s` : 
-                      'All comments'} · Sort: {sortMethod}
-                  </div>
-                {/if}
-              </div>
+          <div class="w-full bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 h-full p-4">
+            <!-- Comment count and filter badges with consistent styling -->
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+              <span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Filter by:</span>
               
-              <div class="text-neutral-500 dark:text-neutral-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class={`h-5 w-5 transition-transform duration-200 ${isFilterExpanded ? 'rotate-180' : 'rotate-0'}`} viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              <button 
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border transition-colors
+                  {commentTypeFilter === 'ALL' 
+                    ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                    : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
+                on:click={() => commentTypeFilter = 'ALL'}
+              >
+                <span class="flex items-center">All</span>
+                <span class="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-white/20 dark:bg-black/20 flex items-center">{totalCommentCount}</span>
+              </button>
+              
+              <button 
+                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors
+                  {commentTypeFilter === 'QUESTION' 
+                    ? 'bg-amber-600 text-white border-amber-700' 
+                    : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 hover:bg-amber-200 dark:hover:bg-amber-900/50'}"
+                on:click={() => commentTypeFilter = 'QUESTION'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                 </svg>
-              </div>
+                <span>Questions</span>
+                <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/20">{commentCounts.QUESTION || 0}</span>
+              </button>
+              
+              <button 
+                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors
+                  {commentTypeFilter === 'SUGGESTION' 
+                    ? 'bg-emerald-600 text-white border-emerald-700' 
+                    : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'}"
+                on:click={() => commentTypeFilter = 'SUGGESTION'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+                </svg>
+                <span>Suggestions</span>
+                <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/20">{commentCounts.SUGGESTION || 0}</span>
+              </button>
+              
+              <button 
+                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors
+                  {commentTypeFilter === 'STORY' 
+                    ? 'bg-blue-600 text-white border-blue-700' 
+                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 hover:bg-blue-200 dark:hover:bg-blue-900/50'}"
+                on:click={() => commentTypeFilter = 'STORY'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                </svg>
+                <span>Stories</span>
+                <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/20">{commentCounts.STORY || 0}</span>
+              </button>
             </div>
             
-            <!-- Collapsible content -->
-            {#if isFilterExpanded}
-              <div class="p-4">
-                <!-- Comment count and filter badges with consistent styling -->
-                <div class="flex flex-wrap items-center gap-2 mb-4">
-                  <span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Filter by:</span>
-                  
-                  <button 
-                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border transition-colors
-                      {commentTypeFilter === 'ALL' 
-                        ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
-                    on:click={() => commentTypeFilter = 'ALL'}
-                  >
-                    <span class="flex items-center">All</span>
-                    <span class="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-white/20 dark:bg-black/20 flex items-center">{totalCommentCount}</span>
-                  </button>
-                  
-                  <button 
-                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors
-                      {commentTypeFilter === 'QUESTION' 
-                        ? 'bg-amber-600 text-white border-amber-700' 
-                        : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50 hover:bg-amber-200 dark:hover:bg-amber-900/50'}"
-                    on:click={() => commentTypeFilter = 'QUESTION'}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                    </svg>
-                    <span>Questions</span>
-                    <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/20">{commentCounts.QUESTION || 0}</span>
-                  </button>
-                  
-                  <button 
-                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors
-                      {commentTypeFilter === 'SUGGESTION' 
-                        ? 'bg-emerald-600 text-white border-emerald-700' 
-                        : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'}"
-                    on:click={() => commentTypeFilter = 'SUGGESTION'}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
-                    </svg>
-                    <span>Suggestions</span>
-                    <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/20">{commentCounts.SUGGESTION || 0}</span>
-                  </button>
-                  
-                  <button 
-                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium transition-colors
-                      {commentTypeFilter === 'STORY' 
-                        ? 'bg-blue-600 text-white border-blue-700' 
-                        : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 hover:bg-blue-200 dark:hover:bg-blue-900/50'}"
-                    on:click={() => commentTypeFilter = 'STORY'}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
-                    </svg>
-                    <span>Stories</span>
-                    <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/20">{commentCounts.STORY || 0}</span>
-                  </button>
-                </div>
-                
-                <!-- Sort controls with button styling instead of dropdown -->
-                <div class="flex flex-wrap items-center gap-2 mb-4">
-                  <span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Sort by:</span>
-                  
-                  <button 
-                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
-                      {sortMethod === 'newest' 
-                        ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
-                    on:click={() => sortMethod = 'newest'}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-                    </svg>
-                    Newest
-                  </button>
-                  
-                  <button 
-                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
-                      {sortMethod === 'oldest' 
-                        ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
-                    on:click={() => sortMethod = 'oldest'}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-14a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 7.586V4z" clip-rule="evenodd" />
-                    </svg>
-                    Oldest
-                  </button>
-                  
-                  <button 
-                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
-                      {sortMethod === 'votes' 
-                        ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
-                    on:click={() => sortMethod = 'votes'}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
-                    </svg>
-                    Most votes
-                  </button>
-                  
-                  <button 
-                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
-                      {sortMethod === 'type' 
-                        ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
-                        : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
-                    on:click={() => sortMethod = 'type'}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                    </svg>
-                    By type
-                  </button>
-                </div>
-                
-                <div class="flex items-center mb-3">
-                  <label class="inline-flex items-center text-sm text-neutral-500 dark:text-neutral-400">
-                    <input 
-                      type="checkbox" 
-                      bind:checked={sortReplies} 
-                      class="h-3.5 w-3.5 text-teal-600 focus:ring-teal-500 mr-1.5 rounded-full"
-                    />
-                    Also sort replies
-                  </label>
-                </div>
-                
-                <!-- Results info with consistent styling -->
-                <div class="pt-3 border-t border-neutral-200 dark:border-neutral-700 text-sm text-neutral-600 dark:text-neutral-400">
-                  {#if commentTypeFilter === 'ALL'}
-                    Showing all comments
-                  {:else if commentTypeFilter !== 'ALL' && filteredAndSortedComments.length !== comments.length}
-                    Showing {filteredAndSortedComments.length} of {comments.length} comments
-                    <button 
-                      class="ml-2 text-teal-600 dark:text-teal-500 hover:underline"
-                      on:click={() => commentTypeFilter = 'ALL'}
-                    >
-                      Clear filter
-                    </button>
-                  {/if}
-                </div>
-              </div>
-            {/if}
+            <!-- Sort controls with button styling instead of dropdown -->
+            <div class="flex flex-wrap items-center gap-2 mb-4">
+              <span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Sort by:</span>
+              
+              <button 
+                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
+                  {sortMethod === 'newest' 
+                    ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                    : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
+                on:click={() => sortMethod = 'newest'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
+                </svg>
+                Newest
+              </button>
+              
+              <button 
+                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
+                  {sortMethod === 'oldest' 
+                    ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                    : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
+                on:click={() => sortMethod = 'oldest'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-14a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 7.586V4z" clip-rule="evenodd" />
+                </svg>
+                Oldest
+              </button>
+              
+              <button 
+                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
+                  {sortMethod === 'votes' 
+                    ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                    : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
+                on:click={() => sortMethod = 'votes'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z" />
+                </svg>
+                Most votes
+              </button>
+              
+              <button 
+                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border transition-colors
+                  {sortMethod === 'type' 
+                    ? 'bg-neutral-900 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                    : 'bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-900'}"
+                on:click={() => sortMethod = 'type'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                </svg>
+                By type
+              </button>
+            </div>
+            
+            <div class="flex items-center mb-3">
+              <label class="inline-flex items-center text-sm text-neutral-500 dark:text-neutral-400">
+                <input 
+                  type="checkbox" 
+                  bind:checked={sortReplies} 
+                  class="h-3.5 w-3.5 text-teal-600 focus:ring-teal-500 mr-1.5 rounded-full"
+                />
+                Also sort replies
+              </label>
+            </div>
+            
+            <!-- Results info with consistent styling -->
+            <div class="pt-3 text-neutral-500 dark:text-neutral-400 border-t border-neutral-100 dark:border-neutral-800 text-xs">
+              {#if commentTypeFilter === 'ALL'}
+                Showing all comments
+              {:else if commentTypeFilter !== 'ALL' && filteredAndSortedComments.length !== comments.length}
+                Showing {filteredAndSortedComments.length} of {comments.length} comments
+                <button 
+                  class="ml-2 text-teal-600 dark:text-teal-500 hover:underline"
+                  on:click={() => commentTypeFilter = 'ALL'}
+                >
+                  Clear filter
+                </button>
+              {/if}
+            </div>
           </div>
         </div>
       </div>

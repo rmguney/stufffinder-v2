@@ -439,7 +439,7 @@
   });
 </script>
 
-<div class="min-h-screen flex justify-center p-4 md:p-6 lg:py-10 bg-change dark:bg-dark shifting">
+<div class="min-h-screen flex justify-center bg-change dark:bg-dark shifting p-3 py-5">
   <div class="w-full max-w-7xl space-y-6">
     {#if userNotFound}
       <!-- User Not Found Card -->

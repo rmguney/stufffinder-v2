@@ -407,7 +407,7 @@
     }
 </script>
 
-<div class="flex flex-col items-center bg-change dark:bg-dark shifting p-3 sm:p-4 md:p-5">
+<div class="flex flex-col items-center bg-change dark:bg-dark shifting p-3 py-5">
     <div class="w-full max-w-7xl mx-auto">
         <form class="w-full" on:submit|preventDefault={handleUpdate}>
             <Card.Root class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">

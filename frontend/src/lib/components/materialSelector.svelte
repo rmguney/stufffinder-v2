@@ -190,11 +190,11 @@
     on:input={handleInputChange}
     on:focus={handleFocus}
     {placeholder}
-    class="w-full"
+    class="w-full rounded-full"
   />
   
   {#if showSuggestions}
-    <div class="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto bg-white dark:bg-neutral-900 shadow-lg border rounded-md">
+    <div class="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto bg-white dark:bg-neutral-900 shadow-lg border rounded-xl">
       <!-- Loading state -->
       {#if $isLoading}
         <div class="p-3 flex items-center justify-center">
@@ -206,18 +206,18 @@
         <div class="p-3 text-sm text-red-500">{$error}</div>
       <!-- Empty state -->
       {:else if $materials.length === 0 && inputValue.length >= 2}
-        <div class="p-3 text-sm text-gray-500">No matching materials found. You can use your own term.</div>
+        <div class="p-3 text-sm text-neutral-500">No matching materials found. You can use your own term.</div>
       <!-- Search results -->
       {:else if inputValue.length >= 2 && $materials.length > 0}
         <div class="p-2">
-          <div class="text-xs font-semibold mb-1 px-2 text-gray-500">Material Suggestions</div>
+          <div class="text-xs font-semibold mb-1 px-2 text-neutral-500">Material Suggestions</div>
           {#each $materials as material}
             <button 
-              class="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-neutral-800 rounded transition-colors"
+              class="block w-full text-left px-3 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
               on:click={() => selectMaterial(material)}>
               <div class="text-sm font-medium">{material.label}</div>
               {#if material.description}
-                <div class="text-xs text-gray-500 line-clamp-1">{material.description}</div>
+                <div class="text-xs text-neutral-500 line-clamp-1">{material.description}</div>
               {/if}
             </button>
           {/each}
@@ -225,21 +225,21 @@
       <!-- Material categories (shown when focused with empty or short input) -->
       {:else if $materialCategories.length > 0}
         <div class="p-2">
-          <div class="text-xs font-semibold mb-1 px-2 text-gray-500">Common Material Categories</div>
+          <div class="text-xs font-semibold mb-1 px-2 text-neutral-500">Common Material Categories</div>
           {#each $materialCategories as category}
             <button 
-              class="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-neutral-800 rounded transition-colors"
+              class="block w-full text-left px-3 py-2 text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full transition-colors"
               on:click={() => selectCategory(category)}>
               <div class="text-sm font-medium">{category.label}</div>
-              <div class="text-xs text-gray-500">Select as material</div>
+              <div class="text-xs text-neutral-500">Select as material</div>
             </button>
           {/each}
-          <div class="text-xs text-center mt-2 text-gray-500">
+          <div class="text-xs text-center mt-2 text-neutral-500">
             Type to search for specific materials
           </div>
         </div>
       {:else}
-        <div class="p-3 text-sm text-gray-500">Type at least 2 characters to search for materials</div>
+        <div class="p-3 text-sm text-neutral-500">Type at least 2 characters to search for materials</div>
       {/if}
     </div>
   {/if}

@@ -630,7 +630,7 @@
     let lastUrlUpdate = '';
 </script>
 
-<div class="flex flex-col items-center h-full min-h-screen text-text bg-change dark:bg-dark shifting p-4 lg:py-8">
+<div class="flex flex-col items-center h-full min-h-screen text-text bg-change dark:bg-dark shifting p-3 py-5">
   <div class="w-full max-w-7xl">
     <Card.Root class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">
       <Card.Title class="p-6 text-2xl font-semibold text-center">
@@ -762,7 +762,7 @@
         
         <!-- Search Results -->
         <Separator class="my-6 bg-neutral-200 dark:bg-neutral-700" />
-        
+
         <div class="space-y-4" aria-live="polite">
           {#if loading}
             <div class="text-center py-8">

@@ -81,7 +81,7 @@
         aria-label="Select color"
     />
     <div 
-        class="flex items-center gap-2 flex-1 border rounded p-2 bg-white dark:bg-neutral-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-700"
+        class="flex items-center gap-2 flex-1 border rounded-full p-2 bg-white dark:bg-neutral-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-700"
         on:click={openColorPicker}
         on:keydown={(e) => e.key === 'Enter' && openColorPicker()}
         tabindex="0"
@@ -89,7 +89,7 @@
         aria-label="Open color picker"
     >
         <div 
-            class="w-6 h-6 rounded border"
+            class="w-6 h-6 rounded-full border"
             style="background-color: {selectedHexColor};"
         ></div>
         <span class="text-sm truncate">

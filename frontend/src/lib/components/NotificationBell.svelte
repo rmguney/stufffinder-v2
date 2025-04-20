@@ -177,7 +177,7 @@
         
         <Popover.Content 
             align="end" 
-            class="w-[280px] sm:w-80 p-0 bg-white dark:bg-neutral-950 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-800"
+            class="w-[280px] sm:w-80 p-0 bg-white dark:bg-neutral-950 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-900"
         >
             <Card.Root class="border-0 shadow-none">
                 <Card.Header class="px-3 sm:px-4 py-2 sm:py-3 flex flex-row justify-between items-center space-y-0">
@@ -186,7 +186,7 @@
                         <Button 
                             variant="ghost" 
                             size="sm" 
-                            class="text-xs hover:bg-rose-900 hover:text-white transition-colors h-7 sm:h-8"
+                            class="text-xs hover:bg-neutral-800 hover:text-white transition-colors rounded-full h-7 sm:h-8"
                             on:click={markAllAsRead}
                         >
                             Mark all as read
@@ -240,7 +240,7 @@
                     <Button 
                         variant="ghost" 
                         size="sm" 
-                        class="w-full text-xs text-neutral-500 dark:text-neutral-400 hover:bg-rose-900 hover:text-white h-7 sm:h-8"
+                        class="w-full text-xs text-neutral-500 dark:text-neutral-400 hover:bg-neutral-900 hover:text-white h-7 sm:h-8"
                         on:click={() => isOpen = false}
                     >
                         Close

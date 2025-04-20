@@ -970,7 +970,7 @@ async function fetchColorHexFromName(colorName) {
                         {/if}
                         {#if part.color && !Object.keys(part).some(k => k.toLowerCase().includes('colorname') && k !== 'color')}
                           <div class="bg-neutral-50 dark:bg-neutral-950 p-2 rounded-md border border-neutral-100 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition-colors">
-                            <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1 capitalize">color</span>
+                            <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1">COLOR</span>
                             <span class="flex items-center gap-2">
                               {#if isHexColor(part.color)}
                                 <div class="w-4 h-4 rounded border" style="background-color: {part.color};"></div>

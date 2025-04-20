@@ -66,7 +66,7 @@
                     </div>
                     
                     <a href={`/user/${$activeUser}`} class="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
-                        <span class="text-sm font-medium">
+                        <span class="text-lg font-medium">
                             {$activeUser[0].toUpperCase()}
                         </span>
                     </a>

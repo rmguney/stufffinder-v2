@@ -338,7 +338,7 @@
                 Contributing
               </span>
             {/if}
-          </div>zz
+          </div>
 
           <!-- Comment content -->
           {#if editMode}

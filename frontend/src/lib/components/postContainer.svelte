@@ -458,9 +458,10 @@
               : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
           on:click={() => sortMethod = 'recent'}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd" />
-          </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="size-3 mr-1">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        
           Recent
         </button>
       </div>
@@ -555,27 +556,26 @@
 <!-- Display skeleton loaders when loading, otherwise real posts -->
 <div class="flex flex-col lg:flex-wrap lg:flex-row justify-center gap-4 lg:gap-6">
   {#if $isLoading}
-    <!-- Skeleton loaders for posts -->
+    <!-- Skeleton loaders for posts - updated to match new thumb variant structure -->
     {#each Array(postsPerPage) as _, i}
       <div class="w-full lg:w-[calc(33.333%-1rem)]">
         <div class="bg-white dark:bg-neutral-950 shadow-sm border border-neutral-200 dark:border-neutral-800 rounded-md overflow-hidden animate-pulse">
-          <!-- Skeleton image -->
+          <!-- Skeleton image at top without padding -->
           <div class="w-full aspect-[4/3] bg-neutral-200 dark:bg-neutral-800"></div>
           
-          <!-- Skeleton title and description -->
+          <!-- Skeleton content below image -->
           <div class="p-4">
             <div class="h-5 bg-neutral-200 dark:bg-neutral-800 rounded w-3/4 mb-3"></div>
-            <div class="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-full mb-2"></div>
-            <div class="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-2/3"></div>
+            <div class="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-full mb-3"></div>
             
             <!-- Skeleton tags -->
-            <div class="flex flex-wrap gap-1.5 mt-3">
+            <div class="flex flex-wrap gap-1.5 mb-3">
               <div class="h-5 w-16 bg-neutral-200 dark:bg-neutral-800 rounded-full"></div>
               <div class="h-5 w-12 bg-neutral-200 dark:bg-neutral-800 rounded-full"></div>
             </div>
             
             <!-- Skeleton footer -->
-            <div class="mt-4 pt-3 border-t border-neutral-200 dark:border-neutral-700 flex justify-between">
+            <div class="pt-3 border-t border-neutral-200 dark:border-neutral-700 flex justify-between">
               <div class="h-4 w-24 bg-neutral-200 dark:bg-neutral-800 rounded"></div>
               <div class="h-4 w-16 bg-neutral-200 dark:bg-neutral-800 rounded"></div>
             </div>

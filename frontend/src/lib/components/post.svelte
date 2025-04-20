@@ -20,7 +20,7 @@
   export let mediaFiles = []; // New prop for multiple media files
   export let solved = false;
   export let resolution = null;
-  export let variant = "thumb";
+  export let variant = "default"; // "default" or "thumb"
   export let mysteryObject = null;  // Changed from object with defaults to null
   let mysteryObjectSubParts = mysteryObject?.subParts || [];
   export let postedBy = '';
@@ -230,7 +230,7 @@ function handleImageError(event) {
 
 function handleMediaError(event) {
   const svgIcon = `
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="size-10 bg-black">
+    <svg xmlns="http://www.w3.org/20000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="white" class="size-10 bg-black">
       <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
     </svg>
     `;
@@ -583,6 +583,100 @@ async function fetchColorHexFromName(colorName) {
   </div>
 {/if}
 
+{#if variant === "thumb"}
+  <!-- Modified thumb variant with added shine+scale effect on hover -->
+  <div class="thumb-card flex flex-col bg-white dark:bg-neutral-950 shadow-sm border border-neutral-200 dark:border-neutral-800 rounded-md overflow-hidden h-full transition-all duration-300 hover:shadow-md relative">
+    <!-- Steam-like glossy overlay effect -->
+    <div class="gloss-effect absolute inset-0 z-0 pointer-events-none"></div>
+    
+    <!-- Image at top without padding -->
+    {#if imageSrc}
+      <div class="w-full aspect-[4/3] overflow-hidden">
+        <img src={imageSrc} alt={title} class="w-full h-full object-cover" />
+      </div>
+    {:else if mediaFiles.length > 0}
+      <div class="w-full aspect-[4/3] overflow-hidden">
+        <img src={mediaFiles[0].url} alt={title} class="w-full h-full object-cover" on:error={handleImageError} />
+      </div>
+    {:else}
+      <div class="w-full aspect-[4/3] bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-neutral-300 dark:text-neutral-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </div>
+    {/if}
+    
+    <!-- Content below image -->
+    <div class="p-4 flex flex-col flex-grow">
+      <h3 class="font-medium text-neutral-900 dark:text-white text-lg mb-1 line-clamp-1">{title}</h3>
+      
+      <!-- Description - reduced to 1 line -->
+      <p class="text-sm text-neutral-600 dark:text-neutral-400 mb-2 line-clamp-1">{description}</p>
+      
+      <!-- Tags -->
+      {#if $tagDetails && $tagDetails.length > 0}
+        <div class="flex flex-wrap gap-1.5 mb-3">
+          {#each $tagDetails as tag}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
+              {tag.label}
+            </span>
+          {/each}
+        </div>
+      {/if}
+      
+      <!-- Footer with username and status -->
+      <div class="mt-auto pt-3 border-t border-neutral-100 dark:border-neutral-800 flex justify-between items-center">
+        <div class="text-xs text-neutral-500 dark:text-neutral-400">
+          <span class="font-medium">{postedBy}</span>
+          <!-- Replace text status with badge, matching thread variant -->
+          {#if solved}
+            <span class="inline-flex items-center ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/50">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              Resolved
+            </span>
+          {:else}
+            <span class="inline-flex items-center ml-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+              </svg>
+              Unresolved
+            </span>
+          {/if}
+        </div>
+        
+        <!-- Stats -->
+        <div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+          <!-- Votes -->
+          <div class="flex items-center gap-1">
+            {#if downvotes > upvotes}
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-rose-600" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M5 6l5 5 5-5H5z"/>
+              </svg>
+              <span class="text-rose-600">{upvotes - downvotes}</span>
+            {:else if upvotes > 0}
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-teal-600" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M5 14l5-5 5 5H5z"/>
+              </svg>
+              <span class="text-teal-600">{upvotes - downvotes}</span>
+            {:else}
+              <span class="text-neutral-500">0</span>
+            {/if}
+          </div>
+
+          <!-- Comment count -->
+          <div class="flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span>{commentCount}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{:else}
 <Card.Root class={`shadow-md hover:shadow-lg transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]
   ${variant === "thumb" ? 'bg-opacity-90 hover:bg-opacity-100 w-70 h-70 lg:hover:scale-[1.02] hover:-translate-y-1 rounded-md' : 'bg-opacity-90 hover:bg-opacity-100 rounded-md'}`}>
   {#if variant === "thread"}
@@ -796,7 +890,7 @@ async function fetchColorHexFromName(colorName) {
         </div>
       </div>
     {/if}
-        
+
     <!-- Separator between main content and details -->
     <div class="h-px bg-neutral-200 dark:bg-neutral-800 mx-4"></div>
 
@@ -816,7 +910,7 @@ async function fetchColorHexFromName(colorName) {
               ) as [key, value]}
                 {#if value}
                   <div class="bg-white dark:bg-neutral-950 p-3 rounded-md border border-neutral-100 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors shadow-sm">
-                    <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1 uppercase">
+                    <span class="block text-xs font-medium text-neutral-500 dark:text-neutral-400 mb-1 object-part-name">
                       {key.split(/(?=[A-Z])/).join(' ').replace('_', ' ')}
                     </span>
                     <span class="text-neutral-900 dark:text-neutral-100">
@@ -1014,421 +1108,208 @@ async function fetchColorHexFromName(colorName) {
                 </div>
               </div>
             {/if}
-            
           </div>
         </div>
-    {/if}
+      {/if}
 
-    <!-- Media Carousel Section -->
-    {#if mediaFiles.length > 0}
-      <div class="lg:w-1/2 flex-shrink-0 order-1 lg:order-2">
-        <div class="relative rounded-md overflow-hidden bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 shadow-sm">
-          <!-- Carousel navigation buttons -->
-          {#if mediaFiles.length > 1}
-            <div class="absolute top-0 bottom-0 left-0 flex items-center z-10">
-              <button 
-                on:click={prevMedia}
-                class="bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white p-2 rounded-r-lg ml-2 focus:outline-none transform transition-all duration-200 hover:scale-110 hover:shadow-lg"
-                aria-label="Previous media"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-            </div>
-            
-            <div class="absolute top-0 bottom-0 right-0 flex items-center z-10">
-              <button 
-                on:click={nextMedia}
-                class="bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white p-2 rounded-l-lg mr-2 focus:outline-none transform transition-all duration-200 hover:scale-110 hover:shadow-lg"
-                aria-label="Next media"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-            
-            <!-- Media counter -->
-            <div class="absolute bottom-4 left-0 right-0 flex justify-center z-10">
-              <div class="bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs shadow-sm">
-                {currentMediaIndex + 1} / {mediaFiles.length}
-              </div>
-            </div>
-          {/if}
-          
-          <!-- Current media display -->
-          <div class="carousel-container w-full">
-            {#if mediaFiles[currentMediaIndex]}
-              {@const media = mediaFiles[currentMediaIndex]}
-              {#if media.type === 'image'}
-                <img 
-                  src={media.url} 
-                  alt={media.name || title} 
-                  class="w-full object-contain max-h-[500px]" 
-                  on:error={handleMediaError}
-                />
-              {:else if media.type === 'video'}
-                <!-- svelte-ignore a11y-media-has-caption -->
-                <video 
-                  src={media.url} 
-                  controls 
-                  class="w-full object-contain max-h-[500px]"
+      <!-- Media Carousel Section -->
+      {#if mediaFiles.length > 0}
+        <div class="lg:w-1/2 flex-shrink-0 order-1 lg:order-2">
+          <div class="relative rounded-md overflow-hidden bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 shadow-sm">
+            <!-- Carousel navigation buttons -->
+            {#if mediaFiles.length > 1}
+              <div class="absolute top-0 bottom-0 left-0 flex items-center z-10">
+                <button 
+                  on:click={prevMedia}
+                  class="bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white p-2 rounded-r-lg ml-2 focus:outline-none transform transition-all duration-200 hover:scale-110 hover:shadow-lg"
+                  aria-label="Previous media"
                 >
-                  Your browser does not support the video tag.
-                </video>
-              {:else}
-                <div class="flex flex-col items-center justify-center p-10 h-[300px]">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-rose-500 dark:text-rose-400 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2zM9 10l12-3" />
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                   </svg>
-                  <audio 
+                </button>
+              </div>
+              
+              <div class="absolute top-0 bottom-0 right-0 flex items-center z-10">
+                <button 
+                  on:click={nextMedia}
+                  class="bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white p-2 rounded-l-lg mr-2 focus:outline-none transform transition-all duration-200 hover:scale-110 hover:shadow-lg"
+                  aria-label="Next media"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+              
+              <!-- Media counter -->
+              <div class="absolute bottom-4 left-0 right-0 flex justify-center z-10">
+                <div class="bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs shadow-sm">
+                  {currentMediaIndex + 1} / {mediaFiles.length}
+                </div>
+              </div>
+            {/if}
+            
+            <!-- Current media display -->
+            <div class="carousel-container w-full">
+              {#if mediaFiles[currentMediaIndex]}
+                {@const media = mediaFiles[currentMediaIndex]}
+                {#if media.type === 'image'}
+                  <img 
+                    src={media.url} 
+                    alt={media.name || title} 
+                    class="w-full object-contain max-h-[500px]" 
+                    on:error={handleMediaError}
+                  />
+                {:else if media.type === 'video'}
+                  <!-- svelte-ignore a11y-media-has-caption -->
+                  <video 
                     src={media.url} 
                     controls 
-                    class="w-full max-w-md"
+                    class="w-full object-contain max-h-[500px]"
                   >
-                    Your browser does not support the audio tag.
-                  </audio>
-                  <p class="mt-4 text-gray-700 dark:text-gray-300">{media.name}</p>
-                </div>
+                    Your browser does not support the video tag.
+                  </video>
+                {:else}
+                  <div class="flex flex-col items-center justify-center p-10 h-[300px]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-rose-500 dark:text-rose-400 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2zM9 10l12-3" />
+                    </svg>
+                    <audio 
+                      src={media.url} 
+                      controls 
+                      class="w-full max-w-md"
+                    >
+                      Your browser does not support the audio tag.
+                    </audio>
+                    <p class="mt-4 text-gray-700 dark:text-gray-300">{media.name}</p>
+                  </div>
+                {/if}
               {/if}
-            {/if}
-          </div>
-          
-          <!-- Thumbnail navigation for multiple media -->
-          {#if mediaFiles.length > 1}
-            <div class="flex justify-center gap-2 px-4 py-3 bg-neutral-100 dark:bg-neutral-950 overflow-x-auto">
-              {#each mediaFiles as media, i}
-                <button 
-                  on:click={() => currentMediaIndex = i}
-                  class="flex-shrink-0 w-14 h-14 rounded-md overflow-hidden focus:outline-none transition-all duration-200 ease-in-out 
-                        {i === currentMediaIndex ? 'ring-2 ring-teal-500 transform scale-105 shadow-md' : 'opacity-60 hover:opacity-100 hover:shadow-sm'}"
-                  aria-label={`View media item ${i+1}`}
-                >
-                  {#if media.type === 'image'}
-                    <img src={media.url} alt="thumbnail" class="w-full h-full object-cover" />
-                  {:else if media.type === 'video'}
-                    <div class="w-full h-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                  {:else if media.type === 'audio'}
-                    <div class="w-full h-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2zM9 10l12-3" />
-                      </svg>
-                    </div>
-                  {:else}
-                    <div class="w-full h-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                    </div>
-                  {/if}
-                </button>
-              {/each}
-            </div>
-          {/if}
-        </div>
-      </div>
-    {/if}
-  </div>
-  {:else}
-    <!-- Thumb variant - keep existing code -->
-    <Card.Header>
-      <div class="flex flex-row items-center">
-        <div class="flex-1 min-w-0">
-          <Card.Title>
-            <div class={`${variant === "thumb" ? 'text-ellipsis overflow-hidden whitespace-nowrap w-full max-w-full' : ''}`}>
-              {title}
-            </div>
-          </Card.Title>
-          <Card.Description class={`${variant === "thumb" ? 'lg:translate-y-2 text-ellipsis overflow-hidden whitespace-nowrap' : 'my-2.5'}`}>
-            <div>
-              <div>
-                {#if postedBy}
-                  <a href={`/user/${postedBy}`} class="hover:text-rose-900 hover:underline font-bold">
-                    {postedBy}
-                  </a>
-                {:else}
-                  <span class="font-bold">Anonymous</span>
-                {/if}
-                <!-- Improved date display -->
-                {#if createdAt && createdAt !== 'undefined' && createdAt !== 'null'}
-                  <span class="ml-1">at {formatDate(createdAt)}</span>
-                {/if}
-              </div>
-              <div class={`${variant === "thumb" ? 'mt-1' : 'mt-1.5'}`}>
-                {#if solved}
-                  <span class="inline-flex items-center px-2.5 py-1 mt-1 rounded-full text-xs font-medium bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/50">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                    </svg>
-                    Resolved
-                  </span>
-                {:else}
-                  <span class="inline-flex items-center px-2.5 py-1 mt-1 rounded-full text-xs font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
-                    </svg>
-                    Unresolved
-                  </span>
-                {/if}
-              </div>
-            </div>
-          </Card.Description>
-        </div>
-      </div>
-    </Card.Header>
-
-    <Card.Content>
-      {#if variant !== "thumb"}
-        <div class="-mt-5">
-          <!-- Post metadata section -->
-          <div class="flex justify-between items-center mb-4">
-            <div class="flex items-center gap-4">
-              <!-- Voting section -->
-              <div class="flex items-center gap-2">
-                <button 
-                  class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
-                         {userUpvoted ? 'text-teal-600' : 'text-neutral-600'}"
-                  on:click={() => handleVote(true)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M5 14l5-5 5 5H5z"/>
-                  </svg>
-                </button>
-                <span class="font-medium text-sm">
-                  {#if downvotes > upvotes}
-                    <span class="text-rose-600">
-                      {downvotes}
-                    </span>
-                  {:else if upvotes > 0}
-                    <span class="text-teal-600">
-                      {upvotes}
-                    </span>
-                  {:else}
-                    <span class="text-neutral-500">
-                      0
-                    </span>
-                  {/if}
-                </span>
-                <button 
-                  class="flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-8 h-8 transition-colors
-                         {userDownvoted ? 'text-rose-600' : 'text-neutral-500'}"
-                  on:click={() => handleVote(false)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M5 6l5 5 5-5H5z"/>
-                  </svg>
-                </button>
-              </div>
             </div>
             
-            <!-- Creation/Update time -->
-            <div class="text-sm text-netural-500">
-              {#if updatedAt && updatedAt !== createdAt}
-                <span>Updated: {formatDate(updatedAt)}</span>
-              {:else}
-                <span>Created: {formatDate(createdAt)}</span>
-              {/if}
-            </div>
-          </div>
-
-          <!-- Add description section right after metadata -->
-          <div class="mb-4">
-            {#if description}
-              <p class="text-lg mb-2">{description}</p>
-            {/if}
-          </div>
-
-          <!-- Tags section -->
-          <div>
-            <ul>
-              <span class="text-md font-semibold text-black dark:text-white">Tags:</span>
-              {#each $tagDetails as tag}
-                <li>
-                  <span 
-                    class="hover:underline text-black dark:text-white hover:text-rose-700 dark:hover:text-rose-500 text-md cursor-pointer"
-                    on:mouseenter={(e) => handleTagHover(e, tag)}
-                    on:mouseleave={handleTagLeave}
+            <!-- Thumbnail navigation for multiple media -->
+            {#if mediaFiles.length > 1}
+              <div class="flex justify-center gap-2 px-4 py-3 bg-neutral-100 dark:bg-neutral-950 overflow-x-auto">
+                {#each mediaFiles as media, i}
+                  <button 
+                    on:click={() => currentMediaIndex = i}
+                    class="flex-shrink-0 w-14 h-14 rounded-md overflow-hidden focus:outline-none transition-all duration-200 ease-in-out 
+                        {i === currentMediaIndex ? 'ring-2 ring-teal-500 transform scale-105 shadow-md' : 'opacity-60 hover:opacity-100 hover:shadow-sm'}"
+                    aria-label={`View media item ${i+1}`}
                   >
-                    {tag.label}: {tag.description}
-                  </span>
-                </li>
-              {/each}
-            </ul>
-          </div>
-
-          <!-- Mystery Object Details -->
-          {#if mysteryObject}
-            <Separator class="mt-4 mb-2"/>
-            <div class="flex flex-col">
-              <ul>
-                {#if mysteryObject.writtenText}<li class="mt-2"><span class="font-semibold text-md">Written Text:</span> {mysteryObject.writtenText}</li>{/if}
-                {#if mysteryObject.color}
-                  <li class="mt-2">
-                    <span class="font-semibold text-md">Color:</span>
-                    <div class="inline-flex items-center gap-2 ml-1">
-                      {#if isHexColor(mysteryObject.color)}
-                        <span class="w-4 h-4 inline-block rounded border" style="background-color: {mysteryObject.color};"></span>
-                        {#if isLoadingColorNames.has(mysteryObject.color)}
-                          Loading...
-                        {:else}
-                          {#await fetchColorName(mysteryObject.color)}
-                            Loading...
-                          {:then colorName}
-                            {colorName}
-                            <span class="text-xs opacity-75 ml-1">({mysteryObject.color})</span>
-                          {:catch}
-                            {mysteryObject.color}
-                          {/await}
-                        {/if}
-                      {:else}
-                        {mysteryObject.color}
-                      {/if}
-                    </div>
-                  </li>
-                {/if}
-                {#if mysteryObject.shape}<li class="mt-2"><span class="font-semibold text-md">Shape:</span> {mysteryObject.shape}</li>{/if}
-                {#if mysteryObject.descriptionOfParts}<li class="mt-2"><span class="font-semibold text-md">Parts Description:</span> {mysteryObject.descriptionOfParts}</li>{/if}
-                {#if mysteryObject.location}<li class="mt-2"><span class="font-semibold text-md">Location:</span> {mysteryObject.location}</li>{/if}
-                {#if mysteryObject.hardness}<li class="mt-2"><span class="font-semibold text-md">Hardness:</span> {mysteryObject.hardness}</li>{/if}
-                {#if mysteryObject.timePeriod}<li class="mt-2"><span class="font-semibold text-md">Time Period:</span> {mysteryObject.timePeriod}</li>{/if}
-                {#if mysteryObject.smell}<li class="mt-2"><span class="font-semibold text-md">Smell:</span> {mysteryObject.smell}</li>{/if}
-                {#if mysteryObject.taste}<li class="mt-2"><span class="font-semibold text-md">Taste:</span> {mysteryObject.taste}</li>{/if}
-                {#if mysteryObject.texture}<li class="mt-2"><span class="font-semibold text-md">Texture:</span> {mysteryObject.texture}</li>{/if}
-                {#if mysteryObject.value}<li class="mt-2"><span class="font-semibold text-md">Value:</span> ${mysteryObject.value}</li>{/if}
-                {#if mysteryObject.originOfAcquisition}<li class="mt-2"><span class="font-semibold text-md">Origin:</span> {mysteryObject.originOfAcquisition}</li>{/if}
-                {#if mysteryObject.pattern}<li class="mt-2"><span class="font-semibold text-md">Pattern:</span> {mysteryObject.pattern}</li>{/if}
-                {#if mysteryObject.brand}<li class="mt-2"><span class="font-semibold text-md">Brand:</span> {mysteryObject.brand}</li>{/if}
-                {#if mysteryObject.print}<li class="mt-2"><span class="font-semibold text-md">Print:</span> {mysteryObject.print}</li>{/if}
-                {#if mysteryObject.imageLicenses}<li class="mt-2"><span class="font-semibold text-md">Image Licenses:</span> {mysteryObject.imageLicenses}</li>{/if}
-                {#if mysteryObject.handmade}<li class="mt-2"><span class="font-semibold text-md">Handmade:</span> Yes</li>{/if}
-                {#if mysteryObject.oneOfAKind}<li class="mt-2"><span class="font-semibold text-md">One of a Kind:</span> Yes</li>{/if}
-                {#if mysteryObject.item_condition}<li class="mt-2"><span class="font-semibold text-md">Condition:</span> {mysteryObject.item_condition}</li>{/if}
-                {#if mysteryObject.sizeX || mysteryObject.sizeY || mysteryObject.sizeZ}
-                  <li class="mt-2"><span class="font-semibold text-md">Dimensions:</span> {mysteryObject.sizeX}x{mysteryObject.sizeY}x{mysteryObject.sizeZ} cm</li>
-                {/if}
-                {#if mysteryObject.weight}<li class="mt-2"><span class="font-semibold text-md">Weight:</span> {mysteryObject.weight}g</li>{/if}
-              </ul>
-            </div>
-          {/if}
-        </div>
-      {:else}
-        <div class={`${variant === "thumb" ? 'overflow-hidden flex justify-center items-center rounded-md' : ''}`}>
-          {#if thumbnailImage}
-            {#if variant !== "thumb"}
-              <a href={thumbnailImage} target="_blank" rel="noopener noreferrer">
-                <img 
-                  class="object-cover w-full pt-4" 
-                  src={thumbnailImage} 
-                  alt={title}
-                  on:error={handleImageError}
-                />
-              </a>
-            {:else}
-              <img 
-                class="object-cover w-full h-48 hover:scale-[1.02] transition-all duration-300" 
-                src={thumbnailImage} 
-                alt={title}
-                on:error={handleImageError}
-              />
+                    {#if media.type === 'image'}
+                      <img src={media.url} alt="thumbnail" class="w-full h-full object-cover" />
+                    {:else if media.type === 'video'}
+                      <div class="w-full h-full bg-neutral-200 dark:bg-neutral-700 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    {:else if media.type === 'audio'}
+                      <div class="w-full h-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2zM9 10l12-3" />
+                        </svg>
+                      </div>
+                    {:else}
+                      <div class="w-full h-full bg-neutral-200 dark:bg-neutral-800 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                    {/if}
+                  </button>
+                {/each}
+              </div>
             {/if}
-          {/if}
-        </div>
-
-      <!-- Add brief description for thumb variant -->
-      {#if variant === "thumb" && description}
-        <div class="pt-3">
-          <p class="text-sm text-neutral-700 dark:text-neutral-300 line-clamp-2">
-            {description}
-          </p>
+          </div>
         </div>
       {/if}
-
-        <!-- Add tags display for thumb variant after the image -->
-        {#if variant === "thumb" && $tagDetails.length > 0}
-          <div class="flex flex-wrap gap-1.5 mt-3 mb-1">
-            {#each $tagDetails as tag}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800 transition-colors duration-200">
-                {tag.label}
-              </span>
-            {/each}
-          </div>
-        {/if}
-
-        <!-- Add comment count and vote count display -->
-        {#if variant === "thumb"}
-          <div class="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 pt-3 border-t border-neutral-100 dark:border-neutral-800 mt-2">
-            <!-- Vote count -->
-            <div class="flex items-center gap-1.5 h-[24px]">
-              {#if downvotes > upvotes}
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-rose-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M5 6l5 5 5-5H5z"/>
-                </svg>
-                <span class="text-rose-600">{downvotes} downvotes</span>
-              {:else if upvotes > 0}
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-teal-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M5 14l5-5 5 5H5z"/>
-                </svg>
-                <span class="text-teal-600">{upvotes} upvotes</span>
-              {:else}
-                <div class="flex items-center gap-1">
-                  <div class="flex flex-col -my-1 justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-neutral-500" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M5 14l5-5 5 5H5z"/>
-                    </svg>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-neutral-500" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M5 6l5 5 5-5H5z"/>
-                    </svg>
-                  </div>
-                  <span class="text-neutral-500">0 votes</span>
-                </div>
-              {/if}
-            </div>
-
-            <!-- Comment count -->
-            <div class="flex items-center gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              <span>{commentCount} {commentCount === 1 ? 'comment' : 'comments'}</span>
-            </div>
-          </div>
-        {/if}
-      {/if}
-    </Card.Content>
+    </div>
   {/if}
-</Card.Root>
 
-<!-- Add the tag tooltip/modal -->
-{#if tooltipVisible && hoveredTag}
-  <div class="tag-tooltip" style="left: {tooltipPosition.x}px; top: {tooltipPosition.y}px;">
-    <div class="tag-tooltip-content">
-      <div class="tag-tooltip-header">
-        <span class="font-medium">{hoveredTag.label}</span>
-      </div>
-      <div class="tag-tooltip-body">
-        {#if tagImageLoading}
-          <div class="tag-image-placeholder">
-            <div class="inline-block h-8 w-8 border-4 border-neutral-200 dark:border-neutral-800 border-t-teal-600 dark:border-t-teal-500 rounded-full animate-spin"></div>
-          </div>
-        {:else if tagImage}
-          <img src={tagImage} alt={hoveredTag.label} class="tag-image" />
-        {/if}
-        <p class="tag-description">{hoveredTag.description || 'No description available'}</p>
+  <!-- Tag tooltip -->
+  {#if tooltipVisible && hoveredTag}
+    <div class="tag-tooltip" style="left: {tooltipPosition.x}px; top: {tooltipPosition.y}px;">
+      <div class="tag-tooltip-content">
+        <div class="tag-tooltip-header">
+          <span class="font-medium">{hoveredTag.label}</span>
+        </div>
+        <div class="tag-tooltip-body">
+          {#if tagImageLoading}
+            <div class="tag-image-placeholder">
+              <div class="inline-block h-8 w-8 border-4 border-neutral-200 dark:border-neutral-800 border-t-teal-600 dark:border-t-teal-500 rounded-full animate-spin"></div>
+            </div>
+          {:else if tagImage}
+            <img src={tagImage} alt={hoveredTag.label} class="tag-image" />
+          {/if}
+          <p class="tag-description">{hoveredTag.description || 'No description available'}</p>
+        </div>
       </div>
     </div>
-  </div>
+  {/if}
+</Card.Root>
 {/if}
 
 <style>
   /* Modern transitions and animations */
   .carousel-container {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  /* Thumb card hover effects */
+  .thumb-card {
+    transform: translateZ(0); /* Hardware acceleration */
+    transition: all 0.3s ease;
+  }
+  
+  .thumb-card:hover {
+    transform: scale(1.02);
+  }
+  
+  /* Diagonal glossy effect from top-left to bottom-right */
+  .gloss-effect {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    opacity: 0.7;
+    border-radius: 4px;
+  }
+  
+  /* Enhanced gloss effect on hover */
+  .thumb-card:hover .gloss-effect {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.25) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    opacity: 0.9;
+    transition: opacity 0.3s ease, background 0.3s ease;
+  }
+  
+  /* Dark mode adjustments for gloss effect */
+  :global(.dark) .gloss-effect {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(255, 255, 255, 0.02) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+  }
+  
+  :global(.dark) .thumb-card:hover .gloss-effect {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.04) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
   }
   
   /* Fade-in animation for cards */
@@ -1441,12 +1322,18 @@ async function fetchColorHexFromName(colorName) {
     animation: fadeIn 0.4s ease-out;
   }
 
-  /* Tag tooltip styles - improved to match design system */
+  /* Ensure text in object parts is displayed in all uppercase */
+  :global(.object-part-name) {
+    text-transform: uppercase;
+  }
+  
+  /* Tag tooltip styles */
   .tag-tooltip {
     position: absolute;
     z-index: 100;
     max-width: 300px;
     background-color: white;
+    padding: 12px;
     border-radius: 0.5rem;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     overflow: hidden;
@@ -1490,10 +1377,10 @@ async function fetchColorHexFromName(colorName) {
   }
   
   .tag-image-placeholder {
-    height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
+    height: 100px;
     background-color: #f5f5f5;
     border-radius: 0.375rem;
     margin-bottom: 10px;
@@ -1512,10 +1399,4 @@ async function fetchColorHexFromName(colorName) {
   :global(.dark) .tag-description {
     color: #a3a3a3;
   }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
 </style>

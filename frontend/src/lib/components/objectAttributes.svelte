@@ -79,20 +79,13 @@
     }
 </script>
 
-<div class="mb-5">
-    <!-- svelte-ignore a11y-label-has-associated-control -->
-    <label class="sm:block text-sm font-medium mb-1.5 flex items-center">
-        <span>Object Attributes</span>
-        <span class="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-xs rounded-full">
-            {activeAttributes.length} added
-        </span>
-    </label>
-    
-    <!-- Add Attribute Button with active state ring -->
+<!-- Removed the mb-5 class to make padding consistent with tags component -->
+<div>
+    <!-- Add Attribute Button with rounded-full style -->
     <Button 
         variant="outline" 
         on:click={() => showAttributeSelector = !showAttributeSelector} 
-        class="w-full p-2 border dark:border-gray-600 rounded mb-4 transition-all hover:bg-neutral-50 dark:hover:bg-neutral-800 flex justify-center items-center gap-2 {showAttributeSelector ? 'ring-2 dark:ring-neutral-50 ring-neutral-800' : ''}"
+        class="w-full p-2 border dark:border-neutral-600 rounded-full mb-4 transition-all hover:bg-neutral-50 dark:hover:bg-neutral-800 flex justify-center items-center gap-2 {showAttributeSelector ? 'ring-2 dark:ring-neutral-50 ring-neutral-800' : ''}"
     >
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-plus">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -101,9 +94,9 @@
         <span class="text-sm">Add Attribute</span>
     </Button>
     
-    <!-- Attribute Selector Dropdown -->
+    <!-- Attribute Selector Dropdown with more rounded corners -->
     {#if showAttributeSelector}
-        <div class="mt-2 p-2 border rounded bg-white dark:bg-neutral-950 shadow-lg max-h-60 overflow-y-auto mb-4 z-10 relative">
+        <div class="mt-2 p-2 border rounded-lg bg-white dark:bg-neutral-950 shadow-lg max-h-60 overflow-y-auto mb-4 z-10 relative">
             <div class="sticky top-0 bg-white dark:bg-neutral-800 p-2 border-b mb-1 flex items-center justify-between">
                 <span class="text-sm font-medium">Select Attribute</span>
                 <button 
@@ -116,7 +109,7 @@
             </div>
             {#each availableToAdd as attribute}
                 <button 
-                    class="block w-full text-left p-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded transition-colors text-sm"
+                    class="block w-full text-left p-2.5 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-full transition-colors text-sm"
                     on:click={() => addAttribute(attribute.id)}
                 >
                     {attribute.label}
@@ -134,7 +127,7 @@
             {#each activeAttributes as attrId}
                 {@const attr = availableAttributes.find(a => a.id === attrId)}
                 {#if attr} <!-- Add check to ensure attr is found -->
-                <div class="relative p-3 rounded-md border bg-neutral-50 dark:bg-neutral-900 dark:border-neutral-700 transition-all hover:shadow-sm {attr.type === 'dimensions' ? 'col-span-1 sm:col-span-2' : ''}">
+                <div class="relative p-3 rounded-xl border bg-neutral-50 dark:bg-neutral-900 dark:border-neutral-700 transition-all hover:shadow-sm {attr.type === 'dimensions' ? 'col-span-1 sm:col-span-2' : ''}">
                     <!-- Updated Remove button with consistent styling -->
                     <button 
                         type="button" 
@@ -151,7 +144,7 @@
                             id={attrId} 
                             bind:value={attributeValues[attrId]} 
                             on:change={() => dispatch('valuechange', { attributeValues })}
-                            class="w-full p-2 rounded border dark:border-neutral-600 dark:bg-neutral-950 text-sm"
+                            class="w-full p-2 rounded-full border dark:border-neutral-600 dark:bg-neutral-950 text-sm"
                         >
                             {#each attr.options as option}
                                 <option value={option.value}>{option.label}</option>
@@ -166,7 +159,7 @@
                                 <Input 
                                     type="number" 
                                     id="sizeX" 
-                                    class="w-full p-2 border rounded dark:border-neutral-600" 
+                                    class="w-full p-2 border rounded-full dark:border-neutral-600" 
                                     bind:value={attributeValues.sizeX}
                                     on:input={() => dispatch('valuechange', { attributeValues })}
                                     placeholder="Length (cm)" 
@@ -177,7 +170,7 @@
                                 <Input 
                                     type="number" 
                                     id="sizeY" 
-                                    class="w-full p-2 border rounded dark:border-neutral-600" 
+                                    class="w-full p-2 border rounded-full dark:border-neutral-600" 
                                     bind:value={attributeValues.sizeY}
                                     on:input={() => dispatch('valuechange', { attributeValues })}
                                     placeholder="Width (cm)" 
@@ -188,7 +181,7 @@
                                 <Input 
                                     type="number" 
                                     id="sizeZ" 
-                                    class="w-full p-2 border rounded dark:border-neutral-600" 
+                                    class="w-full p-2 border rounded-full dark:border-neutral-600" 
                                     bind:value={attributeValues.sizeZ}
                                     on:input={() => dispatch('valuechange', { attributeValues })}
                                     placeholder="Height (cm)" 
@@ -204,7 +197,7 @@
                                     bind:checked={attributeValues[attrId]} 
                                     on:change={() => dispatch('valuechange', { attributeValues })}
                                     id={`${attrId}-checkbox`} 
-                                    class="w-4 h-4 mr-3" 
+                                    class="w-4 h-4 mr-3 rounded-full" 
                                 />
                                 <label for={`${attrId}-checkbox`} class="text-sm font-medium">
                                     {attr.label}
@@ -233,7 +226,7 @@
                         <Input 
                             type={attr.type || "text"} 
                             id={attrId} 
-                            class="w-full p-2 border rounded dark:border-neutral-600" 
+                            class="w-full p-2 border rounded-full dark:border-neutral-600" 
                             bind:value={attributeValues[attrId]} 
                             on:input={() => dispatch('valuechange', { attributeValues })}
                             placeholder={attr.placeholder || ""}
@@ -244,6 +237,6 @@
             {/each}
         </div>
     {:else}
-        <p class="text-sm text-neutral-500 dark:text-gray-400 mt-2">No attributes added yet. Click 'Add Attribute' to start.</p>
+        <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-2">No attributes added yet. Click 'Add Attribute' to start.</p>
     {/if}
 </div>

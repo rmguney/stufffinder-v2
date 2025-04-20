@@ -1,6 +1,6 @@
 <script>
   import Post from '$lib/components/post.svelte';
-  import { threadStore, forceRefreshThreads } from '../../threadStore';
+  import { threadStore, forceRefreshThreads, isLoading } from '../../threadStore';
   import { onMount } from 'svelte';
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
@@ -397,8 +397,8 @@
           on:click={() => solvedFilter = 'SOLVED'}
         >
           <span class="inline-flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
             Resolved
           </span>
@@ -552,32 +552,63 @@
   {/if}
 </div>
 
-<!-- Display filtered, sorted and paginated posts -->
+<!-- Display skeleton loaders when loading, otherwise real posts -->
 <div class="flex flex-col lg:flex-wrap lg:flex-row justify-center gap-4 lg:gap-6">
-  {#each paginatedThreads as thread}
-    <div class="w-full lg:w-[calc(33.333%-1rem)]">
-      <a href={`/thread/${thread.id}`}>
-        <Post
-          id={thread.id}
-          title={thread.title}
-          description={thread.description || ""}
-          tags={thread.tags || []}
-          imageSrc={thread.mysteryObjectImageUrl ? thread.mysteryObjectImageUrl : ''}
-          mediaFiles={thread.mediaFiles || []}
-          postedBy={thread.author}
-          createdAt={thread.createdAt}
-          updatedAt={thread.updatedAt}
-          upvotes={thread.upvotesCount || 0}
-          downvotes={thread.downvotesCount || 0}
-          commentCount={thread.commentCount || 0}
-          userUpvoted={thread.userUpvoted || false}
-          userDownvoted={thread.userDownvoted || false}
-          solved={thread.solved}
-          mysteryObject={thread.mysteryObject || null}
-          variant="thumb"
-        />
-      </a>
-    </div>
+  {#if $isLoading}
+    <!-- Skeleton loaders for posts -->
+    {#each Array(postsPerPage) as _, i}
+      <div class="w-full lg:w-[calc(33.333%-1rem)]">
+        <div class="bg-white dark:bg-neutral-950 shadow-sm border border-neutral-200 dark:border-neutral-800 rounded-md overflow-hidden animate-pulse">
+          <!-- Skeleton image -->
+          <div class="w-full aspect-[4/3] bg-neutral-200 dark:bg-neutral-800"></div>
+          
+          <!-- Skeleton title and description -->
+          <div class="p-4">
+            <div class="h-5 bg-neutral-200 dark:bg-neutral-800 rounded w-3/4 mb-3"></div>
+            <div class="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-full mb-2"></div>
+            <div class="h-4 bg-neutral-200 dark:bg-neutral-800 rounded w-2/3"></div>
+            
+            <!-- Skeleton tags -->
+            <div class="flex flex-wrap gap-1.5 mt-3">
+              <div class="h-5 w-16 bg-neutral-200 dark:bg-neutral-800 rounded-full"></div>
+              <div class="h-5 w-12 bg-neutral-200 dark:bg-neutral-800 rounded-full"></div>
+            </div>
+            
+            <!-- Skeleton footer -->
+            <div class="mt-4 pt-3 border-t border-neutral-200 dark:border-neutral-700 flex justify-between">
+              <div class="h-4 w-24 bg-neutral-200 dark:bg-neutral-800 rounded"></div>
+              <div class="h-4 w-16 bg-neutral-200 dark:bg-neutral-800 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {/each}
+  {:else if paginatedThreads.length > 0}
+    {#each paginatedThreads as thread}
+      <div class="w-full lg:w-[calc(33.333%-1rem)]">
+        <a href={`/thread/${thread.id}`}>
+          <Post
+            id={thread.id}
+            title={thread.title}
+            description={thread.description || ""}
+            tags={thread.tags || []}
+            imageSrc={thread.mysteryObjectImageUrl ? thread.mysteryObjectImageUrl : ''}
+            mediaFiles={thread.mediaFiles || []}
+            postedBy={thread.author}
+            createdAt={thread.createdAt}
+            updatedAt={thread.updatedAt}
+            upvotes={thread.upvotesCount || 0}
+            downvotes={thread.downvotesCount || 0}
+            commentCount={thread.commentCount || 0}
+            userUpvoted={thread.userUpvoted || false}
+            userDownvoted={thread.userDownvoted || false}
+            solved={thread.solved}
+            mysteryObject={thread.mysteryObject || null}
+            variant="thumb"
+          />
+        </a>
+      </div>
+    {/each}
   {:else}
     <div class="w-full text-center py-8">
       {#if solvedFilter !== 'ALL' || tagFilter !== 'ALL'}
@@ -593,78 +624,77 @@
         <p>No posts found. Check back later!</p>
       {/if}
     </div>
-  {/each}
+  {/if}
 </div>
 
-<!-- Pagination controls -->
-{#if totalPages > 1}
-  <div class="flex justify-center mt-8 mb-4">
-    <div class="flex items-center gap-1"></div>
-      <!-- First page button -->
+<!-- Pagination controls - always visible -->
+<div class="flex justify-center mt-8 mb-4">
+  <div class="flex items-center gap-1"></div>
+    <!-- First page button -->
+    <Button 
+      variant="outline" 
+      size="sm" 
+      class="h-8 w-8 p-0 rounded-md"
+      disabled={currentPage === 1 || totalPages === 0}
+      on:click={() => goToPage(1)}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+      </svg>
+    </Button>
+    
+    <!-- Previous page button -->
+    <Button 
+      variant="outline" 
+      size="sm" 
+      class="h-8 w-8 p-0 rounded-md"
+      disabled={currentPage === 1 || totalPages === 0}
+      on:click={() => goToPage(currentPage - 1)}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+      </svg>
+    </Button>
+    
+    <!-- Page numbers -->
+    {#each totalPages > 0 ? getPaginationRange(currentPage, totalPages) : [1] as page}
       <Button 
-        variant="outline" 
+        variant={page === currentPage ? 'default' : 'outline'}
         size="sm" 
-        class="h-8 w-8 p-0 rounded-md"
-        disabled={currentPage === 1}
-        on:click={() => goToPage(1)}
+        class="h-8 w-8 p-0 {page === currentPage ? 'bg-teal-600 hover:bg-teal-700 text-white' : ''} rounded-md"
+        disabled={totalPages === 0}
+        on:click={() => goToPage(page)}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-        </svg>
+        {page}
       </Button>
-      
-      <!-- Previous page button -->
-      <Button 
-        variant="outline" 
-        size="sm" 
-        class="h-8 w-8 p-0 rounded-md"
-        disabled={currentPage === 1}
-        on:click={() => goToPage(currentPage - 1)}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
-        </svg>
-      </Button>
-      
-      <!-- Page numbers -->
-      {#each getPaginationRange(currentPage, totalPages) as page}
-        <Button 
-          variant={page === currentPage ? 'default' : 'outline'}
-          size="sm" 
-          class="h-8 w-8 p-0 {page === currentPage ? 'bg-teal-600 hover:bg-teal-700 text-white' : ''} rounded-md"
-          on:click={() => goToPage(page)}
-        >
-          {page}
-        </Button>
-      {/each}
-      
-      <!-- Next page button -->
-      <Button 
-        variant="outline" 
-        size="sm" 
-        class="h-8 w-8 p-0 rounded-md"
-        disabled={currentPage === totalPages}
-        on:click={() => goToPage(currentPage + 1)}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-        </svg>
-      </Button>
-      
-      <!-- Last page button -->
-      <Button 
-        variant="outline" 
-        size="sm" 
-        class="h-8 w-8 p-0 rounded-md"
-        disabled={currentPage === totalPages}
-        on:click={() => goToPage(totalPages)}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 6.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0zM10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-3.293a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-        </svg>
-      </Button>
-    </div>
-{/if}
+    {/each}
+    
+    <!-- Next page button -->
+    <Button 
+      variant="outline" 
+      size="sm" 
+      class="h-8 w-8 p-0 rounded-md"
+      disabled={currentPage === totalPages || totalPages <= 1}
+      on:click={() => goToPage(currentPage + 1)}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+      </svg>
+    </Button>
+    
+    <!-- Last page button -->
+    <Button 
+      variant="outline" 
+      size="sm" 
+      class="h-8 w-8 p-0 rounded-md"
+      disabled={currentPage === totalPages || totalPages <= 1}
+      on:click={() => goToPage(totalPages)}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 6.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0zM10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-3.293a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+      </svg>
+    </Button>
+  </div>
 
 <!-- Tag tooltip -->
 {#if tooltipVisible && hoveredTag}
@@ -728,5 +758,15 @@
   .filter-section {
     transition: height 0.3s ease-out;
     overflow: hidden;
+  }
+
+  /* Add skeleton animation */
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+  }
+  
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 </style>

@@ -413,9 +413,9 @@
             <Card.Root class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                 <Card.Header class="p-4 border-b border-neutral-100 dark:border-neutral-800">
                     <Card.Title class="text-xl font-semibold text-neutral-900 dark:text-white">
-                        Edit Mystery Object
+                        Edit your post
                     </Card.Title>
-                    <Card.Description class="text-sm text-neutral-600 dark:text-neutral-400">
+                    <Card.Description class="text-sm mt-1 text-neutral-600 dark:text-neutral-400">
                         Update the details about your mystery object
                     </Card.Description>
                 </Card.Header>
@@ -434,12 +434,17 @@
 
                         <!-- Title -->
                         <div class="mb-4">
-                            <label for="title" class="block text-sm font-medium mb-1.5 text-neutral-700 dark:text-neutral-300">Title*</label>
+                            <label for="title" class="block text-sm font-medium mb-1.5 text-neutral-700 dark:text-neutral-300 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                                </svg>
+                                Title*
+                            </label>
                             <Textarea 
                                 id="title" 
                                 class="w-full p-3 border rounded-md text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500" 
                                 bind:value={title} 
-                                placeholder="Post title" 
+                                placeholder="This is what people will see on their homepage so try to make it interesting"
                             />
                             {#if errors.title}
                                 <p class="text-red-500 text-sm mt-1">{errors.title}</p>
@@ -447,72 +452,75 @@
                         </div>
 
                         <!-- Description -->
-                        <div class="mb-4">
-                            <label for="description" class="block text-sm font-medium mb-1.5 text-neutral-700 dark:text-neutral-300">Description*</label>
+                        <div class="mb-5">
+                            <label for="description" class="block text-sm font-medium mb-1.5 text-neutral-700 dark:text-neutral-300 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 2a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7zm0 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                                </svg>
+                                Description*
+                            </label>
                             <Textarea 
                                 id="description" 
                                 class="w-full p-3 border rounded-md text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 min-h-[120px]" 
                                 bind:value={description} 
-                                placeholder="Post description and any additional context"
+                                placeholder="You can add any additional context about your object or how you came into possession of it."
                             />
                             {#if errors.description}
                                 <p class="text-red-500 text-sm mt-1">{errors.description}</p>
                             {/if}
                         </div>
                         
-                        <!-- Tags Section -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium mb-1.5 text-neutral-700 dark:text-neutral-300 flex items-center">
-                                <span>Tags</span>
-                                <span class="ml-2 px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-xs rounded-full text-neutral-700 dark:text-neutral-300">
-                                    {tags.length} added
-                                </span>
-                            </label>
-                            <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm p-3">
-                                <Query bind:tags={tags} bind:labels={labels} />
+                        <!-- Attributes and Tags wrapper for side-by-side on lg screens -->
+                        <div class="flex flex-col lg:flex-row lg:gap-6 mb-6">
+                            <!-- Object Attributes Component -->
+                            <div class="w-full lg:w-1/2 mb-6 lg:mb-0">
+                                <div class="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                    </svg>
+                                    Object Attributes
+                                    <span class="ml-2 px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-xs rounded-full text-neutral-700 dark:text-neutral-300">
+                                        {activeAttributes.length} added
+                                    </span>
+                                </div>
+                                <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm p-3">
+                                    <ObjectAttributes 
+                                        bind:attributeValues={attributeValues}
+                                        bind:activeAttributes={activeAttributes}
+                                        on:update={handleAttributesUpdate}
+                                        on:valuechange={handleAttributeValueChange}
+                                    />
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Media upload component with consistent styling -->
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium mb-1.5 text-neutral-700 dark:text-neutral-300">Media Files*</label>
-                            <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm p-3">
-                                <MediaUploader
-                                    bind:mediaFiles={mediaFiles}
-                                    bind:errors={errors}
-                                    on:update={handleMediaUpdate}
-                                />
-                                {#if errors.media}
-                                    <p class="text-red-500 text-sm mt-1">{errors.media}</p>
-                                {/if}
-                            </div>
-                        </div>
-
-                        <!-- Separator -->
-                        <div class="h-px bg-neutral-200 dark:bg-neutral-800 my-6"></div>
-
-                        <!-- Mystery Object Section -->
-                        <h3 class="text-lg font-medium mb-4 text-neutral-950 dark:text-white">Mystery Object Properties</h3>
-                        
-                        <!-- Object Attributes Component -->
-                        <div class="mb-6">
-                            <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm p-3">
-                                <ObjectAttributes 
-                                    bind:attributeValues={attributeValues}
-                                    bind:activeAttributes={activeAttributes}
-                                    on:update={handleAttributesUpdate}
-                                    on:valuechange={handleAttributeValueChange}
-                                />
+                            <!-- Tags -->
+                            <div class="w-full lg:w-1/2">
+                                <div class="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                    </svg>
+                                    Tags
+                                    <span class="ml-2 px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-xs rounded-full text-neutral-700 dark:text-neutral-300">
+                                        {tags.length} added
+                                    </span>
+                                </div>
+                                <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm p-3">
+                                    <Query bind:tags={tags} bind:labels={labels} />
+                                </div>
                             </div>
                         </div>
 
                         <!-- Sub-parts component -->
                         <div class="mb-6">
-                            <h3 class="text-base font-medium mb-3 text-neutral-800 dark:text-neutral-300 border-b border-neutral-200 dark:border-neutral-700 pb-2">Object Parts</h3>
+                            <h3 class="block text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                                </svg>
+                                Object Parts
+                            </h3>
+                            <p class="text-sm text-neutral-500 dark:text-neutral-400 mb-3">You can add parts to your mystery object if it consists of multiple components.</p>
+
                             <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm p-3">
-                                <p class="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-                                    You can add, edit, or remove parts of your mystery object.
-                                </p>
                                 <MysteryObjectSubParts
                                     mysteryObjectId={mysteryObjectId}
                                     bind:subParts={mysteryObjectSubParts}
@@ -520,10 +528,40 @@
                                 />
                             </div>
                         </div>
+
+                        <!-- Media upload component -->
+                        <div class="mb-6">
+                            <h3 class="block text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                                </svg>
+                                Media Files*
+                            </h3>
+                            <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm p-3">
+                                <MediaUploader
+                                    bind:mediaFiles={mediaFiles}
+                                    bind:errors={errors}
+                                    on:update={handleMediaUpdate}
+                                />
+                                {#if errors.media}
+                                    <p class="text-red-500 text-sm mt-2">{errors.media}</p>
+                                {/if}
+                            </div>
+                        </div>
                     </Card.Content>
 
-                    <!-- Action Buttons -->
-                    <div class="px-4 py-3 border-t border-neutral-100 dark:border-neutral-800 flex flex-wrap gap-3 justify-end bg-neutral-50 dark:bg-neutral-900">
+                    <!-- Action Buttons - Updated with consistent padding and placement -->
+                    <div class="flex justify-start gap-3 border-t border-neutral-100 dark:border-neutral-800 p-4 sm:p-6 pt-4">
+                        <Button
+                            on:click={handleUpdate}
+                            variant="default" 
+                            class="text-sm py-1 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-full"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                            Save Changes
+                        </Button>
                         <Button
                             variant="outline"
                             on:click={() => goto(`/thread/${postId}`)}
@@ -533,22 +571,6 @@
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" />
                             </svg>
                             Cancel
-                        </Button>
-                        <Button 
-                            on:click={handleUpdate}
-                            variant="default" 
-                            class="text-sm py-1 px-3 bg-teal-600 hover:bg-teal-700 text-white rounded-full"
-                            disabled={saveLoading}
-                        >
-                            {#if saveLoading}
-                                <span class="inline-block h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1.5"></span>
-                                Saving Changes...
-                            {:else}
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                </svg>
-                                Save Changes
-                            {/if}
                         </Button>
                     </div>
                 {/if}

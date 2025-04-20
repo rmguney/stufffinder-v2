@@ -201,8 +201,7 @@
 </script>
 
 <div class="mb-6">
-    <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-medium">Object Parts</h3>
+    <div class="flex items-center justify-start mb-4">
         <Button 
             variant="outline" 
             size="sm"
@@ -210,14 +209,12 @@
                 resetForm();
                 showAddForm = !showAddForm;
             }}
-            class="text-xs"
+            class="text-xs rounded-full px-3 py-1 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800"
         >
-            {#if showAddForm}
-                Cancel
-            {:else}
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-1"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                Add Part
-            {/if}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Add Part
         </Button>
     </div>
     
@@ -229,51 +226,81 @@
     
     <!-- Add/Edit Form -->
     {#if showAddForm}
-        <div class="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md p-4 mb-4">
-            <h4 class="text-sm font-medium mb-3">
+        <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md p-4 mb-4">
+            <h4 class="text-sm font-medium mb-3 text-neutral-700 dark:text-neutral-300">
                 {editingSubPartId ? 'Edit Part' : 'Add New Part'}
             </h4>
             
-            <div class="mb-4">
-                <label for="description" class="block text-sm font-medium mb-1.5">Description*</label>
-                <Textarea 
-                    id="description" 
-                    class="w-full p-2 border rounded dark:border-gray-600 h-20" 
-                    bind:value={description} 
-                    placeholder="Describe this part of the object"
-                />
+            <!-- Updated layout: Description and Attributes side-by-side -->
+            <div class="flex flex-col lg:flex-row lg:gap-6">
+                <!-- Description on the left -->
+                <div class="w-full lg:w-1/2 mb-4 lg:mb-0">
+                    <label for="description" class="block text-sm font-medium mb-1.5 text-neutral-700 dark:text-neutral-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 2a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7zm0 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                        </svg>
+                        Description*
+                    </label>
+                    <Textarea 
+                        id="description" 
+                        class="w-full p-3 border rounded-md text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 min-h-[100px]" 
+                        bind:value={description} 
+                        placeholder="Describe this part of the object"
+                        rows="3"
+                    />
+                </div>
+                
+                <!-- Object Attributes on the right -->
+                <div class="w-full lg:w-1/2">
+                    <div class="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                        </svg>
+                        Part Attributes
+                        <span class="ml-2 px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-xs rounded-full text-neutral-700 dark:text-neutral-300">
+                            {activeAttributes.length} added
+                        </span>
+                    </div>
+                    <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm p-3">
+                        <!-- Reuse the ObjectAttributes component -->
+                        <ObjectAttributes 
+                            bind:attributeValues={attributeValues}
+                            bind:activeAttributes={activeAttributes}
+                            on:update={handleAttributesUpdate}
+                            on:valuechange={handleAttributeValueChange}
+                        />
+                    </div>
+                </div>
             </div>
             
-            <!-- Reuse the ObjectAttributes component -->
-            <ObjectAttributes 
-                bind:attributeValues={attributeValues}
-                bind:activeAttributes={activeAttributes}
-                on:update={handleAttributesUpdate}
-                on:valuechange={handleAttributeValueChange}
-            />
-            
-            <div class="flex justify-end mt-4 gap-2">
+            <div class="flex justify-start mt-4 gap-2">
+                <Button 
+                variant="default" 
+                size="sm"
+                on:click={saveSubPart}
+                class="text-sm py-1 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-full"
+                disabled={isLoading}
+            >
+                {#if isLoading}
+                    <span class="inline-block h-3.5 w-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1.5"></span>
+                    Saving...
+                {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Save Part
+                {/if}
+            </Button>
                 <Button 
                     variant="outline" 
                     size="sm"
                     on:click={resetForm}
-                    class="text-xs"
+                    class="text-sm py-1 px-3 rounded-full border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                 >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" />
+                    </svg>
                     Cancel
-                </Button>
-                <Button 
-                    variant="default" 
-                    size="sm"
-                    on:click={saveSubPart}
-                    class="text-xs"
-                    disabled={isLoading}
-                >
-                    {#if isLoading}
-                        <span class="inline-block h-4 w-4 border-2 border-current/30 border-t-current rounded-full animate-spin mr-2"></span>
-                        Saving...
-                    {:else}
-                        Save Part
-                    {/if}
                 </Button>
             </div>
         </div>
@@ -283,7 +310,7 @@
     {#if subParts.length > 0}
         <div class="space-y-3">
             {#each subParts as part (part.id)}
-                <div class="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md p-3">
+                <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md p-3">
                     <div class="flex justify-between items-start mb-2">
                         <h5 class="font-medium text-sm">{part.description || 'Unnamed Part'}</h5>
                         <div class="flex gap-1">
@@ -291,17 +318,21 @@
                                 variant="ghost" 
                                 size="xs"
                                 on:click={() => editSubPart(part)}
-                                class="h-6 px-2 text-xs"
+                                class="h-6 w-6 p-0 rounded-full flex items-center justify-center"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
                             </Button>
                             <Button 
                                 variant="ghost" 
                                 size="xs"
                                 on:click={() => deleteSubPart(part.id)}
-                                class="h-6 px-2 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                                class="h-6 w-6 p-0 rounded-full flex items-center justify-center text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
                             </Button>
                         </div>
                     </div>
@@ -312,8 +343,14 @@
                             <div class="flex justify-between"><span class="text-neutral-500">Material:</span> <span>{part.material}</span></div>
                         {/if}
                         {#if part.color}
-                        <span class="w-3 h-3 inline-block rounded border" style="background-color: {part.color};"></span>
-                        <span>{part.color}</span>                        {/if}
+                            <div class="flex justify-between items-center">
+                                <span class="text-neutral-500">Color:</span> 
+                                <span class="flex items-center">
+                                    <span class="w-3 h-3 inline-block rounded-full border mr-1" style="background-color: {part.color};"></span>
+                                    <span>{part.color}</span>
+                                </span>
+                            </div>
+                        {/if}
                         {#if part.shape}
                             <div class="flex justify-between"><span class="text-neutral-500">Shape:</span> <span>{part.shape}</span></div>
                         {/if}
@@ -326,8 +363,11 @@
             {/each}
         </div>
     {:else}
-        <div class="bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-md p-4 text-center text-sm text-neutral-500">
-            No parts added yet. Click "Add Part" to create object sub-parts.
+        <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md p-4 text-center text-sm text-neutral-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-2 text-neutral-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9v-1h5v2H5a1 1 0 01-1-1zm7 1h4a1 1 0 001-1v-1h-5v2zm0-4h5V8h-5v2zM9 8H4v2h5V8z" clip-rule="evenodd" />
+            </svg>
+            <p>No parts added yet. Click "Add Part" to create object sub-parts.</p>
         </div>
     {/if}
 </div>

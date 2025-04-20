@@ -657,7 +657,7 @@
   </div>
 {/if}
 
-<div class="flex flex-col items-center bg-change dark:bg-dark shifting p-3 sm:p-4 md:p-5">
+<div class="flex flex-col items-center bg-change dark:bg-dark shifting p-3 py-5">
   <div class="w-full max-w-7xl mx-auto">
     {#if thread}
       <div class="bg-white dark:dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">
@@ -691,188 +691,7 @@
     
     <!-- Grid container for comment input and filter sections, side-by-side on larger screens -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 mt-3 mb-3">
-      <!-- Comment input area with consistent styling -->
-      <div class="lg:col-span-7">
-        {#if $activeUser}
-          <Card.Root class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden h-full">
-            <div class="w-full p-4">
-              <!-- Consistent padding -->
-              <Textarea 
-                bind:value={comment} 
-                class="w-full resize-none p-3 border border-neutral-200 dark:border-neutral-700 rounded-md bg-white dark:dark:bg-neutral-950 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 mb-3" 
-                placeholder="Write your comment..."
-              />
-              
-              <div class="w-full flex flex-wrap items-start gap-3">
-                <div class="flex flex-wrap items-center gap-3">
-                  <div class="flex items-center bg-neutral-100 dark:bg-neutral-950 rounded-full p-1 border border-neutral-200 dark:border-neutral-700">
-                    <label class="inline-flex items-center px-2.5 py-1 rounded-full cursor-pointer transition-all text-xs
-                                  {selectedCommentType === 'QUESTION' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-900'}">
-                      <input type="radio" id="question" bind:group={selectedCommentType} value="QUESTION" class="sr-only" />
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                      </svg>
-                      Question
-                    </label>
-                    
-                    <label class="inline-flex items-center px-2.5 py-1 rounded-full cursor-pointer transition-all text-xs
-                                  {selectedCommentType === 'SUGGESTION' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-900'}">
-                      <input type="radio" id="suggestion" bind:group={selectedCommentType} value="SUGGESTION" class="sr-only" />
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
-                      </svg>
-                      Suggestion
-                    </label>
-                    
-                    <label class="inline-flex items-center px-2.5 py-1 rounded-full cursor-pointer transition-all text-xs
-                                  {selectedCommentType === 'STORY' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-900'}">
-                      <input type="radio" id="story" bind:group={selectedCommentType} value="STORY" class="sr-only" />
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
-                      </svg>
-                      Story
-                    </label>
-                  </div>
-                  
-                  <!-- Media upload button -->
-                  <div class="flex items-center">
-                    <input 
-                      type="file" 
-                      id="media-upload"
-                      bind:this={fileInputRef}
-                      on:change={handleFileSelect}
-                      accept="image/*,video/*,audio/*" 
-                      class="hidden" 
-                      multiple
-                    />
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      class="text-xs bg-white dark:dark:bg-neutral-950 hover:bg-neutral-100 dark:bg-neutral-950 hover:dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700 rounded-full"
-                      on:click={() => fileInputRef?.click()}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                      </svg>
-                      {selectedFiles.length > 0 ? `${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''}` : 'Add Media'}
-                    </Button>
-                  </div>
-                  
-                  <!-- Submit button -->
-                  <Button 
-                    on:click={handleSend} 
-                    variant="default"
-                    size="sm"
-                    class="text-xs bg-teal-600 hover:bg-teal-700 text-white px-4 rounded-full"
-                    disabled={isLoading}
-                  >
-                    {#if isLoading}
-                      <span class="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1.5"></span>
-                      {selectedFiles.length > 0 ? 'Uploading...' : 'Posting...'}
-                    {:else}
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                      </svg>
-                      Post as {selectedCommentType.charAt(0) + selectedCommentType.slice(1).toLowerCase()}
-                    {/if}
-                  </Button>
-                </div>
-              </div>
-              
-              {#if selectedFiles.length > 0}
-                <div class="mt-3 flex flex-wrap gap-2 p-2 border border-neutral-200 dark:border-neutral-700 rounded-md bg-white dark:dark:bg-neutral-950">
-                  {#each selectedFiles as file, i}
-                    <div class="relative bg-white dark:dark:bg-neutral-950 rounded-md shadow-sm p-1 w-16 h-16 flex items-center justify-center border border-neutral-200 dark:border-neutral-700">
-                      {#if file.type.startsWith('image/')}
-                        <img 
-                          src={URL.createObjectURL(file)} 
-                          alt={file.name} 
-                          class="max-w-full max-h-full object-contain rounded"
-                        />
-                      {:else if file.type.startsWith('video/')}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      {:else if file.type.startsWith('audio/')}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                        </svg>
-                      {:else}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                      {/if}
-                      <!-- Remove button -->
-                      <button 
-                        class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-sm hover:bg-red-600 transition-colors"
-                        on:click={() => {
-                          selectedFiles = selectedFiles.filter((_, index) => index !== i);
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  {/each}
-                </div>
-              {/if}
-              
-              {#if error}
-                <div class="mt-2 text-red-500 text-sm flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                  </svg>
-                  {error}
-                </div>
-              {/if}
-              
-              <!-- Description for comment type selection -->
-              <div class="mt-3 text-xs text-neutral-500 dark:text-neutral-400 border-t border-neutral-100 dark:border-neutral-800 pt-2">
-                <div class="flex items-center gap-1">
-                  <span class="font-medium">Posting as:</span>
-                  {#if selectedCommentType === 'QUESTION'}
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                      </svg>
-                      Question
-                    </span>
-                    - Ask for more details or information about the mystery object
-                  {:else if selectedCommentType === 'SUGGESTION'}
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
-                      </svg>
-                      Suggestion
-                    </span>
-                    - Offer an idea about what the mystery object might be
-                  {:else}
-                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
-                      </svg>
-                      Story
-                    </span>
-                    - Share a personal experience or related story
-                  {/if}
-                </div>
-              </div>
-            </div>
-          </Card.Root>
-        {:else}
-          <Card.Root class="bg-white dark:dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden h-full">
-            <div class="py-6 text-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-neutral-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-              </svg>
-              <Card.Title class="text-lg mb-1">Sign in to comment</Card.Title>
-              <p class="text-sm text-neutral-500 dark:text-neutral-400">Join the discussion by signing in to your account</p>
-            </div>
-          </Card.Root>
-        {/if}
-      </div>
-      
-      <!-- Filter component with consistent styling -->
+      <!-- Filter component with consistent styling - MOVED UP -->
       <div class="lg:col-span-5">
         <div class="flex flex-col h-full">
           <div class="w-full bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 h-full p-4 pb-3">
@@ -1027,6 +846,187 @@
           </div>
         </div>
       </div>
+
+      <!-- Comment input area with consistent styling - MOVED DOWN -->
+      <div class="lg:col-span-7">
+        {#if $activeUser}
+          <Card.Root class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden h-full">
+            <div class="w-full p-4">
+              <!-- Consistent padding -->
+              <Textarea 
+                bind:value={comment} 
+                class="w-full resize-none p-3 border border-neutral-200 dark:border-neutral-700 rounded-md bg-white dark:dark:bg-neutral-950 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 mb-3" 
+                placeholder="Write your comment..."
+              />
+              
+              <div class="w-full flex flex-wrap items-start gap-3">
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="flex items-center bg-neutral-100 dark:bg-neutral-950 rounded-full p-1 border border-neutral-200 dark:border-neutral-700">
+                    <label class="inline-flex items-center px-2.5 py-1 rounded-full cursor-pointer transition-all text-xs
+                                  {selectedCommentType === 'QUESTION' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-900'}">
+                      <input type="radio" id="question" bind:group={selectedCommentType} value="QUESTION" class="sr-only" />
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                      </svg>
+                      Question
+                    </label>
+                    
+                    <label class="inline-flex items-center px-2.5 py-1 rounded-full cursor-pointer transition-all text-xs
+                                  {selectedCommentType === 'SUGGESTION' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-900'}">
+                      <input type="radio" id="suggestion" bind:group={selectedCommentType} value="SUGGESTION" class="sr-only" />
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+                      </svg>
+                      Suggestion
+                    </label>
+                    
+                    <label class="inline-flex items-center px-2.5 py-1 rounded-full cursor-pointer transition-all text-xs
+                                  {selectedCommentType === 'STORY' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 shadow-sm' : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-900'}">
+                      <input type="radio" id="story" bind:group={selectedCommentType} value="STORY" class="sr-only" />
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                      </svg>
+                      Story
+                    </label>
+                  </div>
+                  
+                  <!-- Media upload button -->
+                  <div class="flex items-center">
+                    <input 
+                      type="file" 
+                      id="media-upload"
+                      bind:this={fileInputRef}
+                      on:change={handleFileSelect}
+                      accept="image/*,video/*,audio/*" 
+                      class="hidden" 
+                      multiple
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      class="text-xs bg-white dark:dark:bg-neutral-950 hover:bg-neutral-100 dark:bg-neutral-950 hover:dark:bg-neutral-900 border-neutral-300 dark:border-neutral-700 rounded-full"
+                      on:click={() => fileInputRef?.click()}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                      </svg>
+                      {selectedFiles.length > 0 ? `${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''}` : 'Add Media'}
+                    </Button>
+                  </div>
+                  
+                  <!-- Submit button -->
+                  <Button 
+                    on:click={handleSend} 
+                    variant="default"
+                    size="sm"
+                    class="text-xs bg-teal-600 hover:bg-teal-700 text-white px-4 rounded-full"
+                    disabled={isLoading}
+                  >
+                    {#if isLoading}
+                      <span class="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-1.5"></span>
+                      {selectedFiles.length > 0 ? 'Uploading...' : 'Posting...'}
+                    {:else}
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                      </svg>
+                      Post as {selectedCommentType.charAt(0) + selectedCommentType.slice(1).toLowerCase()}
+                    {/if}
+                  </Button>
+                </div>
+              </div>
+              
+              {#if selectedFiles.length > 0}
+                <div class="mt-3 flex flex-wrap gap-2 p-2 border border-neutral-200 dark:border-neutral-700 rounded-md bg-white dark:dark:bg-neutral-950">
+                  {#each selectedFiles as file, i}
+                    <div class="relative bg-white dark:dark:bg-neutral-950 rounded-md shadow-sm p-1 w-16 h-16 flex items-center justify-center border border-neutral-200 dark:border-neutral-700">
+                      {#if file.type.startsWith('image/')}
+                        <img 
+                          src={URL.createObjectURL(file)} 
+                          alt={file.name} 
+                          class="max-w-full max-h-full object-contain rounded"
+                        />
+                      {:else if file.type.startsWith('video/')}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      {:else if file.type.startsWith('audio/')}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2zM9 10l12-3" />
+                        </svg>
+                      {:else}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      {/if}
+                      <!-- Remove button -->
+                      <button 
+                        class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-sm hover:bg-red-600 transition-colors"
+                        on:click={() => {
+                          selectedFiles = selectedFiles.filter((_, index) => index !== i);
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+              
+              {#if error}
+                <div class="mt-2 text-red-500 text-sm flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                  </svg>
+                  {error}
+                </div>
+              {/if}
+              
+              <!-- Description for comment type selection -->
+              <div class="mt-3 text-xs text-neutral-500 dark:text-neutral-400 border-t border-neutral-100 dark:border-neutral-800 pt-2">
+                <div class="flex items-center gap-1">
+                  <span class="font-medium">Posting as:</span>
+                  {#if selectedCommentType === 'QUESTION'}
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                      </svg>
+                      Question
+                    </span>
+                    - Ask for more details or information about the mystery object
+                  {:else if selectedCommentType === 'SUGGESTION'}
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+                      </svg>
+                      Suggestion
+                    </span>
+                    - Offer an idea about what the mystery object might be
+                  {:else}
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                      </svg>
+                      Story
+                    </span>
+                    - Share a personal experience or related story
+                  {/if}
+                </div>
+              </div>
+            </div>
+          </Card.Root>
+        {:else}
+          <Card.Root class="bg-white dark:dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden h-full">
+            <div class="py-6 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-neutral-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              <Card.Title class="text-lg mb-1">Sign in to comment</Card.Title>
+              <p class="text-sm text-neutral-500 dark:text-neutral-400">Join the discussion by signing in to your account</p>
+            </div>
+          </Card.Root>
+        {/if}
+      </div>
     </div>
     
     {#if comments.length > 0}
@@ -1053,7 +1053,7 @@
         {/each}
       </div>
     {:else}
-      <Card.Root class="bg-white dark:dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+      <Card.Root class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">
         <div class="py-10 text-center px-4">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-neutral-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />

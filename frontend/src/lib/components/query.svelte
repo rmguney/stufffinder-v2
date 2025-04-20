@@ -106,13 +106,13 @@
 </script>
 
 <div class="w-full mx-auto relative search-container text-sm">
-  <!-- Search Input - replaced with shadcn Input -->
+  <!-- Search Input - with rounded-full style -->
   <Input
     type="text"
     placeholder="Add relevant tags"
     bind:value={searchTerm}
     on:input={searchWikidata}
-    class="w-full p-2 border rounded dark:border-gray-600"
+    class="w-full p-2 border rounded-full dark:border-neutral-600"
   />
 
   <!-- Loading Indicator -->
@@ -132,7 +132,7 @@
           >
             <div>
               <div class="font-medium">{result.label}</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">{result.description}</div>
+              <div class="text-xs text-neutral-500 dark:text-neutral-400">{result.description}</div>
             </div>
           </Button>
         </li>
@@ -145,30 +145,22 @@
     {#if $selectedItems.length > 0}
       <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {#each $selectedItems as selectedItem}
-          <div class="relative p-3 rounded-md border bg-gray-50 dark:bg-neutral-900 dark:border-gray-700 transition-all hover:shadow-sm">
+          <div class="relative p-3 rounded-md border bg-neutral-50 dark:bg-neutral-900 dark:border-neutral-700 transition-all hover:shadow-sm">
             <!-- Remove button in consistent style -->
             <button 
               type="button"
-              class="absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center bg-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+              class="absolute top-2 right-2 h-6 w-6 rounded-full flex items-center justify-center bg-neutral-100 text-neutral-500 hover:bg-red-50 hover:text-red-500 dark:bg-neutral-800 dark:hover:bg-neutral-700 transition-colors"
               on:click={() => removeSelectedItem(selectedItem.id)}
               title="Remove tag"
             >
               {@html getRemovalIcon()}
             </button>
             
-            <!-- Tag content -->
+            <!-- Tag content - removed Q-code display -->
             <div class="pr-6">
               <div class="font-medium text-sm mb-1">{selectedItem.label}</div>
-              <a 
-                href={`https://www.wikidata.org/wiki/${selectedItem.id}`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                class="text-xs text-gray-500 hover:text-rose-700 dark:hover:text-rose-400 transition-colors"
-              >
-                {selectedItem.id}
-              </a>
               {#if selectedItem.description}
-                <p class="text-xs mt-1 line-clamp-2 text-gray-600 dark:text-gray-400">
+                <p class="text-xs mt-1 line-clamp-2 text-neutral-600 dark:text-neutral-400">
                   {selectedItem.description}
                 </p>
               {/if}
@@ -177,7 +169,7 @@
         {/each}
       </div>
     {:else}
-      <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">No tags added yet. Search for relevant terms above.</p>
+      <p class="text-sm text-neutral-500 dark:text-neutral-400 mt-2">No tags added yet. Search for relevant terms above.</p>
     {/if}
   </div>
 </div>

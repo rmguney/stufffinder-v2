@@ -630,198 +630,225 @@
     let lastUrlUpdate = '';
 </script>
 
-<div class="flex justify-center p-6 lg:py-10 bg-change dark:bg-dark shifting">
-    <div class="w-full lg:w-2/3">
-        <Card.Root class="bg-opacity-90">
-            <Card.Title class="p-4 text-2xl mt-6 text-center">
-                Enhanced Semantic Search
-                <small class="block text-sm mt-2 font-normal opacity-75">
-                    Discover objects while leveraging semantic search with Wikidata
-                </small>
-            </Card.Title>
+<div class="flex flex-col items-center h-full min-h-screen text-text bg-change dark:bg-dark shifting p-3 py-5">
+  <div class="w-full max-w-7xl">
+    <Card.Root class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+      <Card.Title class="p-6 text-2xl font-semibold text-center">
+        Enhanced Semantic Search
+        <small class="block text-sm mt-2 font-normal text-neutral-500 dark:text-neutral-400">
+          Discover objects while leveraging semantic search with Wikidata
+        </small>
+      </Card.Title>
+      
+      <div class="px-4 sm:px-6 pb-6">
+        <!-- Search Form with submission handling -->
+        <form on:submit={handleSubmit} class="mb-6">
+          <div class="relative">
+            <Input
+              type="search"
+              placeholder="Enter search terms..."
+              bind:value={searchQuery}
+              class="w-full pl-10 py-3 text-base border-neutral-300 dark:border-neutral-700 rounded-full focus:ring-teal-500 focus:border-teal-500"
+              aria-label="Search terms"
+            />
+            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <button type="submit" class="sr-only">Search</button>
+          </div>
+        </form>
+        
+        <!-- IMPROVEMENT 2: Enhanced Semantic Expansions Section with Relevance Indicators -->
+        {#if semanticLoading}
+          <div class="flex justify-center my-6 py-4">
+            <div class="w-6 h-6 border-2 border-teal-600 border-t-transparent rounded-full animate-spin" 
+                 aria-label="Loading related terms"></div>
+            <span class="ml-3 text-neutral-600 dark:text-neutral-300">Finding related terms...</span>
+          </div>
+        {:else if showExpansions}
+          <div class="mb-6 bg-neutral-50 dark:bg-neutral-900/50 p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 shadow-sm">
+            <h3 class="text-sm font-semibold mb-3 text-neutral-700 dark:text-neutral-200 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Related Terms from Wikidata:
+            </h3>
             
-            <div class="bg-opacity-95 rounded-lg shadow-lg p-6">
-                <!-- Search Form with submission handling -->
-                <form on:submit={handleSubmit} class="mb-6">
-                    <Input
-                        type="search"
-                        placeholder="Enter search terms..."
-                        bind:value={searchQuery}
-                        class="w-full"
-                        aria-label="Search terms"
-                    />
-                    <button type="submit" class="sr-only">Search</button>
-                </form>
+            <!-- Group by relation type for better organization -->
+            {#if allVisibleExpansions.length > 0}
+              <!-- Get unique relation types -->
+              {@const relationTypes = [...new Set(allVisibleExpansions
+                .filter(exp => !exp.label.match(/^Q\d+$/))
+                .map(exp => exp.relation))]}
+              
+              <div class="space-y-4">
+                {#each relationTypes as relationType}
+                  <div>
+                    <h4 class="text-xs uppercase tracking-wider font-medium mb-2 text-teal-700 dark:text-teal-400 border-l-2 border-teal-500 pl-2">{relationType}:</h4>
+                    <div class="flex flex-wrap gap-2">
+                      {#each allVisibleExpansions
+                      .filter(exp => exp.relation === relationType && !exp.label.match(/^Q\d+$/)) as expansion (expansion.id)}
+                        <div class="flex items-center">
+                          <!-- svelte-ignore a11y-label-has-associated-control -->
+                          <label class="flex items-center space-x-2 px-2.5 py-1.5 bg-white dark:bg-neutral-800 rounded-full border border-neutral-200 dark:border-neutral-700 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors duration-200 shadow-sm"
+                                 class:border-teal-500={expansion.fromPreviousSearch || isExpansionSelected(expansion)}
+                                 class:bg-teal-50={isExpansionSelected(expansion)}
+                                 class:shadow-md={isExpansionSelected(expansion)}
+                                 class:bg-opacity-30={expansion.fromPreviousSearch}
+                                 class:border-l-4={expansion.score > 70}
+                                 class:border-l-teal-600={expansion.score > 70}
+                                 title={`Relevance: ${expansion.score > 80 ? 'High' : expansion.score > 50 ? 'Medium' : 'Low'}`}>
+                            <Checkbox.Root
+                              checked={isExpansionSelected(expansion)}
+                              onCheckedChange={() => toggleExpansionTerm(expansion)}
+                              class="data-[state=checked]:bg-teal-600 border-2 border-neutral-300 dark:border-neutral-600 data-[state=checked]:border-teal-600 size-4"
+                            >
+                              <Checkbox.Indicator>
+                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M13.3334 4L6.00002 11.3333L2.66669 8" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                              </Checkbox.Indicator>
+                            </Checkbox.Root>
+                            <span class="text-xs font-medium flex items-center">
+                              <span>{expansion.label}</span>
+                              
+                              <!-- Relevance indicator -->
+                              {#if expansion.score > 70}
+                                <span class="ml-1 text-teal-600 dark:text-teal-400">★</span>
+                              {/if}
+                              
+                              {#if expansion.fromPreviousSearch}
+                                <span class="ml-1 text-teal-600 dark:text-teal-400 text-xs italic">(previous)</span>
+                              {/if}
+                            </span>
+                          </label>
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
+                {/each}
+              </div>
+            {:else}
+              <p class="text-sm text-neutral-500 dark:text-neutral-400 italic">No related terms found.</p>
+            {/if}
+            
+            {#if selectedExpansions.length > 0}
+              <div class="mt-4 pt-3 border-t border-neutral-200 dark:border-neutral-700 flex items-center justify-between">
+                <p class="text-xs text-neutral-600 dark:text-neutral-300">
+                  <span class="font-medium">Searching for:</span> 
+                  <span class="font-semibold text-teal-700 dark:text-teal-400">{searchQuery}</span>
+                  {#each selectedExpansions as exp}
+                    <span class="mx-1 text-neutral-400 dark:text-neutral-500">OR</span>
+                    <span class="font-semibold text-teal-700 dark:text-teal-400">{exp.label}</span>
+                  {/each}
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  class="text-xs border-neutral-800 hover:bg-neutral-900/50 hover:text-white transition-colors rounded-full"
+                  on:click={() => { selectedExpansions = []; performSearch(); }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Clear All
+                </Button>
+              </div>
+            {/if}
+          </div>
+        {/if}
+        
+        <!-- Search Results -->
+        <Separator class="my-6 bg-neutral-200 dark:bg-neutral-700" />
+
+        <div class="space-y-4" aria-live="polite">
+          {#if loading}
+            <div class="text-center py-8">
+              <div class="w-10 h-10 border-3 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" 
+                   aria-hidden="true"></div>
+              <p class="text-neutral-500 dark:text-neutral-400">Searching...</p>
+            </div>
+          {:else if searchResults.length === 0 && searchQuery.trim().length >= 3}
+            <div class="text-center py-12">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-neutral-500 dark:text-neutral-400">No results found</p>
+            </div>
+          {:else if searchQuery.trim().length < 3}
+            <div class="text-center py-12">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <p class="text-neutral-500 dark:text-neutral-400">Type at least 3 characters to search</p>
+            </div>
+          {:else}
+            {#each searchResults as post}
+              <a 
+                href={`/thread/${post.id}`} 
+                class="block p-4 sm:p-5 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-teal-500 dark:hover:border-teal-500 transition-colors duration-200 bg-white dark:bg-neutral-950 shadow-sm hover:shadow-md"
+              >
+                <div class="flex justify-between items-start">
+                  <h2 class="text-lg sm:text-xl font-semibold mb-2 text-neutral-800 dark:text-neutral-100">
+                    {@html highlightMatches(post.title || '')}
+                  </h2>
+                  {#if post.isSolved}
+                    <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-xs px-2.5 py-1 rounded-full font-medium ml-2 flex-shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 inline-block mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Solved
+                    </span>
+                  {/if}
+                </div>
                 
-                <!-- IMPROVEMENT 2: Enhanced Semantic Expansions Section with Relevance Indicators -->
-                {#if semanticLoading}
-                    <div class="flex justify-center my-4">
-                        <div class="w-8 h-8 border-2 border-rose-900 border-t-transparent rounded-full animate-spin" 
-                             aria-label="Loading related terms"></div>
-                        <span class="ml-2">Finding related terms...</span>
-                    </div>
-                {:else if showExpansions}
-                    <div class="mb-6 bg-neutral-50 dark:bg-neutral-900 p-4 rounded-lg">
-                        <h3 class="text-sm font-semibold mb-2">Related Terms from Wikidata:</h3>
-                        
-                        <!-- Group by relation type for better organization -->
-                        {#if allVisibleExpansions.length > 0}
-                            <!-- Get unique relation types -->
-                            {@const relationTypes = [...new Set(allVisibleExpansions
-                                .filter(exp => !exp.label.match(/^Q\d+$/))
-                                .map(exp => exp.relation))]}
-                            
-                            {#each relationTypes as relationType}
-                                <div class="mb-3">
-                                    <h4 class="text-xs text-neutral-500 mb-1 capitalize">{relationType}:</h4>
-                                    <div class="flex flex-wrap gap-2">
-                                        {#each allVisibleExpansions
-                                        .filter(exp => exp.relation === relationType && !exp.label.match(/^Q\d+$/)) as expansion (expansion.id)}
-                                            <div class="flex items-center">
-                                                <!-- svelte-ignore a11y-label-has-associated-control -->
-                                                <label class="flex items-center space-x-2 px-2 py-1 bg-white dark:bg-neutral-800 rounded border border-neutral-200 dark:border-neutral-700 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700"
-                                                       class:border-rose-500={expansion.fromPreviousSearch}
-                                                       class:bg-rose-50={expansion.fromPreviousSearch && !isExpansionSelected(expansion)}
-                                                       class:dark:bg-rose-900={expansion.fromPreviousSearch && !isExpansionSelected(expansion)}
-                                                       class:bg-opacity-30={expansion.fromPreviousSearch}
-                                                       class:border-l-4={expansion.score > 70}
-                                                       class:border-l-rose-600={expansion.score > 70}
-                                                       title={`Relevance: ${expansion.score > 80 ? 'High' : expansion.score > 50 ? 'Medium' : 'Low'}`}>
-                                                    <Checkbox.Root
-                                                        checked={isExpansionSelected(expansion)}
-                                                        onCheckedChange={() => toggleExpansionTerm(expansion)}
-                                                        class="data-[state=checked]:bg-rose-600"
-                                                    >
-                                                        <Checkbox.Indicator>
-                                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                                <path d="M13.3334 4L6.00002 11.3333L2.66669 8" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                                            </svg>
-                                                        </Checkbox.Indicator>
-                                                    </Checkbox.Root>
-                                                    <span class="text-xs">
-                                                        <span class="font-medium">{expansion.label}</span>
-                                                        
-                                                        <!-- Relevance indicator -->
-                                                        {#if expansion.score > 70}
-                                                            <span class="ml-1 text-rose-600 dark:text-rose-400 text-xs">★</span>
-                                                        {/if}
-                                                        
-                                                        {#if expansion.fromPreviousSearch}
-                                                            <span class="ml-1 text-rose-600 dark:text-rose-400 text-xs">(previous)</span>
-                                                        {/if}
-                                                    </span>
-                                                </label>
-                                            </div>
-                                        {/each}
-                                    </div>
-                                </div>
-                            {/each}
-                        {:else}
-                            <p class="text-sm text-neutral-500">No related terms found.</p>
-                        {/if}
-                        
-                        {#if selectedExpansions.length > 0}
-                            <div class="mt-2 flex items-center justify-between">
-                                <p class="text-xs text-neutral-500">
-                                    Searching for: <span class="font-semibold">{searchQuery}</span>
-                                    {#each selectedExpansions as exp}
-                                        <span class="mx-1">OR</span>
-                                        <span class="font-semibold">{exp.label}</span>
-                                    {/each}
-                                </p>
-                                <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    class="text-xs hover:bg-rose-900 hover:text-white"
-                                    on:click={() => { selectedExpansions = []; performSearch(); }}
-                                >
-                                    Clear All
-                                </Button>
-                            </div>
-                        {/if}
-                    </div>
+                <!-- Post description -->
+                {#if post.description}
+                  <p class="text-sm text-neutral-600 dark:text-neutral-300 mb-3 line-clamp-2">
+                    {@html highlightMatches(post.description)}
+                  </p>
                 {/if}
                 
-                <!-- Search Results -->
-                <Separator class="my-6" />
+                <!-- Mystery object matched attributes -->
+                {#if post.mysteryObject}
+                  <div class="mt-3">
+                    <div class="space-y-1.5">
+                      {#each mysteryObjectAttributes as attr}
+                        {#if post.mysteryObject[attr.key] && containsAnySearchTerms(post.mysteryObject[attr.key])}
+                          <div class="bg-neutral-50 dark:bg-neutral-900 p-2 rounded">
+                            <span class="font-medium text-neutral-700 dark:text-neutral-300">{attr.label}:</span>
+                            <span class="text-neutral-800 dark:text-neutral-200">
+                              {@html highlightMatches(post.mysteryObject[attr.key])}
+                            </span>
+                          </div>
+                        {/if}
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
                 
-                <div class="space-y-4" aria-live="polite">
-                    {#if loading}
-                        <div class="text-center p-4">
-                            <div class="w-8 h-8 border-2 border-rose-900 border-t-transparent rounded-full animate-spin mx-auto mb-2" 
-                                 aria-hidden="true"></div>
-                            <p>Searching...</p>
-                        </div>
-                    {:else if searchResults.length === 0 && searchQuery.trim().length >= 3}
-                        <div class="text-center p-4">
-                            <p class="text-gray-500">No results found</p>
-                        </div>
-                    {:else if searchQuery.trim().length < 3}
-                        <div class="text-center p-4">
-                            <p class="text-gray-500">Type at least 3 characters to search</p>
-                        </div>
-                    {:else}
-                        {#each searchResults as post}
-                            <a 
-                                href={`/thread/${post.id}`} 
-                                class="block p-4 border rounded-lg hover:border-rose-900 transition-colors duration-200"
-                            >
-                                <div class="flex justify-between items-start">
-                                    <h2 class="text-xl font-semibold mb-2">
-                                        {@html highlightMatches(post.title || '')}
-                                    </h2>
-                                    {#if post.isSolved}
-                                        <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-xs px-2 py-1 rounded-full font-medium">
-                                            Solved
-                                        </span>
-                                    {/if}
-                                </div>
-                                
-                                <!-- Post description -->
-                                {#if post.description}
-                                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                                        {@html highlightMatches(post.description)}
-                                    </p>
-                                {/if}
-                                
-                                <!-- Mystery object matched attributes -->
-                                {#if post.mysteryObject}
-                                    <div class="mt-3 text-sm">
-                                        <div class="space-y-1.5">
-                                            {#each mysteryObjectAttributes as attr}
-                                                {#if post.mysteryObject[attr.key] && containsAnySearchTerms(post.mysteryObject[attr.key])}
-                                                    <div class="bg-gray-50 dark:bg-gray-800 p-2 rounded">
-                                                        <span class="font-medium text-gray-700 dark:text-gray-300">{attr.label}:</span>
-                                                        <span class="text-gray-800 dark:text-gray-200">
-                                                            {@html highlightMatches(post.mysteryObject[attr.key])}
-                                                        </span>
-                                                    </div>
-                                                {/if}
-                                            {/each}
-                                        </div>
-                                    </div>
-                                {/if}
-                                
-                                <!-- Post metadata -->
-                                <div class="flex justify-between items-center mt-3 text-xs">
-                                    <p class="text-gray-500">Posted by: {post.author || 'Anonymous'}</p>
-                                    {#if post.tags && Array.isArray(post.tags) && post.tags.length > 0}
-                                        <div class="flex gap-1 flex-wrap">
-                                            {#each post.tags as tag}
-                                                {#if tag}
-                                                    <span class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
-                                                        {@html highlightMatches(getTagLabel(tag))}
-                                                    </span>
-                                                {/if}
-                                            {/each}
-                                        </div>
-                                    {/if}
-                                </div>
-                            </a>
-                        {/each}
-                    {/if}
+                <!-- Post metadata -->
+                <div class="flex justify-between items-center mt-3 text-xs">
+                  <p class="text-neutral-500 dark:text-neutral-400">Posted by: {post.author || 'Anonymous'}</p>
+                  {#if post.tags && Array.isArray(post.tags) && post.tags.length > 0}
+                    <div class="flex gap-1 flex-wrap">
+                      {#each post.tags as tag}
+                        {#if tag}
+                          <span class="bg-neutral-100 dark:bg-neutral-800 px-2 py-1 rounded-full text-neutral-700 dark:text-neutral-300">
+                            {@html highlightMatches(getTagLabel(tag))}
+                          </span>
+                        {/if}
+                      {/each}
+                    </div>
+                  {/if}
                 </div>
-            </div>
-        </Card.Root>
-    </div>
+              </a>
+            {/each}
+          {/if}
+        </div>
+      </div>
+    </Card.Root>
+  </div>
 </div>

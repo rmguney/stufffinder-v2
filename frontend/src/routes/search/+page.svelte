@@ -648,7 +648,7 @@
               type="search"
               placeholder="Enter search terms..."
               bind:value={searchQuery}
-              class="w-full pl-10 py-3 text-base border-neutral-300 dark:border-neutral-700 focus:ring-teal-500 focus:border-teal-500"
+              class="w-full pl-10 py-3 text-base border-neutral-300 dark:border-neutral-700 rounded-full focus:ring-teal-500 focus:border-teal-500"
               aria-label="Search terms"
             />
             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">

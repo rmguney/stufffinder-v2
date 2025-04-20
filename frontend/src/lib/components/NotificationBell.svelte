@@ -240,7 +240,7 @@
                     <Button 
                         variant="ghost" 
                         size="sm" 
-                        class="w-full text-xs text-neutral-500 dark:text-neutral-400 hover:bg-neutral-900 hover:text-white h-7 sm:h-8"
+                        class="w-full text-xs text-neutral-500 dark:text-neutral-400 rounded-full hover:bg-neutral-900 hover:text-white h-7 sm:h-8"
                         on:click={() => isOpen = false}
                     >
                         Close

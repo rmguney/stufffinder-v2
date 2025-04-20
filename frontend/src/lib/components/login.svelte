@@ -274,8 +274,8 @@
                     type="text" 
                     bind:value={loginUsername} 
                     class={loginErrors.username 
-                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 bg-red-50/30" 
-                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 transition-colors"} 
+                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 bg-red-50/30 rounded-full" 
+                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 dark:border-neutral-700 rounded-full hover:border-neutral-300 transition-colors"} 
                     placeholder="Enter username"
                   />
                 </div>
@@ -299,8 +299,8 @@
                     type="password" 
                     bind:value={loginPassword} 
                     class={loginErrors.password 
-                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 bg-red-50/30" 
-                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 transition-colors"} 
+                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 rounded-full bg-red-50/30" 
+                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 rounded-full dark:border-neutral-700 hover:border-neutral-300 transition-colors"} 
                     placeholder="Enter password"
                   />
                 </div>
@@ -325,7 +325,7 @@
             <Card.Footer class="p-0 pt-4">
               <Button 
                 variant="outline"
-                class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800 w-full" 
+                class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800 w-full rounded-full" 
                 on:click={() => handleLogin()}
                 disabled={loginLoading}
               >
@@ -359,8 +359,8 @@
                     type="text" 
                     bind:value={registerUsername} 
                     class={registerErrors.username 
-                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 bg-red-50/30" 
-                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 transition-colors"} 
+                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 rounded-full bg-red-50/30" 
+                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 dark:border-neutral-700 rounded-full hover:border-neutral-300 transition-colors"} 
                     placeholder="Choose a username"
                   />
                 </div>
@@ -384,8 +384,8 @@
                     type="password" 
                     bind:value={registerPassword} 
                     class={registerErrors.password 
-                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 bg-red-50/30" 
-                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 transition-colors"} 
+                      ? "pl-9 focus-visible:ring-neutral-500 border-red-300 rounded-full bg-red-50/30" 
+                      : "pl-9 focus-visible:ring-neutral-500 border-neutral-200 rounded-full dark:border-neutral-700 hover:border-neutral-300 transition-colors"} 
                     placeholder="Create a password"
                   />
                 </div>
@@ -418,7 +418,7 @@
             <Card.Footer class="p-0 pt-4">
               <Button 
                 variant="outline"
-                class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800 w-full" 
+                class="text-xs py-1 px-3 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full w-full" 
                 on:click={handleRegister}
                 disabled={registerLoading}
               >

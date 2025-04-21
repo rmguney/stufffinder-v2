@@ -7,12 +7,13 @@ import lombok.ToString;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
+// Import Set if needed, already imported
 
 @Entity
 @Table(name = "users")
 @Data
-@EqualsAndHashCode(exclude = {"createdPosts", "comments", "upvotedPosts", "downvotedPosts", "upvotedComments", "downvotedComments", "notifications"})
-@ToString(exclude = {"createdPosts", "comments", "upvotedPosts", "downvotedPosts", "upvotedComments", "downvotedComments", "notifications"})
+@EqualsAndHashCode(exclude = {"createdPosts", "comments", "upvotedPosts", "downvotedPosts", "upvotedComments", "downvotedComments", "notifications", "userBadges"}) // Added userBadges
+@ToString(exclude = {"createdPosts", "comments", "upvotedPosts", "downvotedPosts", "upvotedComments", "downvotedComments", "notifications", "userBadges"}) // Added userBadges
 public class User {
 
     @Id
@@ -32,6 +33,12 @@ public class User {
     private String bio;
 
     private String profilePictureUrl;
+
+    @Column(length = 255) // Store as JSON string, e.g., ["TR", "US"]
+    private String location;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserBadge> userBadges;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Post> createdPosts;

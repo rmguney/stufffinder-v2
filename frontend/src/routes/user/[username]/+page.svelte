@@ -20,13 +20,19 @@
   let loadingThreads = true;
   let loadingComments = true;
   let tagsLoaded = false;
-  let userBio = ""; // Placeholder for user bio
-  let userImage = null; // Placeholder for user image
+  let userBio = "";
+  let userImage = null;
   let userCountries = []; // Selected countries (up to 3)
+  let userBadges = []; // Store fetched badges
   let isCurrentUserProfile = false;
-  let userNotFound = false; // Flag for user not found
-  let uploadingImage = false; // Track if image is uploading
-  let uploadError = null; // Track upload errors
+  let userNotFound = false;
+  let savingProfile = false; // Track profile saving state
+  let saveError = null; // Track profile save errors
+  let uploadingImage = false;
+  let uploadError = null;
+  let allCountriesData = []; // Add state for all countries
+  let initialUserBio = ""; // Store initial bio value
+  let profileLoaded = false; // Track if initial profile load is complete
   
   // Pagination state
   let postsPage = 1;
@@ -42,6 +48,7 @@
   // Get username from URL params
   $: userName = $page.params.username;
   $: isCurrentUserProfile = $activeUser === userName;
+  $: bioChanged = userBio !== initialUserBio; // Reactive check if bio has changed
   
   // Format date in the same style as the Angular implementation
   function formatDate(date) {
@@ -203,13 +210,13 @@
       
       // Create FormData object
       const formData = new FormData();
-      formData.append('image', file);
-      
-      // Upload to server
-      const response = await fetch(`${PUBLIC_API_URL}/api/auth/updateProfileImage`, {
+      formData.append('file', file); // Use 'file' key as expected by backend
+
+      // Upload to server using authenticated fetch (assuming global fetch handles auth)
+      const response = await fetch(`${PUBLIC_API_URL}/api/users/me/profile-picture`, { 
         method: 'POST',
-        credentials: 'include',
         body: formData
+        // No need for credentials: 'include' if global fetch handles it
       });
       
       if (!response.ok) {
@@ -217,12 +224,12 @@
       }
       
       const data = await response.json();
-      
+
       // Update profile image with the URL returned from server
-      if (data.imageUrl) {
-        userImage = data.imageUrl;
+      if (data.profilePictureUrl) { // Use 'profilePictureUrl' key
+        userImage = data.profilePictureUrl;
       } else {
-        // If no URL was returned but upload was successful, use a temporary URL
+        // Fallback if URL is missing but response is ok (shouldn't happen ideally)
         userImage = URL.createObjectURL(file);
       }
       
@@ -233,6 +240,77 @@
       uploadError = "Failed to upload image. Please try again.";
     } finally {
       uploadingImage = false;
+    }
+  }
+
+  // Function to save Bio and Location
+  async function saveProfile() {
+    if (!isCurrentUserProfile) return;
+
+    savingProfile = true;
+    saveError = null;
+
+    try {
+      // Map the array of country objects to an array of country codes (cca2)
+      const countryCodes = userCountries.map(country => country.cca2);
+
+      const payload = {
+        bio: userBio,
+        location: countryCodes // Send the array of codes
+      };
+
+      // Use global fetch (assuming it handles auth)
+      const response = await fetch(`${PUBLIC_API_URL}/api/users/me/profile`, { 
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to save profile' }));
+        throw new Error(errorData.message || `Save failed with status: ${response.status}`);
+      }
+
+      const updatedProfile = await response.json();
+
+      // Optionally update local state if needed, though a page refresh might be simpler
+      userBio = updatedProfile.bio;
+      try {
+        // Location comes back as a JSON string from the DTO, needs parsing and mapping
+        const updatedCountryCodes = JSON.parse(updatedProfile.location || '[]');
+        if (Array.isArray(updatedCountryCodes) && allCountriesData.length > 0) {
+          // Map codes back to full country objects
+          userCountries = updatedCountryCodes.map(code =>
+            allCountriesData.find(country => country.cca2 === code)
+          ).filter(Boolean); // Filter out nulls if a code wasn't found
+        } else {
+          userCountries = [];
+        }
+      } catch (e) {
+        console.error("Failed to parse/map updated location:", e); // Updated error message slightly
+        userCountries = [];
+      }
+      // Update initial bio state after successful save to reflect the new baseline
+      initialUserBio = userBio; 
+
+      // Add success feedback (e.g., toast notification)
+      console.log("Profile saved successfully!");
+
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      saveError = error.message || "Failed to save profile. Please try again.";
+    } finally {
+      savingProfile = false;
+    }
+  }
+
+  // Function to handle country changes and auto-save
+  function handleCountryChange() {
+    if (profileLoaded) { // Only save if initial load is complete
+      console.log("Country changed, auto-saving profile...");
+      saveProfile();
     }
   }
 
@@ -323,6 +401,17 @@
       loadingThreads = true;
       loadingComments = true;
       
+      // Fetch all countries data first
+      try {
+        const countriesResponse = await fetch('https://restcountries.com/v3.1/all?fields=name,flags,cca2');
+        if (!countriesResponse.ok) throw new Error('Failed to fetch countries');
+        const data = await countriesResponse.json();
+        allCountriesData = data.sort((a, b) => a.name.common.localeCompare(b.name.common));
+      } catch (err) {
+        console.error('Error fetching countries in profile page:', err);
+        // Handle error appropriately, maybe show a message, but continue loading profile
+      }
+
       // First get the userId from the username
       const userResponse = await fetch(`${PUBLIC_API_URL}/api/auth/username/${userName}`);
       if (!userResponse.ok) {
@@ -336,19 +425,42 @@
       const userData = await userResponse.json();
       userId = userData.userId;
       
-      // Update to fetch user profile data including image
+      // Fetch user profile data using the new endpoint
       try {
-        const profileResponse = await fetch(`${PUBLIC_API_URL}/api/auth/profile/${userId}`);
+        // Use the username directly for the new endpoint
+        const profileResponse = await fetch(`${PUBLIC_API_URL}/api/users/${userName}/profile`);
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
-          if (profileData.imageUrl) {
-            userImage = profileData.imageUrl;
+          // Use profilePictureUrl
+          if (profileData.profilePictureUrl) {
+            userImage = profileData.profilePictureUrl;
+           }
+           if (profileData.bio) {
+             userBio = profileData.bio;
+             initialUserBio = profileData.bio || ""; // Store initial bio
+           }
+           // Parse location JSON string and map codes to objects
+           if (profileData.location) {
+            try {
+              const countryCodes = JSON.parse(profileData.location || '[]'); // Get ["TR", "US"]
+              if (Array.isArray(countryCodes) && allCountriesData.length > 0) {
+                 // Map codes to full country objects
+                 userCountries = countryCodes.map(code =>
+                   allCountriesData.find(country => country.cca2 === code)
+                 ).filter(Boolean); // Filter out nulls if a code wasn't found
+              } else {
+                 userCountries = [];
+              }
+            } catch (e) {
+              console.error("Failed to parse/map location:", e);
+              userCountries = [];
+            }
+          } else {
+            userCountries = [];
           }
-          if (profileData.bio) {
-            userBio = profileData.bio;
-          }
-          if (profileData.countries && Array.isArray(profileData.countries)) {
-            userCountries = profileData.countries;
+          // Store badges
+          if (profileData.badges && Array.isArray(profileData.badges)) {
+            userBadges = profileData.badges;
           }
         }
       } catch (profileError) {
@@ -428,11 +540,13 @@
       
     } catch (error) {
       console.error("Error fetching user data:", error);
-      loadingThreads = false;
-      loadingComments = false;
-    }
-
-    // Add this at the end of the onMount function
+       loadingThreads = false;
+       loadingComments = false;
+     }
+ 
+     profileLoaded = true; // Mark initial load as complete
+ 
+     // Add this at the end of the onMount function
     setTimeout(() => {
       logCommentData();
     }, 1000);
@@ -506,13 +620,14 @@
                     </svg>
                     <span>Location</span>
                   </div>
-                  <!-- Country selector with proper z-index -->
-                  <div class="relative z-50">
-                    <UserCountrySelector 
-                      bind:selectedCountries={userCountries}
-                      isEditable={isCurrentUserProfile}
-                      maxCountries={3}
-                    />
+                   <!-- Country selector with proper z-index and event handler -->
+                   <div class="relative z-50">
+                     <UserCountrySelector 
+                       bind:selectedCountries={userCountries}
+                       isEditable={isCurrentUserProfile}
+                       maxCountries={3}
+                       on:change={handleCountryChange}
+                     />
                   </div>
                 </div>
               </div>
@@ -530,15 +645,22 @@
                       rows="3"
                       bind:value={userBio}
                     ></textarea>
-                    <div class="absolute bottom-0 right-0 p-1.5">
-                      <Button 
-                        class="h-7 px-3 py-0 text-xs rounded-full bg-white hover:bg-white/50 dark:bg-black dark:hover:bg-black/50 text-black dark:text-white shadow-sm flex items-center justify-center gap-1"
-                        size="sm"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                        Save Bio
-                      </Button>
-                    </div>
+                    {#if bioChanged}
+                      <div class="absolute bottom-0 right-0 p-1.5">
+                        <Button 
+                          class="h-7 px-3 py-0 text-xs rounded-full bg-white hover:bg-white/50 dark:bg-black dark:hover:bg-black/50 text-black dark:text-white shadow-sm flex items-center justify-center gap-1"
+                          size="sm"
+                          on:click={saveProfile}
+                          disabled={savingProfile}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                          {savingProfile ? 'Saving...' : 'Save Bio'}
+                        </Button>
+                      </div>
+                    {/if}
+                    {#if saveError}
+                      <p class="text-xs text-red-500 mt-1 text-center">{saveError}</p>
+                    {/if}
                   </div>
                 {:else if userBio}
                   <div class="bg-white dark:bg-neutral-950 rounded-md border border-neutral-200 dark:border-neutral-800 p-3 h-full">
@@ -563,9 +685,21 @@
                     Badges & Achievements
                   </h3>
                   <div class="flex flex-wrap gap-2 justify-center">
-                    <div class="text-xs border border-neutral-200 dark:border-neutral-700 rounded-full px-3 py-1 bg-neutral-50 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300">
-                      Coming soon
-                    </div>
+                    {#if userBadges.length > 0}
+                      {#each userBadges as badge (badge.id)}
+                        <div
+                          class="text-xs border border-neutral-200 dark:border-neutral-700 rounded-full px-3 py-1 bg-neutral-50 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 flex items-center gap-1"
+                          title={badge.description}
+                        >
+                          {#if badge.iconUrl}
+                            <img src={badge.iconUrl} alt={badge.name} class="h-3 w-3" />
+                          {/if}
+                          <span>{badge.name}</span>
+                        </div>
+                      {/each}
+                    {:else}
+                       <div class="text-xs text-neutral-500 italic">No badges earned yet.</div>
+                    {/if}
                   </div>
                 </div>
               </div>

@@ -1,6 +1,8 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, createEventDispatcher } from 'svelte'; // Import createEventDispatcher
   import { Button } from './ui/button';
+  
+  const dispatch = createEventDispatcher(); // Initialize dispatcher
   
   export let selectedCountries = [];
   export let isEditable = false;
@@ -35,12 +37,14 @@
   function addCountry(country) {
     if (selectedCountries.length < maxCountries && !selectedCountries.some(c => c.cca2 === country.cca2)) {
       selectedCountries = [...selectedCountries, country];
+      dispatch('change'); // Dispatch change event
     }
     isOpen = false;
   }
   
   function removeCountry(countryCode) {
     selectedCountries = selectedCountries.filter(country => country.cca2 !== countryCode);
+    dispatch('change'); // Dispatch change event
   }
   
   onMount(fetchCountries);

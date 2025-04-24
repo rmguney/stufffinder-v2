@@ -18,14 +18,16 @@ public class SearchResultDto {
     private MysteryObjectDto mysteryObject;
     private boolean isSolved;
     private LocalDateTime createdAt;
+    private int commentCount;
 
-    public SearchResultDto(Long id, String author, String title, String description, MysteryObject mysteryObject, boolean isSolved) {
+    public SearchResultDto(Long id, String author, String title, String description, MysteryObject mysteryObject, boolean isSolved, int commentCount) {
         this.id = id;
         this.author = author;
         this.title = title;
         this.description = description;
         this.mysteryObject = mysteryObject != null ? MysteryObjectDto.fromEntity(mysteryObject) : null;
         this.isSolved = isSolved;
+        this.commentCount = commentCount;
     }
 
     public SearchResultDto() {

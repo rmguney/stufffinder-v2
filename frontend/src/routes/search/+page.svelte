@@ -6,6 +6,8 @@
     import * as Checkbox from "$lib/components/ui/checkbox";
     import { PUBLIC_API_URL } from "$env/static/public";
     import { onMount, onDestroy } from 'svelte';
+    import { slide } from 'svelte/transition';
+    import { cubicOut } from 'svelte/easing';
 
     let searchQuery = "";
     let searchResults = [];
@@ -44,6 +46,70 @@
         { key: "brand", label: "Brand" },
         { key: "markings", label: "Markings" }
     ];
+
+    // Pagination state
+    let currentPage = 1;
+    let totalPages = 0;
+    const resultsPerPage = 5;
+    let paginatedResults = [];
+
+    // Function to get paginated results
+    function getPaginatedResults() {
+        if (!filteredAndSortedResults || filteredAndSortedResults.length === 0) {
+            paginatedResults = [];
+            return [];
+        }
+
+        const start = (currentPage - 1) * resultsPerPage;
+        const end = Math.min(start + resultsPerPage, filteredAndSortedResults.length);
+        
+        paginatedResults = filteredAndSortedResults.slice(start, end);
+        return paginatedResults;
+    }
+
+    // Function to generate pagination range
+    function getPaginationRange(current, total) {
+        if (!total || total <= 0) return [];
+        if (total <= 5) {
+            return Array.from({ length: total }, (_, i) => i + 1);
+        }
+        
+        if (current <= 3) {
+            return [1, 2, 3, 4, 5];
+        }
+        
+        if (current >= total - 2) {
+            return [total - 4, total - 3, total - 2, total - 1, total];
+        }
+        
+        return [current - 2, current - 1, current, current + 1, current + 2];
+    }
+
+    $: {
+        if (currentPage && filteredAndSortedResults) {
+            getPaginatedResults();
+        }
+    }
+
+    // Function to change pages
+    function goToPage(page) {
+        if (!page || page < 1) return;
+        const maxPage = Math.ceil(filteredAndSortedResults.length / resultsPerPage);
+        if (page > maxPage) return;
+        
+        currentPage = page;
+        getPaginatedResults(); // Sayfa değiştiğinde sonuçları güncelle
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Calculate total pages
+    $: {
+        if (filteredAndSortedResults) {
+            totalPages = Math.ceil(filteredAndSortedResults.length / resultsPerPage);
+        } else {
+            totalPages = 0;
+        }
+    }
 
     // Initialize the component when mounted
     onMount(() => {
@@ -336,6 +402,7 @@
                 if (currentQuery === searchQuery.trim()) {
                     const data = await response.json();
                     searchResults = data.content || [];
+                    currentPage = 1; // Reset to first page when new search is performed
                     
                     // Collect all unique tag IDs that we haven't fetched yet
                     const tagIds = new Set();
@@ -628,6 +695,122 @@
     }
     // Initialize lastUrlUpdate
     let lastUrlUpdate = '';
+
+    let isFilterExpanded = false;
+    let solvedFilter = 'ALL';
+    let sortMethod = 'recent';
+    let filteredAndSortedResults = [];
+
+    function handleFilterChange(newFilter) {
+        solvedFilter = newFilter;
+        currentPage = 1;
+        if (searchResults && searchResults.length > 0) {
+            applyFiltersAndSort();
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleFilterSection() {
+        isFilterExpanded = !isFilterExpanded;
+    }
+
+    $: {
+        if (searchResults && searchResults.length > 0) {
+            // Filter by solved status
+            let filtered = [...searchResults];
+            if (solvedFilter !== 'ALL') {
+                filtered = filtered.filter(post => 
+                    solvedFilter === 'SOLVED' ? post.solved : !post.solved
+                );
+            }
+
+            // Sort results
+            filtered.sort((a, b) => {
+                switch (sortMethod) {
+                    case 'comments':
+                        return (b.commentCount || 0) - (a.commentCount || 0);
+                    case 'alphabetical':
+                        const titleA = (a.title || '').toLowerCase();
+                        const titleB = (b.title || '').toLowerCase();
+                        return titleA.localeCompare(titleB);
+                    case 'recent':
+                        const aId = parseInt(a.id) || -1;
+                        const bId = parseInt(b.id) || -1;
+                        return bId - aId;
+                    default:
+                        return 0;
+                }
+            });
+
+            console.log('Sorted results:', filtered);
+            filteredAndSortedResults = filtered;
+            totalPages = Math.ceil(filteredAndSortedResults.length / resultsPerPage);
+            if (currentPage > totalPages) {
+                currentPage = 1;
+            }
+            getPaginatedResults();
+        } else {
+            filteredAndSortedResults = [];
+            totalPages = 0;
+            currentPage = 1;
+            paginatedResults = [];
+        }
+    }
+
+    function handleSortMethodChange(newMethod) {
+        sortMethod = newMethod;
+        currentPage = 1;
+        if (searchResults && searchResults.length > 0) {
+            applyFiltersAndSort();
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function applyFiltersAndSort() {
+        let filtered = [...searchResults];
+        
+        if (solvedFilter !== 'ALL') {
+            filtered = searchResults.filter(post => {
+                if (solvedFilter === 'SOLVED') {
+                    return post.solved === true;
+                } else {
+                    return post.solved === false || post.solved === undefined || post.solved === null;
+                }
+            });
+        }
+
+        if (filtered.length > 0) {
+            filtered.sort((a, b) => {
+                switch (sortMethod) {
+                    case 'comments':
+                        return (b.commentCount || 0) - (a.commentCount || 0);
+                    
+                    case 'alphabetical':
+                        const titleA = (a.title || '').toLowerCase();
+                        const titleB = (b.title || '').toLowerCase();
+                        return titleA.localeCompare(titleB);
+                    
+                    case 'recent':
+                        // ID'leri sayıya çevir, eğer geçersizse en sona at
+                        const aId = parseInt(a.id) || -1;
+                        const bId = parseInt(b.id) || -1;
+                        return bId - aId;
+                    
+                    default:
+                        return 0;
+                }
+            });
+        }
+        
+        filteredAndSortedResults = filtered;
+        totalPages = Math.ceil(filteredAndSortedResults.length / resultsPerPage);
+        
+        if (currentPage > totalPages) {
+            currentPage = Math.max(1, totalPages);
+        }
+        
+        getPaginatedResults();
+    }
 </script>
 
 <div class="flex flex-col items-center h-full min-h-screen text-text bg-change dark:bg-dark shifting p-3 py-5">
@@ -659,6 +842,155 @@
             <button type="submit" class="sr-only">Search</button>
           </div>
         </form>
+        
+        <!-- Add filtering and sorting UI with collapsible feature -->
+        <div class="w-full bg-white dark:bg-neutral-950 shadow-sm rounded-md border border-neutral-200 dark:border-neutral-800 mb-4">
+          <!-- Collapsible header with toggle button -->
+          <div 
+            class="p-2.5 sm:p-3 flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 cursor-pointer" 
+            on:click={toggleFilterSection}
+            on:keydown={(e) => e.key === 'Enter' && toggleFilterSection()}
+            role="button"
+            tabindex="0"
+          >
+            <div class="flex items-center gap-1.5 sm:gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-neutral-600 dark:text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              <h3 class="font-medium text-sm text-neutral-800 dark:text-neutral-200">Filter & Sort</h3>
+              
+              <!-- Display filter/sort summary when collapsed -->
+              {#if !isFilterExpanded}
+                <div class="ml-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+                  {solvedFilter !== 'ALL' ? 
+                    `${solvedFilter === 'SOLVED' ? 'Resolved' : 'Unresolved'} posts` : 
+                    'All posts'} · Sort: {sortMethod === 'comments' ? 'Popularity' : sortMethod === 'recent' ? 'Recent' : 'A-Z'}
+                </div>
+              {/if}
+            </div>
+            
+            <div class="text-neutral-500 dark:text-neutral-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class={`h-4 w-4 transition-transform duration-300 ${isFilterExpanded ? 'rotate-180' : 'rotate-0'}`} viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </div>
+          </div>
+          
+          {#if isFilterExpanded}
+            <div 
+              transition:slide={{ duration: 300, easing: cubicOut }}
+              class="p-3 sm:p-4"
+            >
+              <!-- Filter by solved status -->
+              <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+                <span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Filter by:</span>
+                
+                <!-- All posts button -->
+                <button 
+                  class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium border transition-colors
+                    {solvedFilter === 'ALL' 
+                      ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                  on:click={() => handleFilterChange('ALL')}
+                >
+                  <span class="flex items-center">All</span>
+                  <span class="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-white/20 dark:bg-black/20 flex items-center">{searchResults.length}</span>
+                </button>
+                
+                <!-- Solved posts button -->
+                <button 
+                  class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium
+                    {solvedFilter === 'SOLVED' 
+                      ? 'bg-emerald-600 text-white' 
+                      : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'}"
+                  on:click={() => handleFilterChange('SOLVED')}
+                >
+                  <span class="inline-flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                    Resolved
+                  </span>
+                </button>
+                
+                <!-- Unsolved posts button -->
+                <button 
+                  class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium
+                    {solvedFilter === 'UNSOLVED' 
+                      ? 'bg-rose-600 text-white' 
+                      : 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 border border-rose-100 dark:border-rose-800/40 hover:bg-rose-100 dark:hover:bg-rose-900/30'}"
+                  on:click={() => handleFilterChange('UNSOLVED')}
+                >
+                  <span class="inline-flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                    </svg>
+                    Unresolved
+                  </span>
+                </button>
+              </div>
+              
+              <!-- Sort controls -->
+              <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+                <span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Sort by:</span>
+              
+                <button 
+                  class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium border transition-colors
+                    {sortMethod === 'comments' 
+                      ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                  on:click={() => handleSortMethodChange('comments')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd" />
+                  </svg>
+                  Popularity
+                </button>
+                
+                <button 
+                  class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium border transition-colors
+                    {sortMethod === 'alphabetical' 
+                      ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                  on:click={() => handleSortMethodChange('alphabetical')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                  </svg>
+                  A-Z
+                </button>
+                
+                <button 
+                  class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium border transition-colors
+                    {sortMethod === 'recent' 
+                      ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                  on:click={() => handleSortMethodChange('recent')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="size-3 mr-1">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  </svg>
+                  Recent
+                </button>
+              </div>
+              
+              <!-- Results info -->
+              <div class="pt-2 border-t border-neutral-200 dark:border-neutral-700 text-xs text-neutral-600 dark:text-neutral-400">
+                {#if solvedFilter === 'ALL'}
+                  Showing all search results
+                {:else}
+                  Showing {filteredAndSortedResults.length} of {searchResults.length} results
+                  <button 
+                    class="ml-2 text-teal-600 dark:text-teal-500 hover:underline"
+                    on:click={() => handleFilterChange('ALL')}
+                  >
+                    Clear filters
+                  </button>
+                {/if}
+              </div>
+            </div>
+          {/if}
+        </div>
         
         <!-- IMPROVEMENT 2: Enhanced Semantic Expansions Section with Relevance Indicators -->
         {#if semanticLoading}
@@ -770,22 +1102,24 @@
                    aria-hidden="true"></div>
               <p class="text-neutral-500 dark:text-neutral-400">Searching...</p>
             </div>
-          {:else if searchResults.length === 0 && searchQuery.trim().length >= 3}
-            <div class="text-center py-12">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p class="text-neutral-500 dark:text-neutral-400">No results found</p>
-            </div>
-          {:else if searchQuery.trim().length < 3}
-            <div class="text-center py-12">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <p class="text-neutral-500 dark:text-neutral-400">Type at least 3 characters to search</p>
-            </div>
-          {:else}
-            {#each searchResults as post}
+          {:else if !searchResults || searchResults.length === 0}
+            {#if searchQuery.trim().length >= 3}
+              <div class="text-center py-12">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p class="text-neutral-500 dark:text-neutral-400">No results found</p>
+              </div>
+            {:else}
+              <div class="text-center py-12">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <p class="text-neutral-500 dark:text-neutral-400">Type at least 3 characters to search</p>
+              </div>
+            {/if}
+          {:else if paginatedResults && paginatedResults.length > 0}
+            {#each paginatedResults as post}
               <a 
                 href={`/thread/${post.id}`} 
                 class="block p-4 sm:p-5 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-teal-500 dark:hover:border-teal-500 transition-colors duration-200 bg-white dark:bg-neutral-950 shadow-sm hover:shadow-md"
@@ -794,12 +1128,19 @@
                   <h2 class="text-lg sm:text-xl font-semibold mb-2 text-neutral-800 dark:text-neutral-100">
                     {@html highlightMatches(post.title || '')}
                   </h2>
-                  {#if post.isSolved}
-                    <span class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-xs px-2.5 py-1 rounded-full font-medium ml-2 flex-shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 inline-block mr-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  {#if post.solved}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/50">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                       </svg>
-                      Solved
+                      Resolved
+                    </span>
+                  {:else}
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                      </svg>
+                      Unresolved
                     </span>
                   {/if}
                 </div>
@@ -831,7 +1172,15 @@
                 
                 <!-- Post metadata -->
                 <div class="flex justify-between items-center mt-3 text-xs">
-                  <p class="text-neutral-500 dark:text-neutral-400">Posted by: {post.author || 'Anonymous'}</p>
+                  <div class="flex items-center gap-3">
+                    <p class="text-neutral-500 dark:text-neutral-400">Posted by: {post.author || 'Anonymous'}</p>
+                    <div class="flex items-center text-neutral-500 dark:text-neutral-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                      </svg>
+                      {post.commentCount || 0}
+                    </div>
+                  </div>
                   {#if post.tags && Array.isArray(post.tags) && post.tags.length > 0}
                     <div class="flex gap-1 flex-wrap">
                       {#each post.tags as tag}
@@ -846,6 +1195,85 @@
                 </div>
               </a>
             {/each}
+
+            <!-- Pagination -->
+            {#if totalPages > 1}
+              <div class="flex justify-center mt-8 mb-4">
+                <div class="flex items-center gap-1">
+                  <!-- First page button -->
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    class="h-8 w-8 p-0 rounded-md"
+                    disabled={currentPage === 1 || totalPages === 0}
+                    on:click={() => goToPage(1)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </Button>
+                  
+                  <!-- Previous page button -->
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    class="h-8 w-8 p-0 rounded-md"
+                    disabled={currentPage === 1 || totalPages === 0}
+                    on:click={() => goToPage(currentPage - 1)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </Button>
+                  
+                  <!-- Page numbers -->
+                  {#each getPaginationRange(currentPage, totalPages) as page}
+                    <Button 
+                      variant={page === currentPage ? 'default' : 'outline'}
+                      size="sm" 
+                      class="h-8 w-8 p-0 {page === currentPage ? 'bg-teal-600 hover:bg-teal-700 text-white' : ''} rounded-md"
+                      disabled={totalPages === 0}
+                      on:click={() => goToPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  {/each}
+                  
+                  <!-- Next page button -->
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    class="h-8 w-8 p-0 rounded-md"
+                    disabled={currentPage === totalPages || totalPages <= 1}
+                    on:click={() => goToPage(currentPage + 1)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </Button>
+                  
+                  <!-- Last page button -->
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    class="h-8 w-8 p-0 rounded-md"
+                    disabled={currentPage === totalPages || totalPages <= 1}
+                    on:click={() => goToPage(totalPages)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 6.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0zM10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-3.293a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                  </Button>
+                </div>
+              </div>
+            {/if}
+          {:else}
+            <div class="text-center py-12">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-neutral-500 dark:text-neutral-400">No results found</p>
+            </div>
           {/if}
         </div>
       </div>

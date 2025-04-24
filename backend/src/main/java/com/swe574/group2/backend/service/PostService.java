@@ -312,7 +312,8 @@ public class PostService {
                     post.getTitle(), 
                     post.getDescription(), 
                     post.getMysteryObject(), 
-                    post.isSolved()
+                    post.isSolved(),
+                    post.getComments().size()
                 );
                 searchResultDto.setTags(tags);
                 return searchResultDto;
@@ -328,7 +329,8 @@ public class PostService {
                     post.getTitle(), 
                     post.getDescription(), 
                     post.getMysteryObject(), 
-                    post.isSolved()
+                    post.isSolved(),
+                    post.getComments().size()
                 );
                 searchResultDto.setTags(tags);
                 return searchResultDto;

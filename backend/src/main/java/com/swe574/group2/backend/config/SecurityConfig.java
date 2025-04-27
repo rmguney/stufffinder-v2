@@ -70,6 +70,8 @@ public class SecurityConfig {
                                 "api/mysteryObjects/**",
                                 "v3/api-docs/**",
                                 "api/posts/update",
+                                "api/followed-users/**",
+                                "/api/followed-posts/{postId}/followers-count",
                                 "swagger-ui/**").permitAll() // Allow public access to these endpoints
                         .anyRequest().authenticated() // All other requests need authentication
                 )

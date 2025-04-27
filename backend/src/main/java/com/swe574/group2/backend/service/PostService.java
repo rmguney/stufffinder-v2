@@ -18,6 +18,7 @@ import com.swe574.group2.backend.entity.MediaFile;
 import com.swe574.group2.backend.entity.MysteryObject;
 import com.swe574.group2.backend.entity.Post;
 import com.swe574.group2.backend.entity.User;
+import com.swe574.group2.backend.enums.FollowerNotificationType;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -41,14 +42,18 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final NotificationService notificationService;
     private final MediaFileRepository mediaFileRepository;
+    private final FollowerNotificationService followerNotificationService;
 
-    public PostService(PostRepository postRepository, MysteryObjectRepository mysteryObjectRepository, UserRepository userRepository, CommentRepository commentRepository, NotificationService notificationService, MediaFileRepository mediaFileRepository) {
+    public PostService(PostRepository postRepository, MysteryObjectRepository mysteryObjectRepository,
+            UserRepository userRepository, CommentRepository commentRepository, NotificationService notificationService,
+            MediaFileRepository mediaFileRepository, FollowerNotificationService followerNotificationService) {
         this.postRepository = postRepository;
         this.mysteryObjectRepository = mysteryObjectRepository;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.notificationService = notificationService;
         this.mediaFileRepository = mediaFileRepository;
+        this.followerNotificationService = followerNotificationService;
     }
 
     @Transactional
@@ -97,7 +102,7 @@ public class PostService {
         post.setUser(userRepository.findByEmail(userName).orElseThrow());
 
         MysteryObject mysteryObject = postCreationDto.getMysteryObject();
-        
+
         // Handle sub-parts if any
         List<MysteryObject> subParts = new ArrayList<>();
         if (mysteryObject.getSubParts() != null && !mysteryObject.getSubParts().isEmpty()) {
@@ -108,7 +113,7 @@ public class PostService {
         }
 
         mysteryObjectRepository.save(mysteryObject);
-        
+
         // Now add sub-parts if any
         if (!subParts.isEmpty()) {
             for (MysteryObject subPart : subParts) {
@@ -116,7 +121,7 @@ public class PostService {
             }
             mysteryObjectRepository.save(mysteryObject);
         }
-        
+
         post.setMysteryObject(mysteryObject);
 
         Post savedPost = postRepository.save(post);
@@ -124,6 +129,8 @@ public class PostService {
         Map<String, Long> response = new HashMap<>();
         response.put("postId", savedPost.getId());
         response.put("mysteryObjectId", mysteryObject.getId());
+        
+        followerNotificationService.sendFollowedUserPostCreatedNotificationToAll(userName, savedPost.getId());
 
         return response;
     }
@@ -153,6 +160,8 @@ public class PostService {
                 post.getDownvotedBy().remove(user);
                 post.setDownvotesCount(post.getDownvotesCount() - 1);
             }
+            followerNotificationService.sendFollowedPostActivityNotification(post,
+                    FollowerNotificationType.POST_UPVOTED);
         }
 
         postRepository.save(post);
@@ -178,6 +187,8 @@ public class PostService {
                 post.getUpvotedBy().remove(user);
                 post.setUpvotesCount(post.getUpvotesCount() - 1);
             }
+            followerNotificationService.sendFollowedPostActivityNotification(post,
+                    FollowerNotificationType.POST_DOWNVOTED);
         }
 
         postRepository.save(post);
@@ -194,12 +205,12 @@ public class PostService {
         if (post == null) {
             throw new ResourceNotFoundException("Post not found with ID: " + postId);
         }
-    
+
         Set<String> tags = postRepository.findTagKeysByPostId(postId);
-    
+
         PostDetailsDto postDetailsDto = new PostDetailsDto();
         mapPostToDto(post, tags, postDetailsDto, user);
-        
+
         // Add media files information if mystery object exists
         if (post.getMysteryObject() != null) {
             List<MediaFile> mediaFiles = mediaFileRepository.findByMysteryObjectId(post.getMysteryObject().getId());
@@ -211,69 +222,70 @@ public class PostService {
                 dto.setCreatedAt(mediaFile.getCreatedAt());
                 return dto;
             }).collect(Collectors.toList());
-            
+
             postDetailsDto.setMediaFiles(mediaFileDtos);
         }
-    
+
         return postDetailsDto;
     }
 
     @Transactional
     public boolean resolvePost(Long postId, ResolutionDto resolutionDto, String username) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new IllegalArgumentException("Post not found."));
-        
+
         // Check if the logged-in user is the creator of the post
         if (!post.getUser().getEmail().equals(username)) {
             return false; // Not authorized
         }
-        
+
         // Set resolution details
         post.setResolutionDescription(resolutionDto.getDescription());
         post.setResolvedAt(LocalDateTime.now());
         post.setSolved(true);
-        
+
         // Add contributing comments
         if (resolutionDto.getContributingCommentIds() != null && !resolutionDto.getContributingCommentIds().isEmpty()) {
             Set<Comment> contributingComments = new HashSet<>();
             for (Long commentId : resolutionDto.getContributingCommentIds()) {
                 Comment comment = commentRepository.findById(commentId)
-                    .orElseThrow(() -> new IllegalArgumentException("Comment not found with ID: " + commentId));
+                        .orElseThrow(() -> new IllegalArgumentException("Comment not found with ID: " + commentId));
                 contributingComments.add(comment);
-                
+
                 // Send notification to comment author
                 notificationService.sendContributingCommentNotification(comment.getUser().getId(), post, comment);
             }
             post.setContributingComments(contributingComments);
         }
-        
+
         // Save the updated post
         postRepository.save(post);
-        
+        followerNotificationService.sendFollowedPostActivityNotification(post, FollowerNotificationType.POST_RESOLVED);
+
         return true;
     }
-    
+
     @Transactional
     public boolean unresolvePost(Long postId, String username) {
         Post post = postRepository.findById(postId).orElseThrow(() -> new IllegalArgumentException("Post not found."));
-        
+
         // Check if the logged-in user is the creator of the post
         if (!post.getUser().getEmail().equals(username)) {
             return false; // Not authorized
         }
-        
+
         // Clear resolution details
         post.setResolutionDescription(null);
         post.setResolvedAt(null);
         post.setSolved(false);
-        
+
         // Clear contributing comments
         if (post.getContributingComments() != null) {
             post.getContributingComments().clear();
         }
-        
+
         // Save the updated post
         postRepository.save(post);
-        
+
         return true;
     }
 
@@ -282,13 +294,13 @@ public class PostService {
         if (keyword != null && keyword.contains(",")) {
             // Split by comma and trim whitespace
             List<String> keywords = Arrays.stream(keyword.split(","))
-                .map(String::trim)
-                .filter(kw -> !kw.isEmpty())
-                .collect(Collectors.toList());
-            
+                    .map(String::trim)
+                    .filter(kw -> !kw.isEmpty())
+                    .collect(Collectors.toList());
+
             // Use a Map with Post ID as key to ensure uniqueness
             Map<Long, Post> uniquePosts = new HashMap<>();
-            
+
             // Search for each keyword and add results to the map
             for (String kw : keywords) {
                 Page<Post> keywordResults = postRepository.searchPosts(kw, Pageable.unpaged());
@@ -296,23 +308,23 @@ public class PostService {
                     uniquePosts.put(post.getId(), post);
                 }
             }
-            
+
             // Convert map values to a list
             List<Post> allPosts = new ArrayList<>(uniquePosts.values());
-            
+
             // Create a Page from the list using the original paging mechanism
             Page<Post> postsPage = new PageImpl<>(allPosts, pageable, allPosts.size());
-            
+
             // Map to DTOs using your existing approach
             return postsPage.map(post -> {
                 Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
                 SearchResultDto searchResultDto = new SearchResultDto(
-                    post.getId(), 
-                    post.getUser().getUsername(), 
-                    post.getTitle(), 
-                    post.getDescription(), 
-                    post.getMysteryObject(), 
-                    post.isSolved()
+                        post.getId(),
+                        post.getUser().getUsername(),
+                        post.getTitle(),
+                        post.getDescription(),
+                        post.getMysteryObject(),
+                        post.isSolved()
                 );
                 searchResultDto.setTags(tags);
                 return searchResultDto;
@@ -323,12 +335,12 @@ public class PostService {
             return postsPage.map(post -> {
                 Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
                 SearchResultDto searchResultDto = new SearchResultDto(
-                    post.getId(), 
-                    post.getUser().getUsername(), 
-                    post.getTitle(), 
-                    post.getDescription(), 
-                    post.getMysteryObject(), 
-                    post.isSolved()
+                        post.getId(),
+                        post.getUser().getUsername(),
+                        post.getTitle(),
+                        post.getDescription(),
+                        post.getMysteryObject(),
+                        post.isSolved()
                 );
                 searchResultDto.setTags(tags);
                 return searchResultDto;
@@ -358,8 +370,8 @@ public class PostService {
             // Convert contributing comments to IDs
             if (post.getContributingComments() != null && !post.getContributingComments().isEmpty()) {
                 List<Long> contributingCommentIds = post.getContributingComments().stream()
-                    .map(Comment::getId)
-                    .collect(Collectors.toList());
+                        .map(Comment::getId)
+                        .collect(Collectors.toList());
                 postDetailsDto.setContributingCommentIds(contributingCommentIds);
             }
         }
@@ -370,7 +382,7 @@ public class PostService {
             return; // Return after setting basic info + resolution (if solved)
         }
 
-        // Check if the user has upvoted or downvoted the post (only for authenticated users)
+                // Check if the user has upvoted or downvoted the post (only for authenticated users)
         boolean userUpvoted = post.getUpvotedBy().contains(currentUser);
         boolean userDownvoted = post.getDownvotedBy().contains(currentUser);
 
@@ -386,17 +398,17 @@ public class PostService {
                 .map(post -> {
                     Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
                     PostListDto postListDto = new PostListDto(
-                        post.getId(),
-                        post.getUser().getUsername(),
-                        post.getTitle(),
-                        post.getDescription(),
-                        post.getMysteryObject() != null ? post.getMysteryObject().getImageUrl() : null,
-                        post.isSolved(),
-                        post.getUpvotesCount(),
-                        post.getDownvotesCount(),
-                        (long) post.getComments().size()
+                            post.getId(),
+                            post.getUser().getUsername(),
+                            post.getTitle(),
+                            post.getDescription(),
+                            post.getMysteryObject() != null ? post.getMysteryObject().getImageUrl() : null,
+                            post.isSolved(),
+                            post.getUpvotesCount(),
+                            post.getDownvotesCount(),
+                            (long) post.getComments().size()
                     );
-                    
+
                     postListDto.setTags(tags);
                     postListDto.setCreatedAt(post.getCreatedAt());
                     return postListDto;
@@ -414,21 +426,21 @@ public class PostService {
         if (tags == null || tags.isEmpty()) {
             return new HashSet<>();
         }
-        
+
         RestTemplate restTemplate = new RestTemplate();
         ObjectMapper mapper = new ObjectMapper();
         Set<String> tagLabels = new HashSet<>();
-        
+
         // Process each tag individually
         for (String tagId : tags) {
             try {
                 String url = "https://www.wikidata.org/w/api.php?action=wbgetentities&ids=" + tagId +
                         "&props=labels&languages=en&format=json";
-                
+
                 String response = restTemplate.getForObject(url, String.class);
                 JsonNode root = mapper.readTree(response);
                 JsonNode entity = root.path("entities").path(tagId);
-                
+
                 if (!entity.isMissingNode()) {
                     JsonNode enLabel = entity.path("labels").path("en").path("value");
                     if (!enLabel.isMissingNode()) {
@@ -448,7 +460,7 @@ public class PostService {
                 tagLabels.add(tagId);
             }
         }
-        
+
         return tagLabels;
     }
 
@@ -464,17 +476,17 @@ public class PostService {
     public Map<String, Long> updatePost(Long postId, PostCreationDto postUpdateDto, String userName) {
         User user = userRepository.findByEmail(userName).orElseThrow();
         Post post = postRepository.findById(postId).orElseThrow();
-        
+
         // Verify the user is the owner of the post
         if (!post.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You don't have permission to update this post");
         }
-        
+
         // Update post details
         post.setTitle(postUpdateDto.getTitle());
         post.setDescription(postUpdateDto.getContent());
         post.setUpdatedAt(LocalDateTime.now());
-        
+
         // Handle tags and their labels
         if (postUpdateDto.getTags() != null && !postUpdateDto.getTags().isEmpty()) {
             Map<String, String> tagMap = new HashMap<>();
@@ -513,15 +525,15 @@ public class PostService {
         } else {
             post.setTagMap(new HashMap<>());
         }
-        
+
         // Update mystery object if provided
         MysteryObject mysteryObject = post.getMysteryObject();
         MysteryObject updatedMysteryObject = postUpdateDto.getMysteryObject();
-        
+
         if (updatedMysteryObject != null && mysteryObject != null) {
             // Preserve subparts before updating
             List<MysteryObject> existingSubParts = new ArrayList<>(mysteryObject.getSubParts());
-            
+
             // Update mystery object fields
             mysteryObject.setDescription(updatedMysteryObject.getDescription());
             mysteryObject.setMaterial(updatedMysteryObject.getMaterial());
@@ -550,10 +562,10 @@ public class PostService {
             mysteryObject.setSizeZ(updatedMysteryObject.getSizeZ());
             mysteryObject.setWeight(updatedMysteryObject.getWeight());
             mysteryObject.setItem_condition(updatedMysteryObject.getItem_condition());
-            
+
             // SubParts are handled separately via MysteryObjectController endpoints
             // We're not overwriting them here, as they will be managed by separate API calls
-            
+
             mysteryObjectRepository.save(mysteryObject);
         }
 

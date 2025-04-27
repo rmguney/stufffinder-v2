@@ -5,15 +5,22 @@
     import { Button } from "$lib/components/ui/button";
     import { Separator } from "$lib/components/ui/separator";
     import { activeUser } from "../../userStore";
-    import { 
-        notifications, 
-        unreadCount, 
+    import {
+        notifications,
+        unreadCount,
         showNotifications,
-        fetchNotifications, 
+        fetchNotifications,
         markAsRead,
         markAllAsRead,
         startNotificationPolling,
-        stopNotificationPolling
+        stopNotificationPolling,
+        followerNotifications,
+        unreadFollowerCount,
+        fetchFollowerNotifications,
+        markFollowerNotificationAsRead,
+        markAllFollowerNotificationsAsRead,
+        allNotifications,
+        allUnreadCount,
     } from "../../notificationStore";
     import { goto } from "$app/navigation";
 
@@ -53,7 +60,17 @@
     // Handle notification click
     function handleNotificationClick(notification) {
         // Mark notification as read
-        markAsRead(notification.id);
+        if (
+            notification.type &&
+            (notification.type.startsWith("FOLLOWED_") ||
+                notification.type.startsWith("POST_"))
+        ) {
+            // It's a follower notification
+            markFollowerNotificationAsRead(notification.id);
+        } else {
+            // It's a normal notification
+            markAsRead(notification.id);
+        }
 
         // Navigate to the appropriate page based on the notification type
         if (notification.postId) {
@@ -63,8 +80,8 @@
     }
 
     // Bell animation when receiving new notifications
-    $: if ($unreadCount > 0) {
-        const bell = document.querySelector('.notification-bell');
+    $: if ($allUnreadCount > 0) {
+        const bell = document.querySelector(".notification-bell");
         if (bell) {
             bell.classList.add('animate-ring');
             setTimeout(() => {
@@ -76,6 +93,7 @@
     // Start and stop notification polling based on user login status
     $: if ($activeUser) {
         startNotificationPolling();
+        fetchFollowerNotifications();
     } else {
         stopNotificationPolling();
     }
@@ -166,28 +184,39 @@
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                 </svg>
-                
-                {#if $unreadCount > 0}
-                    <span class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-rose-900 rounded-full badge-pulse min-w-[16px] sm:min-w-[20px] h-[16px] sm:h-[20px]">
-                        {$unreadCount > 9 ? '9+' : $unreadCount}
+
+                {#if $unreadCount + $unreadFollowerCount > 0}
+                    <span
+                        class="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-rose-900 rounded-full badge-pulse min-w-[16px] sm:min-w-[20px] h-[16px] sm:h-[20px]"
+                    >
+                        {$unreadCount + $unreadFollowerCount > 9
+                            ? "9+"
+                            : $unreadCount + $unreadFollowerCount}
                     </span>
                 {/if}
             </Button>
         </Popover.Trigger>
-        
-        <Popover.Content 
-            align="end" 
+
+        <Popover.Content
+            align="end"
             class="w-[280px] sm:w-80 p-0 bg-white dark:bg-neutral-950 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-900"
         >
             <Card.Root class="border-0 shadow-none">
-                <Card.Header class="px-3 sm:px-4 py-2 sm:py-3 flex flex-row justify-between items-center space-y-0">
-                    <Card.Title class="text-base sm:text-lg">Notifications</Card.Title>
-                    {#if $unreadCount > 0}
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
+                <Card.Header
+                    class="px-3 sm:px-4 py-2 sm:py-3 flex flex-row justify-between items-center space-y-0"
+                >
+                    <Card.Title class="text-base sm:text-lg"
+                        >Notifications</Card.Title
+                    >
+                    {#if $allUnreadCount > 0}
+                        <Button
+                            variant="ghost"
+                            size="sm"
                             class="text-xs hover:bg-neutral-800 hover:text-white transition-colors rounded-full h-7 sm:h-8"
-                            on:click={markAllAsRead}
+                            on:click={() => {
+                                markAllAsRead();
+                                markAllFollowerNotificationsAsRead();
+                            }}
                         >
                             Mark all as read
                         </Button>
@@ -195,23 +224,41 @@
                 </Card.Header>
                 
                 <Separator />
-                
-                <div class="overflow-y-auto max-h-[300px] sm:max-h-[350px] py-1">
-                    {#if $notifications.length === 0}
-                        <div class="py-6 sm:py-8 text-center text-neutral-500 dark:text-neutral-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+
+                <div
+                    class="overflow-y-auto max-h-[300px] sm:max-h-[350px] py-1"
+                >
+                    {#if $allNotifications.length === 0}
+                        <div
+                            class="py-6 sm:py-8 text-center text-neutral-500 dark:text-neutral-400"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 text-neutral-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="1.5"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                                />
                             </svg>
                             <p class="text-sm sm:text-base">No notifications yet</p>
                         </div>
                     {:else}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
                         <!-- svelte-ignore a11y-no-static-element-interactions -->
-                        {#each $notifications as notification}
+                        {#each $allNotifications as notification}
                             <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <div 
-                                class="relative pl-6 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900 {notification.isRead ? 'opacity-75' : 'bg-opacity-50 bg-neutral-50 dark:bg-neutral-950'}"
-                                on:click={() => handleNotificationClick(notification)}
+                            <div
+                                class="relative pl-6 px-3 sm:px-4 py-2 sm:py-3 cursor-pointer transition-colors hover:bg-neutral-100 dark:hover:bg-neutral-900 {notification.isRead
+                                    ? 'opacity-75'
+                                    : 'bg-opacity-50 bg-neutral-50 dark:bg-neutral-950'}"
+                                on:click={() =>
+                                    handleNotificationClick(notification)}
                             >
                                 <!-- Type indicator -->
                                 <div class="indicator 

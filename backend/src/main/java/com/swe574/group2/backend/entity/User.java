@@ -12,8 +12,8 @@ import java.util.Set;
 @Entity
 @Table(name = "users")
 @Data
-@EqualsAndHashCode(exclude = {"createdPosts", "comments", "upvotedPosts", "downvotedPosts", "upvotedComments", "downvotedComments", "notifications", "userBadges"}) // Added userBadges
-@ToString(exclude = {"createdPosts", "comments", "upvotedPosts", "downvotedPosts", "upvotedComments", "downvotedComments", "notifications", "userBadges"}) // Added userBadges
+@EqualsAndHashCode(exclude = {"createdPosts", "comments", "upvotedPosts", "downvotedPosts", "upvotedComments", "downvotedComments", "notifications", "userBadges", "followers", "following"})
+@ToString(exclude = {"createdPosts", "comments", "upvotedPosts", "downvotedPosts", "upvotedComments", "downvotedComments", "notifications", "userBadges", "followers", "following"})
 public class User {
 
     @Id
@@ -89,4 +89,15 @@ public class User {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_following", 
+            joinColumns = @JoinColumn(name = "follower_id"),
+            inverseJoinColumns = @JoinColumn(name = "following_id")
+    )
+    private Set<User> following; // users this user is following
+
+    @ManyToMany(mappedBy = "following")
+    private Set<User> followers; // users who follow this user
 }

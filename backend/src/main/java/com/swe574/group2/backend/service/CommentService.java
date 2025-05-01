@@ -30,15 +30,19 @@ public class CommentService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final MediaFileRepository mediaFileRepository;
+    private final FollowerNotificationService followerNotificationService;
+
 
     public CommentService(CommentRepository commentRepository, PostRepository postRepository, 
                          UserRepository userRepository, NotificationService notificationService,
-                         MediaFileRepository mediaFileRepository) {
+                         MediaFileRepository mediaFileRepository,
+                         FollowerNotificationService followerNotificationService) {
         this.commentRepository = commentRepository;
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.mediaFileRepository = mediaFileRepository;
+        this.followerNotificationService = followerNotificationService;
     }
 
     public Map<String, Long> createComment(CommentCreateDto commentCreateDto, String email) {
@@ -68,6 +72,8 @@ public class CommentService {
         {
             notificationService.sendCommentNotification(parentComment.getUser().getId(), post, savedComment);
         }
+
+        followerNotificationService.sendFollowedPostCommentNotification(post, user, savedComment);
 
         Map<String, Long> response = new HashMap<>();
         response.put("commentId", savedComment.getId());

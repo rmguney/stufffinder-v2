@@ -25,6 +25,10 @@
   let userCountries = []; // Selected countries (up to 3)
   let userBadges = []; // Store fetched badges
   let isCurrentUserProfile = false;
+  let isFollowing = false;
+  let followLoading = false;
+  let followerCount = 0;
+  let followingCount = 0;
   let userNotFound = false;
   let savingProfile = false; // Track profile saving state
   let saveError = null; // Track profile save errors
@@ -67,17 +71,17 @@
   
   // Process thread data to ensure all expected fields exist
   function processThreadData(thread) {
-        return {
-            ...thread,
-            title: thread.title || "Untitled Post",
-            description: thread.description || thread.content || "",
-            createdAt: thread.createdAt || thread.created || thread.date || null,
-            tags: Array.isArray(thread.tags) ? thread.tags : 
+    return {
+      ...thread,
+      title: thread.title || "Untitled Post",
+      description: thread.description || thread.content || "",
+      createdAt: thread.createdAt || thread.created || thread.date || null,
+      tags: Array.isArray(thread.tags) ? thread.tags : 
                   (thread.categories ? thread.categories : []),
             resolvedTags: thread.tags?.map(qcode => tagMap.get(qcode) || "Loading...") || [],
             // Add image URL processing from mystery object when available
             mediaFiles: processThreadMediaFiles(thread)
-        };
+    };
   }
 
   // Completely rewritten media processing function that handles all edge cases
@@ -98,12 +102,12 @@
       // Check for mediaFiles array with proper structure
       else if (thread.mediaFiles && Array.isArray(thread.mediaFiles) && thread.mediaFiles.length > 0) {
         console.log("Found mediaFiles array with length:", thread.mediaFiles.length);
-        
+
         thread.mediaFiles.forEach((media, index) => {
           if (media.id) {
             const url = `${PUBLIC_API_URL}/api/mysteryObjects/media/${media.id}`;
             console.log(`Adding media ${index} with ID ${media.id}, URL: ${url}`);
-            
+
             mediaFiles.push({
               id: media.id,
               type: media.contentType?.startsWith('image/') ? 'image' : 'unknown',
@@ -143,7 +147,7 @@
             if (media.id) {
               const url = `${PUBLIC_API_URL}/api/mysteryObjects/media/${media.id}`;
               console.log(`Adding mystery object media ${index} with ID ${media.id}, URL: ${url}`);
-              
+
               mediaFiles.push({
                 id: media.id,
                 type: 'image', // Assuming all mystery object media are images
@@ -162,7 +166,7 @@
           url: `data:image/png;base64,${thread.mysteryObjectImage}`
         });
       }
-      
+
       console.log(`Total media files found for thread ${thread.id}: ${mediaFiles.length}`);
     } catch (error) {
       console.error("Error processing thread media:", error);
@@ -173,18 +177,18 @@
 
   // Fetches all q codes and updates tags inside the thread
   async function updateTags() {
-        const allQcodes = threads.flatMap(thread => thread.tags).filter(qcode => qcode);
+    const allQcodes = threads.flatMap(thread => thread.tags).filter(qcode => qcode);
 
-        if (allQcodes.length > 0) {
-            await fetchTagLabels(allQcodes);
-            tagsLoaded = true;
+    if (allQcodes.length > 0) {
+      await fetchTagLabels(allQcodes);
+      tagsLoaded = true;
 
-            // Update tags inside threads
-            threads = threads.map(thread => ({
+      // Update tags inside threads
+      threads = threads.map(thread => ({
                 ...thread,
                 resolvedTags: thread.tags.map(qcode => tagMap.get(qcode) || qcode)
-            }));
-        }
+      }));
+    }
   }
   
   // Enhanced function for image upload
@@ -218,7 +222,7 @@
         body: formData
         // No need for credentials: 'include' if global fetch handles it
       });
-      
+
       if (!response.ok) {
         throw new Error(`Upload failed with status: ${response.status}`);
       }
@@ -395,6 +399,38 @@
     }));
   }
 
+  async function toggleFollow() {
+    if (!userName) return;
+
+    followLoading = true;
+    try {
+      const endpoint = isFollowing
+        ? `${PUBLIC_API_URL}/api/followed-users/unfollow/${userName}`
+        : `${PUBLIC_API_URL}/api/followed-users/follow/${userName}`;
+
+      const method = "POST";
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to ${isFollowing ? "unfollow" : "follow"} user`,
+        );
+      }
+
+      isFollowing = !isFollowing;
+    } catch (error) {
+      console.error(error);
+    } finally {
+      followLoading = false;
+    }
+  }
+
   // Fetch user data, threads and comments
   onMount(async () => {
     try {
@@ -422,6 +458,44 @@
         throw new Error(`Failed to fetch user: ${userResponse.status}`);
       }
       
+
+      try {
+        const followStatusResponse = await fetch(
+          `${PUBLIC_API_URL}/api/followed-users/is-following/${userName}`,
+        );
+        if (followStatusResponse.ok) {
+          const data = await followStatusResponse.json();
+          isFollowing = data.isFollowing;
+        }
+      } catch (error) {
+        console.error("Error checking follow status:", error);
+      }
+
+      // Fetch follower and following counts
+      try {
+        const followersResponse = await fetch(
+          `${PUBLIC_API_URL}/api/followed-users/${userName}/followers-count`,
+        );
+        if (followersResponse.ok) {
+          const data = await followersResponse.json();
+          followerCount = data.followerCount || 0;
+        }
+      } catch (error) {
+        console.error("Error fetching follower count:", error);
+      }
+
+      try {
+        const followingResponse = await fetch(
+          `${PUBLIC_API_URL}/api/followed-users/${userName}/following-count`,
+        );
+        if (followingResponse.ok) {
+          const data = await followingResponse.json();
+          followingCount = data.followingCount || 0;
+        }
+      } catch (error) {
+        console.error("Error fetching following count:", error);
+      }
+
       const userData = await userResponse.json();
       userId = userData.userId;
       
@@ -434,22 +508,22 @@
           // Use profilePictureUrl
           if (profileData.profilePictureUrl) {
             userImage = profileData.profilePictureUrl;
-           }
-           if (profileData.bio) {
-             userBio = profileData.bio;
-             initialUserBio = profileData.bio || ""; // Store initial bio
-           }
-           // Parse location JSON string and map codes to objects
-           if (profileData.location) {
+          }
+          if (profileData.bio) {
+            userBio = profileData.bio;
+            initialUserBio = profileData.bio || ""; // Store initial bio
+          }
+          // Parse location JSON string and map codes to objects
+          if (profileData.location) {
             try {
               const countryCodes = JSON.parse(profileData.location || '[]'); // Get ["TR", "US"]
               if (Array.isArray(countryCodes) && allCountriesData.length > 0) {
-                 // Map codes to full country objects
-                 userCountries = countryCodes.map(code =>
+                // Map codes to full country objects
+                userCountries = countryCodes.map(code =>
                    allCountriesData.find(country => country.cca2 === code)
                  ).filter(Boolean); // Filter out nulls if a code wasn't found
               } else {
-                 userCountries = [];
+                userCountries = [];
               }
             } catch (e) {
               console.error("Failed to parse/map location:", e);
@@ -599,19 +673,49 @@
                           shadow-md hover:bg-primary-dark dark:hover:bg-neutral-900 transition-colors duration-200"
                     title="Change profile picture"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
-                      <circle cx="12" cy="13" r="3"/>
-                    </svg>
-                    <input id="profile-image-upload" type="file" class="hidden" accept="image/*" on:change={handleImageUpload} />
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
+                    <circle cx="12" cy="13" r="3"/>
+                  </svg>
+                  <input id="profile-image-upload" type="file" class="hidden" accept="image/*" on:change={handleImageUpload} />
                   </label>
                 {/if}
               </div>
 
               <!-- User Info Column - Name and Location -->
               <div class="flex-1 space-y-3 text-center">
-                <Card.Title class="text-2xl md:text-3xl font-bold">{userName}</Card.Title>
+                <div class="flex items-center justify-center gap-3 flex-wrap">
+                  <Card.Title class="text-2xl md:text-3xl font-bold"
+                    >{userName}</Card.Title
+                  >
+
+                  {#if !isCurrentUserProfile && $activeUser != null}
+                  <Button
+                  variant="outline"
+                  size="sm"
+                  class={`text-xs px-4 rounded-full border-primary text-primary 
+                         hover:bg-[#0F766E] border-2 hover:border-[#0F993C] hover:text-white transition
+                  ${isFollowing ? 'bg-transparent' : 'bg-[#0F766E]'}`}
+                  on:click={toggleFollow}
+                  disabled={followLoading}
+                >
+                  {isFollowing ? "Following" : "Follow"}
+                </Button>
                 
+                  {/if}
+                </div>
+
+                <div
+                  class="flex justify-center gap-6 text-sm text-neutral-600 dark:text-neutral-400 mt-1"
+                >
+                  <div>
+                    <span class="font-semibold">{followerCount}</span> Followers
+                  </div>
+                  <div>
+                    <span class="font-semibold">{followingCount}</span> Following
+                  </div>
+                </div>
+
                 <!-- Location info integrated here without border -->
                 <div class="pt-1">
                   <div class="flex items-center justify-center gap-1.5 text-sm text-neutral-700 dark:text-neutral-300 mb-1.5">
@@ -620,14 +724,14 @@
                     </svg>
                     <span>Location</span>
                   </div>
-                   <!-- Country selector with proper z-index and event handler -->
-                   <div class="relative z-50">
-                     <UserCountrySelector 
-                       bind:selectedCountries={userCountries}
-                       isEditable={isCurrentUserProfile}
-                       maxCountries={3}
-                       on:change={handleCountryChange}
-                     />
+                  <!-- Country selector with proper z-index and event handler -->
+                  <div class="relative z-50">
+                    <UserCountrySelector
+                      bind:selectedCountries={userCountries}
+                      isEditable={isCurrentUserProfile}
+                      maxCountries={3}
+                      on:change={handleCountryChange}
+                    />
                   </div>
                 </div>
               </div>
@@ -653,8 +757,8 @@
                           on:click={saveProfile}
                           disabled={savingProfile}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                          {savingProfile ? 'Saving...' : 'Save Bio'}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        {savingProfile ? 'Saving...' : 'Save Bio'}
                         </Button>
                       </div>
                     {/if}
@@ -663,14 +767,14 @@
                     {/if}
                   </div>
                 {:else if userBio}
-                  <div class="bg-white dark:bg-neutral-950 rounded-md border border-neutral-200 dark:border-neutral-800 p-3 h-full">
-                    <h3 class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 text-center">Bio</h3>
+                <div class="bg-white dark:bg-neutral-950 rounded-md border border-neutral-200 dark:border-neutral-800 p-3 h-full">
+                  <h3 class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 text-center">Bio</h3>
                     <p class="text-sm text-center">{userBio}</p>
                   </div>
                 {:else}
-                  <div class="bg-white dark:bg-neutral-950 rounded-md border border-neutral-200 dark:border-neutral-800 p-3 h-full">
-                    <h3 class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 text-center">Bio</h3>
-                    <p class="text-sm text-neutral-500 dark:text-neutral-400 italic text-center">No bio provided</p>
+                <div class="bg-white dark:bg-neutral-950 rounded-md border border-neutral-200 dark:border-neutral-800 p-3 h-full">
+                  <h3 class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 text-center">Bio</h3>
+                  <p class="text-sm text-neutral-500 dark:text-neutral-400 italic text-center">No bio provided</p>
                   </div>
                 {/if}
               </div>
@@ -714,8 +818,8 @@
           <!-- Fixed tab header styling -->
           <div class="px-4 pt-4 border-b border-neutral-200 dark:border-neutral-800">
             <div class="grid grid-cols-2 w-full bg-neutral-100 dark:bg-neutral-900 rounded-md overflow-hidden">
-              <TabsTrigger 
-                value="posts" 
+              <TabsTrigger
+                value="posts"
                 class="text-center rounded-none data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 h-10 transition-all"
               >
                 <div class="flex items-center justify-center gap-1.5">
@@ -790,9 +894,9 @@
                         
                         <!-- Solved badge if applicable -->
                         {#if thread.solved}
-                          <div class="absolute top-2 right-2 bg-emerald-500 text-white text-xs font-medium px-2 py-1 rounded-full flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                        <div class="absolute top-2 right-2 bg-emerald-500 text-white text-xs font-medium px-2 py-1 rounded-full flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
                             Resolved
                           </div>
@@ -803,7 +907,7 @@
                       <div class="p-4 flex-1 flex flex-col">
                         <h3 class="font-semibold text-neutral-900 dark:text-neutral-100 line-clamp-2 mb-1">{thread.title || "Untitled Post"}</h3>
                         <p class="text-sm text-neutral-600 dark:text-neutral-400 line-clamp-2 mb-auto">{thread.description || ""}</p>
-                        
+
                         <!-- Tags -->
                         {#if thread.tags && thread.tags.length > 0}
                           <div class="flex flex-wrap gap-1 mt-3">
@@ -851,15 +955,15 @@
                 <div class="flex justify-center mt-4">
                   <div class="flex items-center gap-1">
                     <!-- First page button -->
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       class="h-8 w-8 p-0 rounded-md"
                       disabled={postsPage === 1}
                       on:click={() => goToPage('posts', 1)}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
                       </svg>
                     </Button>
                     
@@ -871,18 +975,18 @@
                       disabled={postsPage === 1}
                       on:click={() => goToPage('posts', postsPage - 1)}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
                       </svg>
                     </Button>
                     
                     <!-- Page numbers -->
                     {#each getPaginationRange(postsPage, totalPostPages) as page}
-                      <Button 
-                        variant={page === postsPage ? 'default' : 'outline'}
-                        size="sm" 
-                        class="h-8 w-8 p-0 {page === postsPage ? 'bg-teal-600 hover:bg-teal-700 text-white' : ''} rounded-md"
-                        on:click={() => goToPage('posts', page)}
+                      <Button
+                      variant={page === postsPage ? 'default' : 'outline'}
+                      size="sm" 
+                      class="h-8 w-8 p-0 {page === postsPage ? 'bg-teal-600 hover:bg-teal-700 text-white' : ''} rounded-md"
+                      on:click={() => goToPage('posts', page)}
                       >
                         {page}
                       </Button>

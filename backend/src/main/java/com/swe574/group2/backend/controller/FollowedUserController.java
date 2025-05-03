@@ -49,6 +49,10 @@ public class FollowedUserController {
     @GetMapping("/is-following/{followedUsername}")
     public ResponseEntity<Map<String, Boolean>> isFollowing(@PathVariable String followedUsername,
             @AuthenticationPrincipal UserDetails userDetails) {
+
+        if(userDetails == null)
+            return ResponseEntity.ok(Map.of("isFollowing", false));
+                
         boolean following = followedUserService.isFollowing(userDetails.getUsername(), followedUsername);
         return ResponseEntity.ok(Map.of("isFollowing", following));
     }

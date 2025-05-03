@@ -60,6 +60,7 @@ public class SecurityConfig {
                                 "api/auth/login",
                                 "api/auth/**",
                                 "api/posts/**",
+                                "api/users/**",
                                 "api/posts/getForPostList",
                                 "api/posts/getForPostDetails/**",
                                 "api/posts/searchForPosts**",

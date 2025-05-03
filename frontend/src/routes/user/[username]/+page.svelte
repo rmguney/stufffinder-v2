@@ -1089,7 +1089,7 @@
                           {#if comment.mediaFiles && comment.mediaFiles.length > 0}
                             <div class="flex flex-wrap gap-2 mt-2">
                               {#each comment.mediaFiles as media (media.id)}
-                                {#if media.contentType.startsWith('image/')}
+                                {#if media.contentType && media.contentType.startsWith('image/')}
                                   <div class="relative w-16 h-16 rounded overflow-hidden border border-neutral-200 dark:border-neutral-800">
                                     <img src={media.url} alt="Comment attachment" class="w-full h-full object-cover" />
                                   </div>

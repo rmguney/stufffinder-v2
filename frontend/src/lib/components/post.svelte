@@ -10,7 +10,8 @@
   import MysteryObjectSubParts from "./mysteryObjectSubParts.svelte";
   import { getMysteryObjectWithSubParts } from "$lib/utils/mysteryObjectUtils.js";
   import { createEventDispatcher } from 'svelte';
-  import { getAuthHeader } from '$lib/utils/auth'; 
+  import { getAuthHeader } from '$lib/utils/auth';
+  import { page } from '$app/stores';
 
   export let id = '';
   export let title = '';
@@ -382,7 +383,10 @@
   onMount(async () => {
     fetchTagDetails();
      
-     if(currentUser){
+     // Check if the current URL ends with /advanced-search
+     const isAdvancedSearchPage = $page.url.pathname.endsWith('/advanced-search');
+
+     if(currentUser && !isAdvancedSearchPage){
       try {
         
         const [statusResponse,countResponse] = await Promise.all([

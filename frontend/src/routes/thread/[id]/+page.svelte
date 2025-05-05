@@ -606,8 +606,8 @@
 
   // Find similar posts based on matching tags with the current thread
   $: similarPosts = $threadStore.filter(t => {
-    // Don't include the current thread
-    if (t.id === data.id) return false;
+    // Don't include the current thread - handle string/number ID inconsistencies
+    if (t.id == data.id || String(t.id) === String(data.id)) return false;
     
     // Check if there are any matching tags
     if (!thread?.tags || !t.tags) return false;

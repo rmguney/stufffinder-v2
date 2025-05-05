@@ -51,7 +51,7 @@
         attributeValues = {
             material: subPart.material || '',
             shape: subPart.shape || '',
-            color: subPart.color || '',
+            color: subPart.colorHex || '',
             texture: subPart.texture || '',
             writtenText: subPart.writtenText || '',
             descriptionOfParts: subPart.descriptionOfParts || '',
@@ -100,7 +100,7 @@
             const subPartData = {
                 description,
                 material: attributeValues.material,
-                color: attributeValues.color,
+                color: attributeValues.colorHex,
                 shape: attributeValues.shape,
                 location: attributeValues.location,
                 smell: attributeValues.smell,

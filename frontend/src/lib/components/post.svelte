@@ -846,23 +846,39 @@
                   Unresolved
                 </span>
               {/if}
+              
+              <span>•</span>
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                </svg>
+                <span class="font-medium">{followerCount}</span> {followerCount === 1 ? 'follower' : 'followers'}
+              </span>
+              
+              {#if $activeUser && $activeUser !== postedBy}
+                <span>•</span>
+                <button
+                  class={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                    isFollowing 
+                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50'
+                      : 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/50'
+                  }`}
+                  on:click={toggleFollow}
+                >
+                  {#if isFollowing}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    Following
+                  {:else}
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                    </svg>
+                    Follow
+                  {/if}
+                </button>
+              {/if}
             </div>
-
-            {#if $activeUser != null}
-            <div>
-              <button
-              class={`text-xs px-4 py-1 rounded-full border-primary text-primary 
-                hover:bg-[#0F766E] border-2 hover:border-[#0F993C] hover:text-white transition
-         ${isFollowing ? 'bg-transparent' : 'bg-[#0F766E]'}`}
-
-                on:click={toggleFollow}
-              >
-                {isFollowing ? "Following" : "Follow Post"}
-              </button>
-            </div>
-
-            {/if}
-
           </div>
 
           <!-- Title and description -->
@@ -889,14 +905,7 @@
             </div>
           {/if}
 
-          <div
-          class="flex justify-start gap-6 text-sm text-neutral-600 dark:text-neutral-400 mt-2 mb-1"
-        >
-          <div>
-            <span class="font-semibold">{followerCount}</span> Followers
-          </div>
-        </div>
-
+          <!-- Remove the duplicate follower count here -->
         </div>
       </div>
 

@@ -15,10 +15,6 @@
   
   // Create a store for tag details
   const tagDetails = writable({});
-  // Add store for semantically expanded tags
-  const expandedTags = writable([]);
-  // Add a variable to store tag labels
-  let tagLabels = {};
   
   export let data;
   let comment = '';
@@ -255,327 +251,6 @@
     }
   }
 
-  // ADDED: Improved async function to fetch tag labels separately
-  async function fetchTagLabels(tagIds) {
-    if (!tagIds || !Array.isArray(tagIds) || tagIds.length === 0) return {};
-    
-    try {
-      let labels = {};
-      
-      for (const tagId of tagIds) {
-        if (!tagId) continue;
-        
-        // Skip if we already have this label
-        if (tagLabels[tagId]) {
-          labels[tagId] = tagLabels[tagId];
-          continue;
-        }
-        
-        try {
-          const response = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${tagId}&format=json&languages=en&props=labels&origin=*`);
-          const data = await response.json();
-          
-          if (data.entities && data.entities[tagId]) {
-            const entity = data.entities[tagId];
-            if (entity.labels?.en?.value) {
-              labels[tagId] = entity.labels.en.value;
-            } else {
-              labels[tagId] = tagId; // Fallback to ID
-            }
-          }
-        } catch (error) {
-          console.error(`Failed to fetch label for tag ${tagId}:`, error);
-          labels[tagId] = tagId; // Fallback to ID
-        }
-      }
-      
-      // Update the global tagLabels object
-      tagLabels = { ...tagLabels, ...labels };
-      return labels;
-    } catch (error) {
-      console.error("Failed to fetch tag labels:", error);
-      return {};
-    }
-  }
-
-  // IMPROVED: Compute relevance score based on hop depth and relation type
-  function computeRelevanceScore(label, query, relation, depth = 1) {
-    let score = 0;
-    const normalizedLabel = label.toLowerCase();
-    const normalizedQuery = query.toLowerCase();
-
-    // Base score for relevance to the original query term
-    if (normalizedLabel === normalizedQuery) {
-      score += 100; // Exact match
-    } else if (normalizedLabel.includes(normalizedQuery)) {
-      score += 70; // Query is substring of label
-    } else if (normalizedQuery.includes(normalizedLabel)) {
-      score += 60; // Label is substring of query
-    } else {
-      // Word overlap scoring
-      const queryWords = normalizedQuery.split(/\s+/).filter(w => w.length >= 3);
-      const labelWords = normalizedLabel.split(/\s+/).filter(w => w.length >= 3);
-      let wordMatchScore = 0;
-      for (const qWord of queryWords) {
-        for (const lWord of labelWords) {
-          if (lWord.includes(qWord) || qWord.includes(lWord)) {
-            wordMatchScore += 20;
-            break; // Count first match per query word
-          }
-        }
-      }
-      score += Math.min(wordMatchScore, 50); // Cap word match score
-    }
-
-    // Adjust score based on relationship type and depth
-    const depthPenalty = (depth - 1) * 15; // Increase penalty per hop
-
-    switch (relation) {
-      case "subclass": // P279 (child)
-        score += 60 - depthPenalty;
-        break;
-      case "parent class": // P279 (parent)
-        score += 55 - depthPenalty;
-        break;
-      case "instance of": // P31 (instance or class)
-        score += 50 - depthPenalty;
-        break;
-      case "has part": // P527
-        score += 40 - depthPenalty;
-        break;
-      case "part of": // P361
-        score += 40 - depthPenalty;
-        break;
-      case "sibling class": // Shares parent via P279
-        // Siblings are relevant, less depth penalty initially
-        score += 45 - Math.max(0, depthPenalty - 10);
-        break;
-      default:
-        score += 10 - depthPenalty; // Generic relation
-    }
-
-    // Boost shorter, more specific labels
-    if (label.length < 20) {
-      score += 10;
-    } else if (label.length > 40) {
-      score -= 10; // Penalize very long labels
-    }
-
-    // Penalize very common/high-level concepts
-    const tooGeneralTerms = [
-      "entity", "object", "thing", "item", "concept", "aspect",
-      "property", "class", "category", "type", "group", "set", "collection"
-    ];
-    const moderateGeneralTerms = [
-      "animal", "organism", "being", "substance", "material", "place", "location", "event"
-    ];
-
-    if (tooGeneralTerms.some(term => normalizedLabel === term)) {
-      score -= 70; // Strong penalty
-    } else if (moderateGeneralTerms.some(term => normalizedLabel === term)) {
-      score -= 40; // Moderate penalty
-    }
-
-    return Math.max(0, Math.round(score)); // Ensure score is non-negative integer
-  }
-
-  // IMPROVED: Semantic tag expansion with deeper search and scoring
-  async function expandTagSemantics(tagLabel, tagId) {
-    if (!tagLabel || !tagId || !tagId.startsWith('Q')) {
-      console.log(`Skipping tag expansion: Invalid tag data - label: ${tagLabel}, id: ${tagId}`);
-      return [];
-    }
-
-    try {
-      console.log(`Expanding semantics for tag: ${tagLabel} (${tagId})`);
-
-      // SPARQL query with multiple relationship types and depth up to 2 for P279
-      const sparqlQuery = `
-        SELECT DISTINCT ?item ?itemLabel ?relation ?depth WHERE {
-          VALUES ?startNode { wd:${tagId} }
-          {
-            # Direct relationships (depth 1)
-            { ?startNode wdt:P279 ?item . BIND("parent class" AS ?relation) BIND(1 AS ?depth) } # Parent class
-            UNION
-            { ?item wdt:P279 ?startNode . BIND("subclass" AS ?relation) BIND(1 AS ?depth) } # Subclass
-            UNION
-            { ?startNode wdt:P31 ?item . BIND("instance of" AS ?relation) BIND(1 AS ?depth) } # Instance of (class)
-            UNION
-            { ?item wdt:P31 ?startNode . BIND("instance of" AS ?relation) BIND(1 AS ?depth) } # Instance of (item)
-            UNION
-            { ?startNode wdt:P361 ?item . BIND("part of" AS ?relation) BIND(1 AS ?depth) } # Part of
-            UNION
-            { ?item wdt:P361 ?startNode . BIND("has part" AS ?relation) BIND(1 AS ?depth) } # Has part (reverse)
-            UNION
-            { ?startNode wdt:P527 ?item . BIND("has part" AS ?relation) BIND(1 AS ?depth) } # Has part
-            UNION
-            { ?item wdt:P527 ?startNode . BIND("part of" AS ?relation) BIND(1 AS ?depth) } # Part of (reverse)
-            UNION
-            # Siblings (depth 1 relative to parent, effectively 2 from start)
-            { ?startNode wdt:P279 ?parent . ?item wdt:P279 ?parent . FILTER(?item != ?startNode) BIND("sibling class" AS ?relation) BIND(2 AS ?depth) }
-          }
-          UNION
-          {
-            # Second level relationships (depth 2) for P279
-            { ?startNode wdt:P279 ?intermediate . ?intermediate wdt:P279 ?item . BIND("parent class" AS ?relation) BIND(2 AS ?depth) } # Grandparent
-            UNION
-            { ?item wdt:P279 ?intermediate . ?intermediate wdt:P279 ?startNode . BIND("subclass" AS ?relation) BIND(2 AS ?depth) } # Grandchild
-          }
-
-          # Filter out the starting node itself
-          FILTER(?item != ?startNode)
-
-          SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
-        }
-        LIMIT 50 # Increased limit slightly to allow for more filtering later
-      `;
-
-      const url = `https://query.wikidata.org/sparql?query=${encodeURIComponent(sparqlQuery)}&format=json`;
-
-      console.log(`Executing SPARQL query for ${tagLabel} (${tagId})`);
-      const response = await fetch(url, {
-        headers: {
-          'Accept': 'application/sparql-results+json',
-          'User-Agent': 'MysteryObjectFinder/1.0 (SWE574-G2)' // Added project identifier
-        },
-        // timeout: 8000 // Slightly longer timeout if needed
-      });
-
-      if (!response.ok) {
-        console.error(`SPARQL query failed for tag ${tagLabel}: ${response.status} ${response.statusText}`);
-        const errorBody = await response.text();
-        console.error("Error body:", errorBody);
-        return [];
-      }
-
-      const data = await response.json();
-
-      if (!data.results || !data.results.bindings || data.results.bindings.length === 0) {
-        console.log(`No semantic relationships found for tag ${tagLabel} (${tagId})`);
-        return [];
-      }
-
-      console.log(`Got ${data.results.bindings.length} raw semantic relationships for tag ${tagLabel}`);
-
-      // Process results, calculate scores, and filter
-      const results = data.results.bindings
-        .map(item => {
-          if (!item.item || !item.itemLabel || !item.relation || !item.depth) return null;
-
-          const id = item.item.value.split('/').pop();
-          const label = item.itemLabel.value;
-          const relation = item.relation.value;
-          const depth = parseInt(item.depth.value, 10);
-
-          if (id === tagId) return null; // Skip self-references
-          if (label.length > 60) return null; // Skip very long labels
-
-          // Calculate relevance score
-          const score = computeRelevanceScore(label, tagLabel, relation, depth);
-
-          return {
-            id,
-            label,
-            relation,
-            depth,
-            sourceEntity: tagId, // Keep track of the original tag
-            score
-          };
-        })
-        .filter(Boolean) // Remove nulls
-        .filter(item => item.score >= 30); // Filter out low-scoring results
-
-      // Deduplicate based on ID, keeping the highest score if duplicates exist
-      const uniqueResults = Array.from(
-        results.reduce((map, item) => {
-          const existing = map.get(item.id);
-          if (!existing || item.score > existing.score) {
-            map.set(item.id, item);
-          }
-          return map;
-        }, new Map()).values()
-      );
-
-      // Sort by score descending
-      uniqueResults.sort((a, b) => b.score - a.score);
-
-      console.log(`Processed ${uniqueResults.length} relevant semantic relationships for tag ${tagLabel}`);
-      return uniqueResults.slice(0, 20); // Limit final results after scoring and filtering
-    } catch (error) {
-      console.error(`Error expanding tag semantics for ${tagLabel}:`, error);
-      return [];
-    }
-  }
-
-  // Simplified function to fetch semantic expansions for all tags
-  async function fetchAllTagSemanticExpansions(tags) {
-    if (!tags || !Array.isArray(tags) || tags.length === 0) {
-      console.log("No tags to expand semantically");
-      return;
-    }
-    
-    try {
-      console.log("Starting semantic expansion for tags:", tags);
-      const allExpansions = [];
-      
-      // First get the tag details which include labels
-      const tagDetailsMap = {};
-      Object.entries($tagDetails).forEach(([id, details]) => {
-        tagDetailsMap[id] = details;
-      });
-      
-      console.log("Tag details for expansion:", tagDetailsMap);
-      
-      // Process each tag sequentially
-      for (const tagId of tags) {
-        if (!tagId || !tagId.startsWith('Q')) {
-          console.log(`Skipping non-Wikidata tag: ${tagId}`);
-          continue;
-        }
-        
-        const tagDetail = tagDetailsMap[tagId];
-        if (!tagDetail || !tagDetail.label) {
-          console.log(`No label found for tag ${tagId}, skipping expansion`);
-          continue;
-        }
-        
-        console.log(`Processing tag ${tagId} (${tagDetail.label})`);
-        
-        // Expand semantics for this tag
-        const expansions = await expandTagSemantics(tagDetail.label, tagId);
-        
-        if (!expansions || expansions.length === 0) {
-          console.log(`No expansions found for tag ${tagId}`);
-          continue;
-        }
-        
-        console.log(`Found ${expansions.length} expansions for tag ${tagId}`);
-        
-        // Add all expansions to the list
-        expansions.forEach(exp => {
-          if (!allExpansions.some(e => e.id === exp.id)) {
-            allExpansions.push({
-              ...exp,
-              sourceTagId: tagId
-            });
-          }
-        });
-      }
-      
-      if (allExpansions.length > 0) {
-        console.log(`Found a total of ${allExpansions.length} semantic expansions`);
-        expandedTags.set(allExpansions);
-      } else {
-        console.log("No semantic expansions found for any tags");
-        expandedTags.set([]);
-      }
-      
-    } catch (error) {
-      console.error("Error in semantic tag expansion:", error);
-      expandedTags.set([]); // Reset on error
-    }
-  }
-
   onMount(async () => {
     try {
       // Fetch post with media files
@@ -603,15 +278,19 @@
       
       // Fetch tag details if we have them
       if (thread?.tags && thread.tags.length > 0) {
-        console.log("Fetching details for tags:", thread.tags);
         await fetchTagDetails(thread.tags);
-        
-        // Wait a short time for the tag details to be properly set
-        setTimeout(async () => {
-          console.log("Current tag details:", $tagDetails);
-          // Now try to fetch semantic expansions
-          await fetchAllTagSemanticExpansions(thread.tags);
-        }, 500);
+      }
+      
+      // Also fetch tag details for similar posts
+      const allTags = new Set(thread?.tags || []);
+      similarPosts.forEach(post => {
+        if (post.tags) {
+          post.tags.forEach(tag => allTags.add(tag));
+        }
+      });
+      
+      if (allTags.size > 0) {
+        await fetchTagDetails([...allTags]);
       }
       
     } catch (error) {
@@ -925,70 +604,26 @@
     ? findContributingComments(comments, thread.resolution.contributingComments) 
     : [];
 
-  // MODIFIED: Enhanced similar posts finding with score-based relevance
+  // Find similar posts based on matching tags with the current thread
   $: similarPosts = $threadStore.filter(t => {
-    // Don't include the current thread
-    if (String(t.id) === String(data.id)) return false;
+    // Don't include the current thread - handle string/number ID inconsistencies
+    if (t.id == data.id || String(t.id) === String(data.id)) return false;
+    
+    // Check if there are any matching tags
     if (!thread?.tags || !t.tags) return false;
-
-    // Check for any overlap in tags (exact or semantic)
-    const postTagsSet = new Set(t.tags);
-    const threadTagsSet = new Set(thread.tags);
-    const expandedTagIdsSet = new Set($expandedTags.map(exp => exp.id));
-
-    const hasExactMatch = [...postTagsSet].some(tag => threadTagsSet.has(tag));
-    const hasSemanticMatch = [...postTagsSet].some(tag => expandedTagIdsSet.has(tag));
-    // Check reverse semantic match (if a thread tag is an expansion of a post tag)
-    // This requires expanding the post tags too, which is too complex for now.
-    // We rely on the current thread's expansions covering relevant links.
-
-    return hasExactMatch || hasSemanticMatch;
-
+    
+    // Count matching tags
+    const matchingTags = t.tags.filter(tag => thread.tags.includes(tag));
+    
+    // Only include posts with 1 or more matching tags
+    return matchingTags.length > 0;
   }).map(post => {
-    const postTagsSet = new Set(post.tags);
-    const threadTagsSet = new Set(thread.tags);
-
-    // Calculate score based on matches
-    let score = 0;
-    let exactMatches = 0;
-    let semanticMatches = 0;
-    const matchingExpansions = [];
-
-    // Score exact matches highly
-    postTagsSet.forEach(tag => {
-      if (threadTagsSet.has(tag)) {
-        score += 150; // High score for each exact match
-        exactMatches++;
-      }
-    });
-
-    // Add scores from semantic matches
-    $expandedTags.forEach(expansion => {
-      if (postTagsSet.has(expansion.id)) {
-        // Add the pre-calculated score, potentially weighted
-        const expansionScore = expansion.score || 0;
-        score += expansionScore;
-        semanticMatches++;
-        // Avoid adding duplicates if an expansion matches multiple source tags
-        if (!matchingExpansions.some(me => me.id === expansion.id)) {
-           matchingExpansions.push(expansion);
-        }
-      }
-    });
-
-    // Sort matching expansions by score for display
-    matchingExpansions.sort((a, b) => b.score - a.score);
-
-    return {
-      ...post,
-      relevanceScore: score, // Use this for sorting
-      exactTagMatches: exactMatches,
-      semanticMatchCount: semanticMatches, // How many unique semantic tags matched
-      matchingExpansions: matchingExpansions // Top expansions that matched
-    };
+    // Calculate number of matching tags for sorting
+    const matchingTagCount = post.tags.filter(tag => thread?.tags?.includes(tag)).length;
+    return { ...post, matchingTagCount };
   }).sort((a, b) => {
-    // Sort by relevance score (descending)
-    return b.relevanceScore - a.relevanceScore;
+    // Sort by number of matching tags (descending)
+    return b.matchingTagCount - a.matchingTagCount;
   }).slice(0, 10); // Limit to 10 similar posts
 
   // Current slide index for carousel
@@ -1159,7 +794,7 @@
             class="text-sm bg-teal-600 hover:bg-teal-700 px-4"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
             </svg>
             Resolve
           </Button>
@@ -1201,12 +836,10 @@
       </div>
     {/if}
     
-    <!-- Similar Posts Carousel - More Compact -->
     {#if thread?.tags && thread.tags.length > 0}
       {#if similarPosts.length > 0}
         <div class="mt-3 mb-1">
           <div class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-            <!-- Compact header -->
             <div class="p-2.5 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
               <div>
                 <h3 class="text-sm font-medium text-neutral-900 dark:text-white flex items-center">
@@ -1216,10 +849,7 @@
                   Similar Posts
                 </h3>
                 <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
-                  Based on {thread.tags.length} tag{thread.tags.length !== 1 ? 's' : ''} 
-                  {#if $expandedTags.length > 0}
-                  and {$expandedTags.length} semantic relation{$expandedTags.length !== 1 ? 's' : ''}
-                  {/if}
+                  Based on {thread.tags.length} tag{thread.tags.length !== 1 ? 's' : ''}
                 </p>
               </div>
               
@@ -1265,6 +895,7 @@
                     <div class="px-1.5" style="width: {50 / similarPosts.length}%">
                       <a href={`/thread/${post.id}`} class="block h-full">
                         <div class="bg-neutral-50 dark:bg-neutral-900 rounded border border-neutral-200 dark:border-neutral-800 shadow-sm h-full hover:border-neutral-300 dark:hover:border-neutral-700 transition-all">
+                          <!-- Compact image container -->
                           {#if post.mysteryObjectImageUrl || (post.mediaFiles && post.mediaFiles.length > 0)}
                             <div class="aspect-[3/2] overflow-hidden border-b border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800">
                               <img 
@@ -1287,13 +918,7 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
                                   <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                                 </svg>
-                                <!-- Display combined count or score -->
-                                <span>
-                                  {post.exactTagMatches > 0 ? `${post.exactTagMatches} direct` : ''}
-                                  {post.exactTagMatches > 0 && post.semanticMatchCount > 0 ? ' + ' : ''}
-                                  {post.semanticMatchCount > 0 ? `${post.semanticMatchCount} related` : ''}
-                                  {#if post.exactTagMatches === 0 && post.semanticMatchCount === 0}0{/if}
-                                </span>
+                                <span>{post.matchingTagCount}</span>
                               </span>
                               
                               {#each post.tags.filter(tag => thread?.tags?.includes(tag)).slice(0, 1) as tag}
@@ -1304,22 +929,9 @@
                                 {/if}
                               {/each}
                               
-                              {#if post.matchingExpansions && post.matchingExpansions.length > 0}
-                                {#each post.matchingExpansions.slice(0, 1) as expansion}
-                                  <span class="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/30 truncate max-w-[80px] flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-2 w-2 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                                    </svg>
-                                    {expansion.label}
-                                    <!-- Show score and relation/depth -->
-                                    <span class="ml-0.5 text-[8px] opacity-80">({expansion.score}, {expansion.relation}{expansion.depth > 1 ? ` d${expansion.depth}` : ''})</span>
-                                  </span>
-                                {/each}
-                              {/if}
-                              
-                              {#if (post.exactTagMatches + post.matchingExpansions.length) > 1}
+                              {#if post.tags.filter(tag => thread?.tags?.includes(tag)).length > 1}
                                 <span class="shrink-0 px-1 py-0.5 rounded-full text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                                  +{ (post.exactTagMatches + post.matchingExpansions.length) - 1 } more
+                                  +{post.tags.filter(tag => thread?.tags?.includes(tag)).length - 1}
                                 </span>
                               {/if}
                             </div>

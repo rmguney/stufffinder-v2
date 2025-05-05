@@ -138,12 +138,31 @@
         };
     }
 
+    // Add loading state and more comprehensive error tracking
+    let isSubmitting = false;
+    let formErrors = {
+        general: '',
+        api: '',
+        imageUpload: '',
+        mediaFiles: [],
+        subParts: []
+    };
+
     let handlePost = async () => {
         // Reset error state
         errors = {
             title: '',
             media: '',
             description: ''
+        };
+        
+        // Reset submission errors
+        formErrors = {
+            general: '',
+            api: '',
+            imageUpload: '',
+            mediaFiles: [],
+            subParts: []
         };
         
         // Validate required fields
@@ -165,10 +184,13 @@
         }
         
         if (hasErrors) {
+            // Scroll to the top of the form to show validation errors
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             return; // Don't proceed if validation fails
         }
 
         try {
+            isSubmitting = true; // Start loading state
             const enrichedTags = await enrichTagsWithLabels(tags);
             
             // Deep clone and sanitize attribute values to prevent JSON issues
@@ -258,10 +280,13 @@
                     const errorData = await createResponse.json();
                     if (errorData.message) {
                         errorMessage = errorData.message;
+                    } else if (errorData.error) {
+                        errorMessage = errorData.error;
                     }
                 } catch (parseError) {
                     console.error("Error parsing response:", parseError);
                 }
+                formErrors.api = errorMessage;
                 throw new Error(errorMessage);
             }
 
@@ -275,19 +300,24 @@
 
                 console.log("Uploading main image");
                 try {
-                    await fetch(`${PUBLIC_API_URL}/api/posts/${responseData.postId}/mysteryObjects/${responseData.mysteryObjectId}/set-image`, {
+                    const imageResponse = await fetch(`${PUBLIC_API_URL}/api/posts/${responseData.postId}/mysteryObjects/${responseData.mysteryObjectId}/set-image`, {
                         method: 'POST',
                         body: imageFormData,
                         credentials: 'include'
                     });
+                    
+                    if (!imageResponse.ok) {
+                        formErrors.imageUpload = `Main image upload failed (${imageResponse.status}), but post was created`;
+                        console.error("Error uploading main image:", await imageResponse.text());
+                    }
                 } catch (imageError) {
+                    formErrors.imageUpload = `Main image upload error: ${imageError.message}`;
                     console.error("Error uploading main image:", imageError);
                 }
             }
 
-            console.log("Post created successfully:", responseData);
-            
             // Upload media files
+            let mediaUploadErrors = 0;
             if (mediaFiles.length > 0) {
                 console.log(`Uploading ${mediaFiles.length} media files`);
 
@@ -306,17 +336,30 @@
                         });
 
                         if (!mediaResponse.ok) {
+                            formErrors.mediaFiles.push({
+                                index: i,
+                                filename: mediaItem.file.name,
+                                error: `Failed to upload (${mediaResponse.status})`
+                            });
+                            mediaUploadErrors++;
                             console.error(`Failed to upload media file ${i+1}:`, mediaResponse.status, mediaResponse.statusText);
                         } else {
                             console.log(`Media file ${i+1} uploaded successfully`);
                         }
                     } catch (mediaError) {
+                        formErrors.mediaFiles.push({
+                            index: i,
+                            filename: mediaItem.file.name,
+                            error: mediaError.message
+                        });
+                        mediaUploadErrors++;
                         console.error(`Error uploading media file ${i+1}:`, mediaError);
                     }
                 }
             }
 
             // Add sub-parts to the mystery object
+            let subPartErrors = 0;
             if (mysteryObjectSubParts.length > 0) {
                 console.log(`Adding ${mysteryObjectSubParts.length} sub-parts to mystery object`);
 
@@ -338,6 +381,12 @@
                         });
 
                         if (!subPartResponse.ok) {
+                            subPartErrors++;
+                            formErrors.subParts.push({
+                                index: i,
+                                name: mysteryObjectSubParts[i].description || `Part ${i+1}`,
+                                error: `Failed to add (${subPartResponse.status})`
+                            });
                             console.error(`Failed to add sub-part ${i+1}:`, subPartResponse.status, subPartResponse.statusText);
                             const errorText = await subPartResponse.text();
                             console.error('Error response:', errorText);
@@ -345,17 +394,41 @@
                             console.log(`Sub-part ${i+1} added successfully`);
                         }
                     } catch (subPartError) {
+                        subPartErrors++;
+                        formErrors.subParts.push({
+                            index: i,
+                            name: mysteryObjectSubParts[i].description || `Part ${i+1}`,
+                            error: subPartError.message
+                        });
                         console.error(`Error adding sub-part ${i+1}:`, subPartError);
                     }
                 }
             }
-
-            // Update thread store and navigate to home
-            threadStore.update(prev => [...prev, responseData]);
-            goto('/');
+            
+            // Even with some errors, if the post was created we can navigate away
+            // But only if there are no critical errors (like post creation failure)
+            if (mediaUploadErrors > 0 || subPartErrors > 0) {
+                // Some attachments failed, but the post was created
+                formErrors.general = `Post created with ${mediaUploadErrors + subPartErrors} attachment errors. You can view the post and fix issues later.`;
+                // Give the user time to see the error before redirecting
+                setTimeout(() => {
+                    // Update thread store and navigate to home
+                    threadStore.update(prev => [...prev, responseData]);
+                    goto('/');
+                }, 4000);
+            } else {
+                // All good, update thread store and navigate immediately
+                threadStore.update(prev => [...prev, responseData]);
+                goto('/');
+            }
+            
         } catch (error) {
             console.error('Error creating post:', error);
-            alert(`Failed to create post: ${error.message}`);
+            formErrors.general = `Failed to create post: ${error.message}`;
+            // Scroll to the top to show the error
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } finally {
+            isSubmitting = false; // End loading state
         }
     };
 
@@ -428,11 +501,69 @@
                 </Card.Header>
 
                 <Card.Content class="p-4 sm:p-6">
+                    <!-- Error display area -->
+                    {#if formErrors.general || formErrors.api}
+                        <div class="mb-6 p-4 border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-lg">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 mt-0.5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800 dark:text-red-300">Error creating post</h3>
+                                    <div class="mt-1 text-sm text-red-700 dark:text-red-400">
+                                        {formErrors.general || formErrors.api}
+                                    </div>
+                                    
+                                    <!-- Show media file upload errors if any -->
+                                    {#if formErrors.mediaFiles.length > 0}
+                                        <div class="mt-2">
+                                            <details class="text-sm">
+                                                <summary class="cursor-pointer font-medium">
+                                                    {formErrors.mediaFiles.length} media file {formErrors.mediaFiles.length === 1 ? 'error' : 'errors'}
+                                                </summary>
+                                                <ul class="mt-2 pl-5 list-disc space-y-1 text-xs">
+                                                    {#each formErrors.mediaFiles as fileError}
+                                                        <li>{fileError.filename}: {fileError.error}</li>
+                                                    {/each}
+                                                </ul>
+                                            </details>
+                                        </div>
+                                    {/if}
+                                    
+                                    <!-- Show sub-part errors if any -->
+                                    {#if formErrors.subParts.length > 0}
+                                        <div class="mt-2">
+                                            <details class="text-sm">
+                                                <summary class="cursor-pointer font-medium">
+                                                    {formErrors.subParts.length} object part {formErrors.subParts.length === 1 ? 'error' : 'errors'}
+                                                </summary>
+                                                <ul class="mt-2 pl-5 list-disc space-y-1 text-xs">
+                                                    {#each formErrors.subParts as partError}
+                                                        <li>{partError.name}: {partError.error}</li>
+                                                    {/each}
+                                                </ul>
+                                            </details>
+                                        </div>
+                                    {/if}
+                                    
+                                    {#if formErrors.imageUpload}
+                                        <div class="mt-1 text-sm text-red-700 dark:text-red-400">
+                                            {formErrors.imageUpload}
+                                        </div>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                    {/if}
+
                     <!-- Title -->
                     <div class="mb-4">
                         <label for="title" class="block text-sm font-medium mb-1.5 text-neutral-700 dark:text-neutral-300 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9"></path>
+                                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                             </svg>
                             Title*
                         </label>
@@ -450,8 +581,12 @@
                     <!-- Description -->
                     <div class="mb-5">
                         <label for="description" class="block text-sm font-medium mb-1.5 text-neutral-700 dark:text-neutral-300 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 2a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7zm0 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
                             </svg>
                             Description*
                         </label>
@@ -471,8 +606,9 @@
                         <!-- Object Attributes Component -->
                         <div class="w-full lg:w-1/2 mb-6 lg:mb-0">
                             <div class="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
                                 </svg>
                                 Object Attributes
                                 <span class="ml-2 px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-xs rounded-full text-neutral-700 dark:text-neutral-300">
@@ -492,8 +628,9 @@
                         <!-- Tags -->
                         <div class="w-full lg:w-1/2">
                             <div class="mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
                                 </svg>
                                 Tags
                                 <span class="ml-2 px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 text-xs rounded-full text-neutral-700 dark:text-neutral-300">
@@ -509,8 +646,11 @@
                     <!-- Sub-parts component -->
                     <div class="mb-6">
                         <h3 class="block text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
                             </svg>
                             Object Parts (Optional)
                         </h3>
@@ -528,8 +668,10 @@
                     <!-- Media upload component -->
                     <div class="mb-6">
                         <h3 class="block text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
                             </svg>
                             Media Files*
                         </h3>
@@ -548,22 +690,30 @@
                     <!-- Action Buttons -->
                     <div class="flex justify-start gap-3 border-t border-neutral-100 dark:border-neutral-800 pt-4 mt-6">
                         <Button
-                        on:click={handlePost}
-                        variant="default" 
-                        class="text-sm py-1 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-full"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                        Post Your Stuff
-                    </Button>
+                            on:click={handlePost}
+                            variant="default" 
+                            class="text-sm py-1 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-full"
+                            disabled={isSubmitting}
+                        >
+                            {#if isSubmitting}
+                                <div class="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                                Creating Post...
+                            {:else}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M20 6L9 17l-5-5"></path>
+                                </svg>
+                                Post Your Stuff
+                            {/if}
+                        </Button>
                         <Button
                             variant="outline"
                             on:click={() => goto('/')}
                             class="text-sm py-1 px-3 border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full"
+                            disabled={isSubmitting}
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="19" y1="12" x2="5" y2="12"></line>
+                                <polyline points="12 19 5 12 12 5"></polyline>
                             </svg>
                             Cancel
                         </Button>

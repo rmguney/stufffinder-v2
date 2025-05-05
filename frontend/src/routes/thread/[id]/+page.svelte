@@ -836,142 +836,181 @@
       </div>
     {/if}
     
-    <!-- Similar Posts Carousel -->
-    {#if similarPosts.length > 0}
-      <div class="mt-3 mb-1">
-        <div class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">
-          <div class="p-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
-            <h3 class="text-md font-medium text-neutral-900 dark:text-white flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Similar Posts
-            </h3>
-            <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-              Based on {thread?.tags?.length || 0} tag{thread?.tags?.length !== 1 ? 's' : ''} 
-              from this post
-            </p>
-          </div>
-          
-          <div class="relative" bind:clientWidth={containerWidth}>
-            <!-- Left arrow -->
-            {#if currentSlide > 0}
-              <button 
-                class="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white rounded-r-full p-1.5 pl-1 transition-opacity"
-                on:click={prevSlide}
-                aria-label="Previous slide"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-            {/if}
-            
-            <!-- Right arrow -->
-            {#if currentSlide < similarPosts.length - visibleSlides}
-              <button 
-                class="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white rounded-l-full p-1.5 pr-1 transition-opacity"
-                on:click={nextSlide}
-                aria-label="Next slide"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            {/if}
-            
-            <!-- Carousel container with touch events -->
-            <div 
-              class="flex overflow-hidden p-4"
-              on:touchstart={handleTouchStart}
-              on:touchend={handleTouchEnd}
-            >
-              <div 
-                class="flex transition-transform duration-300 ease-in-out"
-                style="transform: translateX(-{currentSlide * (100 / visibleSlides)}%); width: {similarPosts.length * (100 / visibleSlides)}%"
-              >
-                {#each similarPosts as post}
-                  <div class="px-2" style="width: {100 / similarPosts.length}%">
-                    <a href={`/thread/${post.id}`} class="block h-full">
-                      <div class="bg-white dark:bg-neutral-900 rounded-md border border-neutral-200 dark:border-neutral-700 shadow-sm overflow-hidden h-full transition-transform hover:scale-[1.02] hover:shadow-md">
-                        {#if post.mysteryObjectImageUrl || (post.mediaFiles && post.mediaFiles.length > 0)}
-                          <div class="w-full aspect-video overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-                            <img 
-                              src={post.mysteryObjectImageUrl || (post.mediaFiles && post.mediaFiles.length > 0 ? post.mediaFiles[0].url : '')} 
-                              alt={post.title} 
-                              class="w-full h-full object-cover"
-                            />
-                          </div>
-                        {/if}
-                        
-                        <div class="p-3">
-                          <h4 class="font-medium text-sm line-clamp-2 mb-1">{post.title}</h4>
-                          
-                          <!-- Match count badge -->
-                          <div class="mb-1.5">
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/50">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                              </svg>
-                              {post.matchingTagCount} matching tag{post.matchingTagCount !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                          
-                          <!-- Matching tags -->
-                          <div class="flex flex-wrap gap-1 mb-2">
-                            {#each post.tags.filter(tag => thread?.tags?.includes(tag)).slice(0, 2) as tag}
-                              {#if $tagDetails[tag]}
-                                <span class="inline-block px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/30 truncate max-w-[100px]">
-                                  {$tagDetails[tag].label}
-                                </span>
-                              {/if}
-                            {/each}
-                            {#if post.tags.filter(tag => thread?.tags?.includes(tag)).length > 2}
-                              <span class="inline-block px-1.5 py-0.5 rounded-full text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
-                                +{post.tags.filter(tag => thread?.tags?.includes(tag)).length - 2}
-                              </span>
-                            {/if}
-                          </div>
-                          
-                          <!-- Post meta -->
-                          <div class="flex justify-between items-center text-xs text-neutral-500 dark:text-neutral-400 pt-1 border-t border-neutral-100 dark:border-neutral-800">
-                            <div>{post.author}</div>
-                            <div class="flex items-center gap-2">
-                              {#if post.solved}
-                                <span class="inline-flex items-center text-emerald-600 dark:text-emerald-500">
-                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                  </svg>
-                                </span>
-                              {/if}
-                              <span class="inline-flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd" />
-                                </svg>
-                                {post.commentCount || 0}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </a>
-                  </div>
-                {/each}
+    <!-- Similar Posts Carousel - More Compact -->
+    {#if thread?.tags && thread.tags.length > 0}
+      {#if similarPosts.length > 0}
+        <div class="mt-3 mb-1">
+          <div class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+            <!-- Compact header -->
+            <div class="p-2.5 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-medium text-neutral-900 dark:text-white flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Similar Posts
+                </h3>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                  Based on {thread.tags.length} tag{thread.tags.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              
+              <!-- Navigation controls in header -->
+              <div class="flex items-center gap-2">
+                <button 
+                  class="w-7 h-7 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  on:click={prevSlide}
+                  disabled={currentSlide === 0}
+                  aria-label="Previous slide"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button 
+                  class="w-7 h-7 flex items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  on:click={nextSlide}
+                  disabled={currentSlide >= similarPosts.length - visibleSlides}
+                  aria-label="Next slide"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               </div>
             </div>
             
-            <!-- Pagination dots for mobile -->
-            {#if similarPosts.length > visibleSlides}
-              <div class="flex justify-center pb-3 gap-1 sm:hidden">
-                {#each Array(Math.ceil(similarPosts.length / visibleSlides)) as _, i}
-                  <button 
-                    class="w-2 h-2 rounded-full transition-colors {i === Math.floor(currentSlide / visibleSlides) ? 'bg-teal-600' : 'bg-neutral-300 dark:bg-neutral-700'}"
-                    on:click={() => currentSlide = i * visibleSlides}
-                    aria-label={`Go to slide ${i + 1}`}
-                  ></button>
-                {/each}
+            <!-- More compact carousel -->
+            <div 
+              class="relative overflow-hidden"
+              bind:clientWidth={containerWidth}
+            >
+              <div 
+                class="flex py-2.5 px-1"
+                on:touchstart={handleTouchStart}
+                on:touchend={handleTouchEnd}
+              >
+                <div 
+                  class="flex transition-transform duration-300 ease-in-out"
+                  style="transform: translateX(-{currentSlide * (100 / visibleSlides)}%); width: {similarPosts.length * (100 / visibleSlides)}%"
+                >
+                  {#each similarPosts as post}
+                    <div class="px-1.5" style="width: {100 / similarPosts.length}%">
+                      <a href={`/thread/${post.id}`} class="block h-full">
+                        <div class="bg-neutral-50 dark:bg-neutral-900 rounded border border-neutral-200 dark:border-neutral-800 shadow-sm h-full hover:border-neutral-300 dark:hover:border-neutral-700 transition-all">
+                          <!-- Compact image container -->
+                          {#if post.mysteryObjectImageUrl || (post.mediaFiles && post.mediaFiles.length > 0)}
+                            <div class="aspect-[3/2] overflow-hidden border-b border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-800">
+                              <img 
+                                src={post.mysteryObjectImageUrl || (post.mediaFiles && post.mediaFiles.length > 0 ? post.mediaFiles[0].url : '')} 
+                                alt={post.title} 
+                                class="w-full h-full object-cover"
+                              />
+                            </div>
+                          {:else}
+                            <div class="h-3"></div>
+                          {/if}
+                          
+                          <!-- Compact content -->
+                          <div class="p-2">
+                            <h4 class="font-medium text-xs line-clamp-1 mb-1">{post.title}</h4>
+                            
+                            <!-- Tags in single row with overflow -->
+                            <div class="flex items-center gap-1 mb-1 overflow-x-auto scrollbar-none">
+                              <span class="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/50 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-2.5 w-2.5 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                                </svg>
+                                <span>{post.matchingTagCount}</span>
+                              </span>
+                              
+                              {#each post.tags.filter(tag => thread?.tags?.includes(tag)).slice(0, 1) as tag}
+                                {#if $tagDetails[tag]}
+                                  <span class="shrink-0 px-1.5 py-0.5 rounded-full text-[10px] bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/30 truncate max-w-[80px]">
+                                    {$tagDetails[tag].label}
+                                  </span>
+                                {/if}
+                              {/each}
+                              
+                              {#if post.tags.filter(tag => thread?.tags?.includes(tag)).length > 1}
+                                <span class="shrink-0 px-1 py-0.5 rounded-full text-[10px] bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                                  +{post.tags.filter(tag => thread?.tags?.includes(tag)).length - 1}
+                                </span>
+                              {/if}
+                            </div>
+                            
+                            <!-- Compact meta info -->
+                            <div class="flex justify-between items-center text-[10px] text-neutral-500 dark:text-neutral-400 pt-1 border-t border-neutral-100 dark:border-neutral-800">
+                              <div class="truncate">{post.author}</div>
+                              <div class="flex items-center gap-1.5">
+                                {#if post.solved}
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-emerald-600 dark:text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                  </svg>
+                                {/if}
+                                <div class="flex items-center">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd" />
+                                  </svg>
+                                  {post.commentCount || 0}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </a>
+                    </div>
+                  {/each}
+                </div>
               </div>
-            {/if}
+              
+              <!-- Pagination dots for mobile -->
+              {#if similarPosts.length > visibleSlides}
+                <div class="flex justify-center pb-1.5 gap-1 sm:hidden">
+                  {#each Array(Math.ceil(similarPosts.length / visibleSlides)) as _, i}
+                    <button 
+                      class="w-1.5 h-1.5 rounded-full transition-colors {i === Math.floor(currentSlide / visibleSlides) ? 'bg-teal-600' : 'bg-neutral-300 dark:bg-neutral-700'}"
+                      on:click={() => currentSlide = i * visibleSlides}
+                      aria-label={`Go to slide ${i + 1}`}
+                    ></button>
+                  {/each}
+                </div>
+              {/if}
+            </div>
+          </div>
+        </div>
+      {:else}
+        <!-- No similar posts found -->
+        <div class="mt-3 mb-1">
+          <div class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden p-2.5">
+            <div class="flex items-center gap-2.5">
+              <div class="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-sm font-medium text-neutral-900 dark:text-white">No similar posts found</h3>
+                <p class="text-xs text-neutral-500 dark:text-neutral-400">We couldn't find any posts with matching tags</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      {/if}
+    {:else}
+      <!-- No tags in thread -->
+      <div class="mt-3 mb-1">
+        <div class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden p-2.5">
+          <div class="flex items-center gap-2.5">
+            <div class="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-medium text-neutral-900 dark:text-white">No tags in this post</h3>
+              <p class="text-xs text-neutral-500 dark:text-neutral-400">Add tags to this post to discover similar content</p>
+            </div>
           </div>
         </div>
       </div>

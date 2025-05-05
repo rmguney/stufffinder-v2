@@ -11,6 +11,10 @@
   import { PUBLIC_API_URL } from "$env/static/public";
   import { processMediaFiles, processCommentMediaFiles } from '$lib/utils/mediaUtils';
   import { goto } from '$app/navigation';
+  import { writable } from 'svelte/store';
+  
+  // Create a store for tag details
+  const tagDetails = writable({});
   
   export let data;
   let comment = '';
@@ -214,6 +218,39 @@
     }
   }
 
+  // Function to fetch details for tags from Wikidata
+  async function fetchTagDetails(tags) {
+    if (!tags || !Array.isArray(tags) || tags.length === 0) return;
+    
+    try {
+      let fetchedTagDetails = {};
+      
+      for (const qcode of tags) {
+        if (!qcode) continue;
+        
+        try {
+          const response = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${qcode}&format=json&languages=en&props=labels|descriptions&origin=*`);
+          const data = await response.json();
+          
+          if (data.entities && data.entities[qcode]) {
+            const entity = data.entities[qcode];
+            fetchedTagDetails[qcode] = {
+              id: qcode,
+              label: entity.labels?.en?.value || 'Unknown label',
+              description: entity.descriptions?.en?.value || 'No description'
+            };
+          }
+        } catch (error) {
+          console.error(`Failed to fetch details for tag ${qcode}:`, error);
+        }
+      }
+      
+      tagDetails.update(existing => ({...existing, ...fetchedTagDetails}));
+    } catch (error) {
+      console.error("Failed to fetch tag details:", error);
+    }
+  }
+
   onMount(async () => {
     try {
       // Fetch post with media files
@@ -239,6 +276,23 @@
       document.addEventListener('refreshComments', refreshCommentListener);
       document.addEventListener('refreshPost', refreshPostListener);
       
+      // Fetch tag details if we have them
+      if (thread?.tags && thread.tags.length > 0) {
+        await fetchTagDetails(thread.tags);
+      }
+      
+      // Also fetch tag details for similar posts
+      const allTags = new Set(thread?.tags || []);
+      similarPosts.forEach(post => {
+        if (post.tags) {
+          post.tags.forEach(tag => allTags.add(tag));
+        }
+      });
+      
+      if (allTags.size > 0) {
+        await fetchTagDetails([...allTags]);
+      }
+      
     } catch (error) {
       console.error('Error fetching thread data:', error);
     }
@@ -253,6 +307,25 @@
       document.removeEventListener('refreshPost', refreshPostListener);
     }
   });
+
+  // Reactive statement to fetch tag details when thread or similarPosts change
+  $: {
+    if (thread?.tags && thread.tags.length > 0) {
+      fetchTagDetails(thread.tags);
+      
+      // Also fetch tag details for similar posts
+      const allTags = new Set(thread.tags);
+      similarPosts.forEach(post => {
+        if (post.tags) {
+          post.tags.forEach(tag => allTags.add(tag));
+        }
+      });
+      
+      if (allTags.size > 0) {
+        fetchTagDetails([...allTags]);
+      }
+    }
+  }
 
   // Function to refresh comments
   async function refreshComments() {
@@ -531,6 +604,80 @@
     ? findContributingComments(comments, thread.resolution.contributingComments) 
     : [];
 
+  // Find similar posts based on matching tags with the current thread
+  $: similarPosts = $threadStore.filter(t => {
+    // Don't include the current thread
+    if (t.id === data.id) return false;
+    
+    // Check if there are any matching tags
+    if (!thread?.tags || !t.tags) return false;
+    
+    // Count matching tags
+    const matchingTags = t.tags.filter(tag => thread.tags.includes(tag));
+    
+    // Only include posts with 1 or more matching tags
+    return matchingTags.length > 0;
+  }).map(post => {
+    // Calculate number of matching tags for sorting
+    const matchingTagCount = post.tags.filter(tag => thread?.tags?.includes(tag)).length;
+    return { ...post, matchingTagCount };
+  }).sort((a, b) => {
+    // Sort by number of matching tags (descending)
+    return b.matchingTagCount - a.matchingTagCount;
+  }).slice(0, 10); // Limit to 10 similar posts
+
+  // Current slide index for carousel
+  let currentSlide = 0;
+  let touchStartX = 0;
+  let touchEndX = 0;
+  
+  // Calculate visible slides based on screen width
+  let visibleSlides = 3;
+  let containerWidth;
+  
+  // Update visible slides based on container width
+  $: {
+    if (containerWidth) {
+      if (containerWidth < 640) visibleSlides = 1;
+      else if (containerWidth < 1024) visibleSlides = 2;
+      else visibleSlides = 3;
+    }
+  }
+  
+  // Functions to navigate carousel
+  function nextSlide() {
+    if (currentSlide < similarPosts.length - visibleSlides) {
+      currentSlide++;
+    }
+  }
+  
+  function prevSlide() {
+    if (currentSlide > 0) {
+      currentSlide--;
+    }
+  }
+  
+  // Touch handlers for mobile swipe
+  function handleTouchStart(e) {
+    touchStartX = e.touches[0].clientX;
+  }
+  
+  function handleTouchEnd(e) {
+    touchEndX = e.changedTouches[0].clientX;
+    handleSwipe();
+  }
+  
+  function handleSwipe() {
+    const swipeDistance = touchEndX - touchStartX;
+    if (swipeDistance > 50) {
+      // Swipe right
+      prevSlide();
+    } else if (swipeDistance < -50) {
+      // Swipe left
+      nextSlide();
+    }
+  }
+
 </script>
 
 {#if showResolutionModal}
@@ -689,6 +836,147 @@
       </div>
     {/if}
     
+    <!-- Similar Posts Carousel -->
+    {#if similarPosts.length > 0}
+      <div class="mt-3 mb-1">
+        <div class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+          <div class="p-4 pb-3 border-b border-neutral-100 dark:border-neutral-800">
+            <h3 class="text-md font-medium text-neutral-900 dark:text-white flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Similar Posts
+            </h3>
+            <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+              Based on {thread?.tags?.length || 0} tag{thread?.tags?.length !== 1 ? 's' : ''} 
+              from this post
+            </p>
+          </div>
+          
+          <div class="relative" bind:clientWidth={containerWidth}>
+            <!-- Left arrow -->
+            {#if currentSlide > 0}
+              <button 
+                class="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white rounded-r-full p-1.5 pl-1 transition-opacity"
+                on:click={prevSlide}
+                aria-label="Previous slide"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            {/if}
+            
+            <!-- Right arrow -->
+            {#if currentSlide < similarPosts.length - visibleSlides}
+              <button 
+                class="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white rounded-l-full p-1.5 pr-1 transition-opacity"
+                on:click={nextSlide}
+                aria-label="Next slide"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            {/if}
+            
+            <!-- Carousel container with touch events -->
+            <div 
+              class="flex overflow-hidden p-4"
+              on:touchstart={handleTouchStart}
+              on:touchend={handleTouchEnd}
+            >
+              <div 
+                class="flex transition-transform duration-300 ease-in-out"
+                style="transform: translateX(-{currentSlide * (100 / visibleSlides)}%); width: {similarPosts.length * (100 / visibleSlides)}%"
+              >
+                {#each similarPosts as post}
+                  <div class="px-2" style="width: {100 / similarPosts.length}%">
+                    <a href={`/thread/${post.id}`} class="block h-full">
+                      <div class="bg-white dark:bg-neutral-900 rounded-md border border-neutral-200 dark:border-neutral-700 shadow-sm overflow-hidden h-full transition-transform hover:scale-[1.02] hover:shadow-md">
+                        {#if post.mysteryObjectImageUrl || (post.mediaFiles && post.mediaFiles.length > 0)}
+                          <div class="w-full aspect-video overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+                            <img 
+                              src={post.mysteryObjectImageUrl || (post.mediaFiles && post.mediaFiles.length > 0 ? post.mediaFiles[0].url : '')} 
+                              alt={post.title} 
+                              class="w-full h-full object-cover"
+                            />
+                          </div>
+                        {/if}
+                        
+                        <div class="p-3">
+                          <h4 class="font-medium text-sm line-clamp-2 mb-1">{post.title}</h4>
+                          
+                          <!-- Match count badge -->
+                          <div class="mb-1.5">
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/50">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                              </svg>
+                              {post.matchingTagCount} matching tag{post.matchingTagCount !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          
+                          <!-- Matching tags -->
+                          <div class="flex flex-wrap gap-1 mb-2">
+                            {#each post.tags.filter(tag => thread?.tags?.includes(tag)).slice(0, 2) as tag}
+                              {#if $tagDetails[tag]}
+                                <span class="inline-block px-2 py-0.5 rounded-full text-xs bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/30 truncate max-w-[100px]">
+                                  {$tagDetails[tag].label}
+                                </span>
+                              {/if}
+                            {/each}
+                            {#if post.tags.filter(tag => thread?.tags?.includes(tag)).length > 2}
+                              <span class="inline-block px-1.5 py-0.5 rounded-full text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                                +{post.tags.filter(tag => thread?.tags?.includes(tag)).length - 2}
+                              </span>
+                            {/if}
+                          </div>
+                          
+                          <!-- Post meta -->
+                          <div class="flex justify-between items-center text-xs text-neutral-500 dark:text-neutral-400 pt-1 border-t border-neutral-100 dark:border-neutral-800">
+                            <div>{post.author}</div>
+                            <div class="flex items-center gap-2">
+                              {#if post.solved}
+                                <span class="inline-flex items-center text-emerald-600 dark:text-emerald-500">
+                                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                  </svg>
+                                </span>
+                              {/if}
+                              <span class="inline-flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd" />
+                                </svg>
+                                {post.commentCount || 0}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </a>
+                  </div>
+                {/each}
+              </div>
+            </div>
+            
+            <!-- Pagination dots for mobile -->
+            {#if similarPosts.length > visibleSlides}
+              <div class="flex justify-center pb-3 gap-1 sm:hidden">
+                {#each Array(Math.ceil(similarPosts.length / visibleSlides)) as _, i}
+                  <button 
+                    class="w-2 h-2 rounded-full transition-colors {i === Math.floor(currentSlide / visibleSlides) ? 'bg-teal-600' : 'bg-neutral-300 dark:bg-neutral-700'}"
+                    on:click={() => currentSlide = i * visibleSlides}
+                    aria-label={`Go to slide ${i + 1}`}
+                  ></button>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        </div>
+      </div>
+    {/if}
+    
     <!-- Grid container for comment input and filter sections, side-by-side on larger screens -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 mt-3 mb-3">
       <!-- Filter component with consistent styling - MOVED UP -->
@@ -698,7 +986,7 @@
             <!-- Title for the discussions section -->
             <h3 class="text-md font-medium text-neutral-900 dark:text-white mb-2 -mt-1 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-2 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
               Discussions
             </h3>
@@ -910,7 +1198,7 @@
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
                       </svg>
-                      {selectedFiles.length > 0 ? `${selectedFiles.length} file${selectedFiles.length !== 1 ? 's' : ''}` : 'Add Media'}
+                      {selectedFiles.length > 0 ? `${selectedFiles.length !== 1 ? 's' : ''}` : 'Add Media'}
                     </Button>
                   </div>
                   

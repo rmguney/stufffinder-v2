@@ -34,8 +34,15 @@
         title: '',
         media: '',
         description: '',
-        auth: ''
+        auth: '',
+        api: '',
+        mediaUpload: '',
+        subparts: ''
     };
+    
+    // Add an error notification state
+    let showErrorNotification = false;
+    let errorNotificationMessage = '';
     
     // Store all attribute values in a single object
     let attributeValues = {
@@ -85,7 +92,8 @@
             });
             
             if (!response.ok) {
-                throw new Error('Failed to fetch post details');
+                const errorText = await response.text();
+                throw new Error(`Failed to fetch post details: ${response.status} ${errorText || response.statusText}`);
             }
             
             const postData = await response.json();
@@ -161,7 +169,12 @@
             }
         } catch (error) {
             console.error('Error loading post for editing:', error);
-            errors.auth = "Error loading post data";
+            errors.auth = error.message || "Error loading post data";
+            
+            // Show notification for 5 seconds
+            errorNotificationMessage = "Failed to load post data. Please try again.";
+            showErrorNotification = true;
+            setTimeout(() => { showErrorNotification = false; }, 5000);
         } finally {
             isLoading = false;
         }
@@ -221,6 +234,36 @@
         };
     }
 
+    // References to form fields for error scrolling
+    let titleRef;
+    let descriptionRef;
+    let mediaRef;
+    
+    // Function to scroll to the first field with an error
+    function scrollToFirstError() {
+        // Check each field in order of appearance
+        if (errors.title && titleRef) {
+            titleRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        
+        if (errors.description && descriptionRef) {
+            descriptionRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        
+        if (errors.media && mediaRef) {
+            mediaRef.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        
+        // If no specific field errors, but there are API errors, scroll to the top
+        if (errors.api || errors.auth || errors.mediaUpload || errors.subparts) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+    }
+
     // Handle post update form submission
     async function handleUpdate() {
         // Reset error state
@@ -228,7 +271,10 @@
             title: '',
             media: '',
             description: '',
-            auth: ''
+            auth: '',
+            api: '',
+            mediaUpload: '',
+            subparts: ''
         };
         
         // Validate required fields
@@ -250,6 +296,8 @@
         }
         
         if (hasErrors) {
+            // Scroll to the first error field
+            setTimeout(scrollToFirstError, 100);
             return; // Don't proceed if validation fails
         }
 
@@ -320,61 +368,97 @@
 
             // Update main image if needed
             if (mediaFiles.length > 0 && mediaFiles[0].file) {
-                const imageFormData = new FormData();
-                imageFormData.append('file', mediaFiles[0].file);
+                try {
+                    const imageFormData = new FormData();
+                    imageFormData.append('file', mediaFiles[0].file);
 
-                await fetch(`${PUBLIC_API_URL}/api/posts/${postId}/mysteryObjects/${mysteryObjectId}/set-image`, {
-                    method: 'POST',
-                    headers: getAuthHeader(),
-                    body: imageFormData
-                });
+                    const imageResponse = await fetch(`${PUBLIC_API_URL}/api/posts/${postId}/mysteryObjects/${mysteryObjectId}/set-image`, {
+                        method: 'POST',
+                        headers: getAuthHeader(),
+                        body: imageFormData
+                    });
+                    
+                    if (!imageResponse.ok) {
+                        const errorText = await imageResponse.text();
+                        throw new Error(`Failed to upload main image: ${errorText}`);
+                    }
+                } catch (mediaError) {
+                    console.error('Error uploading main image:', mediaError);
+                    errors.mediaUpload = mediaError.message || "Failed to upload main image";
+                    
+                    // Continue with other operations despite main image failure
+                    errorNotificationMessage = "Post updated but main image upload failed";
+                    showErrorNotification = true;
+                    setTimeout(() => { showErrorNotification = false; }, 5000);
+                }
             }
 
             // Handle media files upload (for new files only)
+            let mediaUploadErrors = [];
             for (let i = 0; i < mediaFiles.length; i++) {
                 const mediaItem = mediaFiles[i];
                 
                 // Skip files that don't have a file property (existing files)
                 if (!mediaItem.file) continue;
                 
-                const mediaFormData = new FormData();
-                mediaFormData.append('file', mediaItem.file);
-                mediaFormData.append('type', mediaItem.type || 'image');
+                try {
+                    const mediaFormData = new FormData();
+                    mediaFormData.append('file', mediaItem.file);
+                    mediaFormData.append('type', mediaItem.type || 'image');
 
-                await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/upload-media`, {
-                    method: 'POST',
-                    headers: getAuthHeader(),
-                    body: mediaFormData
-                });
+                    const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/upload-media`, {
+                        method: 'POST',
+                        headers: getAuthHeader(),
+                        body: mediaFormData
+                    });
+                    
+                    if (!mediaResponse.ok) {
+                        const errorText = await mediaResponse.text();
+                        throw new Error(`Failed to upload media ${i+1}: ${errorText}`);
+                    }
+                } catch (mediaError) {
+                    console.error(`Error uploading media file ${i+1}:`, mediaError);
+                    mediaUploadErrors.push(`Media file ${i+1}: ${mediaError.message}`);
+                }
+            }
+            
+            if (mediaUploadErrors.length > 0) {
+                errors.mediaUpload = `Some media files failed to upload: ${mediaUploadErrors.length} errors`;
+                errorNotificationMessage = "Post updated but some media files failed to upload";
+                showErrorNotification = true;
+                setTimeout(() => { showErrorNotification = false; }, 5000);
             }
 
             // Handle sub-parts updates
+            let subpartErrors = [];
             if (mysteryObjectSubParts.length > 0) {
                 // For each sub-part: update existing ones, create new ones
                 for (let i = 0; i < mysteryObjectSubParts.length; i++) {
-                    const subPart = mysteryObjectSubParts[i];
-                    const cleanSubPart = prepareSubPartForApi(subPart);
-                    
-                    if (subPart.id) {
-                        // Update existing sub-part
-                        await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/subParts/${subPart.id}`, {
-                            method: 'PUT',
+                    try {
+                        const subPart = mysteryObjectSubParts[i];
+                        const cleanSubPart = prepareSubPartForApi(subPart);
+                        
+                        const endpoint = subPart.id 
+                            ? `${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/subParts/${subPart.id}`
+                            : `${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/subParts`;
+                        const method = subPart.id ? 'PUT' : 'POST';
+                        
+                        const subPartResponse = await fetch(endpoint, {
+                            method: method,
                             headers: {
                                 'Content-Type': 'application/json',
                                 ...getAuthHeader()
                             },
                             body: JSON.stringify(cleanSubPart)
                         });
-                    } else {
-                        // Create new sub-part
-                        await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/subParts`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                ...getAuthHeader()
-                            },
-                            body: JSON.stringify(cleanSubPart)
-                        });
+                        
+                        if (!subPartResponse.ok) {
+                            const errorText = await subPartResponse.text();
+                            throw new Error(`Failed to ${method === 'POST' ? 'create' : 'update'} sub-part: ${errorText}`);
+                        }
+                    } catch (subpartError) {
+                        console.error(`Error handling sub-part ${i+1}:`, subpartError);
+                        subpartErrors.push(`Sub-part ${i+1}: ${subpartError.message}`);
                     }
                 }
                 
@@ -386,21 +470,46 @@
                     // Find IDs that were in the original but not in current -> these need to be deleted
                     for (const id of originalSubPartIds) {
                         if (!currentSubPartIds.has(id)) {
-                            // Delete this sub-part
-                            await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/subParts/${id}`, {
-                                method: 'DELETE',
-                                headers: getAuthHeader()
-                            });
+                            try {
+                                // Delete this sub-part
+                                const deleteResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${mysteryObjectId}/subParts/${id}`, {
+                                    method: 'DELETE',
+                                    headers: getAuthHeader()
+                                });
+                                
+                                if (!deleteResponse.ok) {
+                                    const errorText = await deleteResponse.text();
+                                    throw new Error(`Failed to delete sub-part: ${errorText}`);
+                                }
+                            } catch (deleteError) {
+                                console.error(`Error deleting sub-part ${id}:`, deleteError);
+                                subpartErrors.push(`Delete sub-part: ${deleteError.message}`);
+                            }
                         }
                     }
                 }
             }
+            
+            if (subpartErrors.length > 0) {
+                errors.subparts = `Some sub-parts failed to update: ${subpartErrors.length} errors`;
+                errorNotificationMessage = "Post updated but some sub-part changes failed";
+                showErrorNotification = true;
+                setTimeout(() => { showErrorNotification = false; }, 5000);
+            }
 
-            // Navigate back to the thread page
-            goto(`/thread/${postId}`);
+            // If there were some non-critical errors but post was updated, show them but still navigate
+            if (errors.mediaUpload || errors.subparts) {
+                setTimeout(() => goto(`/thread/${postId}`), 3000); // Navigate after a short delay to show error
+            } else {
+                // Navigate back to the thread page immediately if everything succeeded
+                goto(`/thread/${postId}`);
+            }
         } catch (error) {
             console.error('Error updating post:', error);
-            errors.auth = `Failed to update post: ${error.message}`;
+            errors.api = `Failed to update post: ${error.message}`;
+            errorNotificationMessage = "Failed to update post";
+            showErrorNotification = true;
+            setTimeout(() => { showErrorNotification = false; }, 5000);
         } finally {
             saveLoading = false;
         }
@@ -409,6 +518,24 @@
 
 <div class="flex flex-col items-center bg-change dark:bg-dark shifting p-3 py-5">
     <div class="w-full max-w-7xl mx-auto">
+        <!-- Error notification toast -->
+        {#if showErrorNotification}
+            <div class="fixed top-5 right-5 z-50 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 text-red-800 dark:text-red-300 px-4 py-3 rounded-lg shadow-lg flex items-center animate-slide-in">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                </svg>
+                {errorNotificationMessage}
+                <button 
+                    class="ml-3 text-red-800 dark:text-red-300 hover:text-red-900 dark:hover:text-red-200"
+                    on:click={() => showErrorNotification = false}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        {/if}
+        
         <form class="w-full" on:submit|preventDefault={handleUpdate}>
             <Card.Root class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden">
                 <Card.Header class="p-4 border-b border-neutral-100 dark:border-neutral-800">
@@ -426,9 +553,53 @@
                     </div>
                 {:else}
                     <Card.Content class="p-4 sm:p-6">
+                        <!-- Authentication error -->
                         {#if errors.auth}
                             <div class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-md mb-4 border border-red-200 dark:border-red-800/50">
-                                {errors.auth}
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    {errors.auth}
+                                </div>
+                            </div>
+                        {/if}
+                        
+                        <!-- API error -->
+                        {#if errors.api}
+                            <div class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-md mb-4 border border-red-200 dark:border-red-800/50">
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    {errors.api}
+                                </div>
+                            </div>
+                        {/if}
+                        
+                        <!-- Media upload errors -->
+                        {#if errors.mediaUpload}
+                            <div class="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 p-3 rounded-md mb-4 border border-yellow-200 dark:border-yellow-800/50">
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    {errors.mediaUpload}
+                                </div>
+                                <p class="text-xs text-yellow-700 dark:text-yellow-400 mt-1 ml-7">Your post will be updated but some media files couldn't be uploaded.</p>
+                            </div>
+                        {/if}
+                        
+                        <!-- Subparts errors -->
+                        {#if errors.subparts}
+                            <div class="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 p-3 rounded-md mb-4 border border-yellow-200 dark:border-yellow-800/50">
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                    </svg>
+                                    {errors.subparts}
+                                </div>
+                                <p class="text-xs text-yellow-700 dark:text-yellow-400 mt-1 ml-7">Your post will be updated but some sub-part changes couldn't be saved.</p>
                             </div>
                         {/if}
 
@@ -440,15 +611,17 @@
                                 </svg>
                                 Title*
                             </label>
-                            <Textarea 
-                                id="title" 
-                                class="w-full p-3 border rounded-md text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500" 
-                                bind:value={title} 
-                                placeholder="This is what people will see on their homepage so try to make it interesting"
-                            />
-                            {#if errors.title}
-                                <p class="text-red-500 text-sm mt-1">{errors.title}</p>
-                            {/if}
+                            <div bind:this={titleRef}>
+                                <Textarea 
+                                    id="title" 
+                                    class="w-full p-3 border rounded-md text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 {errors.title ? 'border-red-500 dark:border-red-800' : ''}" 
+                                    bind:value={title} 
+                                    placeholder="This is what people will see on their homepage so try to make it interesting"
+                                />
+                                {#if errors.title}
+                                    <p class="text-red-500 text-sm mt-1">{errors.title}</p>
+                                {/if}
+                            </div>
                         </div>
 
                         <!-- Description -->
@@ -459,15 +632,17 @@
                                 </svg>
                                 Description*
                             </label>
-                            <Textarea 
-                                id="description" 
-                                class="w-full p-3 border rounded-md text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 min-h-[120px]" 
-                                bind:value={description} 
-                                placeholder="You can add any additional context about your object or how you came into possession of it."
-                            />
-                            {#if errors.description}
-                                <p class="text-red-500 text-sm mt-1">{errors.description}</p>
-                            {/if}
+                            <div bind:this={descriptionRef}>
+                                <Textarea 
+                                    id="description" 
+                                    class="w-full p-3 border rounded-md text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 min-h-[120px] {errors.description ? 'border-red-500 dark:border-red-800' : ''}" 
+                                    bind:value={description} 
+                                    placeholder="You can add any additional context about your object or how you came into possession of it."
+                                />
+                                {#if errors.description}
+                                    <p class="text-red-500 text-sm mt-1">{errors.description}</p>
+                                {/if}
+                            </div>
                         </div>
                         
                         <!-- Attributes and Tags wrapper for side-by-side on lg screens -->
@@ -537,7 +712,7 @@
                                 </svg>
                                 Media Files*
                             </h3>
-                            <div class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm p-3">
+                            <div bind:this={mediaRef} class="bg-white dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-700 rounded-md shadow-sm p-3 {errors.media ? 'border-red-500 dark:border-red-800' : ''}">
                                 <MediaUploader
                                     bind:mediaFiles={mediaFiles}
                                     bind:errors={errors}
@@ -555,12 +730,18 @@
                         <Button
                             on:click={handleUpdate}
                             variant="default" 
+                            disabled={saveLoading}
                             class="text-sm py-1 px-4 bg-teal-600 hover:bg-teal-700 text-white rounded-full"
                         >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                            </svg>
-                            Save Changes
+                            {#if saveLoading}
+                                <div class="inline-block h-3.5 w-3.5 mr-1.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Saving...
+                            {:else}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                </svg>
+                                Save Changes
+                            {/if}
                         </Button>
                         <Button
                             variant="outline"
@@ -586,8 +767,17 @@
         to { opacity: 1; transform: translateY(0); }
     }
     
+    @keyframes slide-in {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
     form {
         animation: fadeIn 0.4s ease-out;
+    }
+    
+    .animate-slide-in {
+        animation: slide-in 0.3s ease-out;
     }
     
     /* Media query for better mobile display */

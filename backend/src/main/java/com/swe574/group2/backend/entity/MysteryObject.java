@@ -30,6 +30,9 @@ public class MysteryObject {
     @Column(name = "color")
     private String color;
 
+    @Column(name = "mainColor")
+    private String mainColor;
+
     @Column(name = "shape")
     private String shape;
 

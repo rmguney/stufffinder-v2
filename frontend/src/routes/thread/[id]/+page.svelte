@@ -4,6 +4,7 @@
   import * as Card from "$lib/components/ui/card";
   import Post from '$lib/components/post.svelte';
   import Comment from '$lib/components/comment.svelte';
+  // Removed threadStore import related to similar posts calculation, kept for other uses
   import { threadStore, updateThread, addCommentToThread, loadCommentsForThread, resolvePost, unresolvePost } from '../../../threadStore';
   import { activeUser } from '../../../userStore';
   import { onMount, onDestroy } from 'svelte';
@@ -12,11 +13,12 @@
   import { processMediaFiles, processCommentMediaFiles } from '$lib/utils/mediaUtils';
   import { goto } from '$app/navigation';
   import { writable } from 'svelte/store';
-  import SimilarPostsCarousel from '$lib/components/similarPosts.svelte';
-  
+  // Renamed component import for clarity
+  import SimilarPostsSection from '$lib/components/similarPosts.svelte';
+
   // Create a store for tag details
   const tagDetails = writable({});
-  
+
   export let data;
   let comment = '';
   let thread;
@@ -24,13 +26,13 @@
   let error = null;
   let comments = [];
   let selectedCommentType = 'QUESTION';
-  
+
   // Simple media upload functionality
   let selectedFiles = [];
   let fileInputRef;
 
   $: commentator = $activeUser || 'Anonymous';
-  
+
   // This is a separate reactive statement to ensure 'comments' 
   // is updated whenever thread.comments changes
   $: {
@@ -225,9 +227,10 @@
     
     try {
       let fetchedTagDetails = {};
+      const currentDetails = $tagDetails; // Get current details to avoid re-fetching
       
       for (const qcode of tags) {
-        if (!qcode) continue;
+        if (!qcode || currentDetails[qcode]) continue; // Skip if null or already fetched
         
         try {
           const response = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${qcode}&format=json&languages=en&props=labels|descriptions&origin=*`);
@@ -277,22 +280,12 @@
       document.addEventListener('refreshComments', refreshCommentListener);
       document.addEventListener('refreshPost', refreshPostListener);
       
-      // Fetch tag details if we have them
+      // Fetch tag details only for the main thread's tags initially
       if (thread?.tags && thread.tags.length > 0) {
         await fetchTagDetails(thread.tags);
       }
       
-      // Also fetch tag details for similar posts
-      const allTags = new Set(thread?.tags || []);
-      similarPosts.forEach(post => {
-        if (post.tags) {
-          post.tags.forEach(tag => allTags.add(tag));
-        }
-      });
-      
-      if (allTags.size > 0) {
-        await fetchTagDetails([...allTags]);
-      }
+      // Removed fetching tag details for similar posts here
       
     } catch (error) {
       console.error('Error fetching thread data:', error);
@@ -309,22 +302,11 @@
     }
   });
 
-  // Reactive statement to fetch tag details when thread or similarPosts change
+  // Reactive statement to fetch tag details when thread changes
   $: {
     if (thread?.tags && thread.tags.length > 0) {
       fetchTagDetails(thread.tags);
-      
-      // Also fetch tag details for similar posts
-      const allTags = new Set(thread.tags);
-      similarPosts.forEach(post => {
-        if (post.tags) {
-          post.tags.forEach(tag => allTags.add(tag));
-        }
-      });
-      
-      if (allTags.size > 0) {
-        fetchTagDetails([...allTags]);
-      }
+      // Removed fetching tag details for similar posts here
     }
   }
 
@@ -605,80 +587,6 @@
     ? findContributingComments(comments, thread.resolution.contributingComments) 
     : [];
 
-  // Find similar posts based on matching tags with the current thread
-  $: similarPosts = $threadStore.filter(t => {
-    // Don't include the current thread - handle string/number ID inconsistencies
-    if (t.id == data.id || String(t.id) === String(data.id)) return false;
-    
-    // Check if there are any matching tags
-    if (!thread?.tags || !t.tags) return false;
-    
-    // Count matching tags
-    const matchingTags = t.tags.filter(tag => thread.tags.includes(tag));
-    
-    // Only include posts with 1 or more matching tags
-    return matchingTags.length > 0;
-  }).map(post => {
-    // Calculate number of matching tags for sorting
-    const matchingTagCount = post.tags.filter(tag => thread?.tags?.includes(tag)).length;
-    return { ...post, matchingTagCount };
-  }).sort((a, b) => {
-    // Sort by number of matching tags (descending)
-    return b.matchingTagCount - a.matchingTagCount;
-  }).slice(0, 10); // Limit to 10 similar posts
-
-  // Current slide index for carousel
-  let currentSlide = 0;
-  let touchStartX = 0;
-  let touchEndX = 0;
-  
-  // Calculate visible slides based on screen width
-  let visibleSlides = 3;
-  let containerWidth;
-  
-  // Update visible slides based on container width
-  $: {
-    if (containerWidth) {
-      if (containerWidth < 640) visibleSlides = 1;
-      else if (containerWidth < 1024) visibleSlides = 2;
-      else visibleSlides = 3;
-    }
-  }
-  
-  // Functions to navigate carousel
-  function nextSlide() {
-    if (currentSlide < similarPosts.length - visibleSlides) {
-      currentSlide++;
-    }
-  }
-  
-  function prevSlide() {
-    if (currentSlide > 0) {
-      currentSlide--;
-    }
-  }
-  
-  // Touch handlers for mobile swipe
-  function handleTouchStart(e) {
-    touchStartX = e.touches[0].clientX;
-  }
-  
-  function handleTouchEnd(e) {
-    touchEndX = e.changedTouches[0].clientX;
-    handleSwipe();
-  }
-  
-  function handleSwipe() {
-    const swipeDistance = touchEndX - touchStartX;
-    if (swipeDistance > 50) {
-      // Swipe right
-      prevSlide();
-    } else if (swipeDistance < -50) {
-      // Swipe left
-      nextSlide();
-    }
-  }
-
 </script>
 
 {#if showResolutionModal}
@@ -837,50 +745,13 @@
       </div>
     {/if}
     
-    <!-- Similar Posts Section - Using the new component -->
-    {#if thread?.tags && thread.tags.length > 0}
-      {#if similarPosts.length > 0}
-        <div class="mt-3 mb-1">
-          <SimilarPostsCarousel 
-            {similarPosts} 
-            {thread} 
-            {tagDetails}
-          />
-        </div>
-      {:else}
-        <!-- No similar posts found -->
-        <div class="mt-3 mb-1">
-          <div class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden p-2.5">
-            <div class="flex items-center gap-2.5">
-              <div class="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <h3 class="text-sm font-medium text-neutral-900 dark:text-white">No similar posts found</h3>
-                <p class="text-xs text-neutral-500 dark:text-neutral-400">We couldn't find any posts with matching tags</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      {/if}
-    {:else}
-      <!-- No tags in thread -->
+    <!-- Similar Posts Section - Using the component -->
+    {#if thread}
       <div class="mt-3 mb-1">
-        <div class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden p-2.5">
-          <div class="flex items-center gap-2.5">
-            <div class="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-sm font-medium text-neutral-900 dark:text-white">No tags in this post</h3>
-              <p class="text-xs text-neutral-500 dark:text-neutral-400">Add tags to this post to discover similar content</p>
-            </div>
-          </div>
-        </div>
+        <SimilarPostsSection
+          {thread}
+          {tagDetails}
+        />
       </div>
     {/if}
     

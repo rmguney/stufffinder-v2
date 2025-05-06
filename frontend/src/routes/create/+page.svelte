@@ -275,7 +275,7 @@
             });
 
             if (!createResponse.ok) {
-                let errorMessage = `Failed to create post: ${createResponse.status} ${createResponse.statusText}`;
+                let errorMessage = '';
                 try {
                     const errorData = await createResponse.json();
                     if (errorData.message) {
@@ -283,11 +283,22 @@
                     } else if (errorData.error) {
                         errorMessage = errorData.error;
                     }
+                    
+                    // Convert technical messages to user-friendly ones
+                    if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+                        formErrors.api = 'Your session may have expired. Please log in again.';
+                    } else if (errorMessage.includes('413') || errorMessage.toLowerCase().includes('large')) {
+                        formErrors.api = 'Your image is too large. Please try with a smaller file size.';
+                    } else if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
+                        formErrors.api = 'You don\'t have permission to create this post.';
+                    } else {
+                        formErrors.api = 'We couldn\'t create your post. Please check your information and try again.';
+                    }
                 } catch (parseError) {
                     console.error("Error parsing response:", parseError);
+                    formErrors.api = 'Something went wrong. Please try again or check your connection.';
                 }
-                formErrors.api = errorMessage;
-                throw new Error(errorMessage);
+                throw new Error(formErrors.api);
             }
 
             const responseData = await createResponse.json();
@@ -307,11 +318,11 @@
                     });
                     
                     if (!imageResponse.ok) {
-                        formErrors.imageUpload = `Main image upload failed (${imageResponse.status}), but post was created`;
+                        formErrors.imageUpload = 'We couldn\'t upload the main image, but your post was created. You can try adding the image later.';
                         console.error("Error uploading main image:", await imageResponse.text());
                     }
                 } catch (imageError) {
-                    formErrors.imageUpload = `Main image upload error: ${imageError.message}`;
+                    formErrors.imageUpload = 'Image upload failed, but your post was created. You can add images later from the edit screen.';
                     console.error("Error uploading main image:", imageError);
                 }
             }
@@ -339,7 +350,7 @@
                             formErrors.mediaFiles.push({
                                 index: i,
                                 filename: mediaItem.file.name,
-                                error: `Failed to upload (${mediaResponse.status})`
+                                error: `Failed to upload. The file may be too large or in an unsupported format.`
                             });
                             mediaUploadErrors++;
                             console.error(`Failed to upload media file ${i+1}:`, mediaResponse.status, mediaResponse.statusText);
@@ -350,7 +361,7 @@
                         formErrors.mediaFiles.push({
                             index: i,
                             filename: mediaItem.file.name,
-                            error: mediaError.message
+                            error: `Couldn't upload. Please check your connection and try again.`
                         });
                         mediaUploadErrors++;
                         console.error(`Error uploading media file ${i+1}:`, mediaError);
@@ -385,7 +396,7 @@
                             formErrors.subParts.push({
                                 index: i,
                                 name: mysteryObjectSubParts[i].description || `Part ${i+1}`,
-                                error: `Failed to add (${subPartResponse.status})`
+                                error: `Could not add this part. Please check if your description is complete.`
                             });
                             console.error(`Failed to add sub-part ${i+1}:`, subPartResponse.status, subPartResponse.statusText);
                             const errorText = await subPartResponse.text();
@@ -398,7 +409,7 @@
                         formErrors.subParts.push({
                             index: i,
                             name: mysteryObjectSubParts[i].description || `Part ${i+1}`,
-                            error: subPartError.message
+                            error: `Failed to add this part. Try again with fewer details.`
                         });
                         console.error(`Error adding sub-part ${i+1}:`, subPartError);
                     }
@@ -409,7 +420,8 @@
             // But only if there are no critical errors (like post creation failure)
             if (mediaUploadErrors > 0 || subPartErrors > 0) {
                 // Some attachments failed, but the post was created
-                formErrors.general = `Post created with ${mediaUploadErrors + subPartErrors} attachment errors. You can view the post and fix issues later.`;
+                let errorCount = mediaUploadErrors + subPartErrors;
+                formErrors.general = `Your post was created successfully! However, ${errorCount} attachment${errorCount === 1 ? '' : 's'} couldn't be added. You can edit your post later to add them.`;
                 // Give the user time to see the error before redirecting
                 setTimeout(() => {
                     // Update thread store and navigate to home
@@ -424,7 +436,9 @@
             
         } catch (error) {
             console.error('Error creating post:', error);
-            formErrors.general = `Failed to create post: ${error.message}`;
+            if (!formErrors.general && !formErrors.api) {
+                formErrors.general = 'We couldn\'t create your post. Please check your information and try again later.';
+            }
             // Scroll to the top to show the error
             window.scrollTo({ top: 0, behavior: 'smooth' });
         } finally {
@@ -501,7 +515,7 @@
                 </Card.Header>
 
                 <Card.Content class="p-4 sm:p-6">
-                    <!-- Error display area -->
+                    <!-- Error display area with improved user-friendly messages -->
                     {#if formErrors.general || formErrors.api}
                         <div class="mb-6 p-4 border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800 rounded-lg">
                             <div class="flex items-start">
@@ -511,7 +525,7 @@
                                     </svg>
                                 </div>
                                 <div class="ml-3">
-                                    <h3 class="text-sm font-medium text-red-800 dark:text-red-300">Error creating post</h3>
+                                    <h3 class="text-sm font-medium text-red-800 dark:text-red-300">We encountered a problem</h3>
                                     <div class="mt-1 text-sm text-red-700 dark:text-red-400">
                                         {formErrors.general || formErrors.api}
                                     </div>
@@ -521,7 +535,7 @@
                                         <div class="mt-2">
                                             <details class="text-sm">
                                                 <summary class="cursor-pointer font-medium">
-                                                    {formErrors.mediaFiles.length} media file {formErrors.mediaFiles.length === 1 ? 'error' : 'errors'}
+                                                    {formErrors.mediaFiles.length} media file issue{formErrors.mediaFiles.length === 1 ? '' : 's'}
                                                 </summary>
                                                 <ul class="mt-2 pl-5 list-disc space-y-1 text-xs">
                                                     {#each formErrors.mediaFiles as fileError}
@@ -537,7 +551,7 @@
                                         <div class="mt-2">
                                             <details class="text-sm">
                                                 <summary class="cursor-pointer font-medium">
-                                                    {formErrors.subParts.length} object part {formErrors.subParts.length === 1 ? 'error' : 'errors'}
+                                                    {formErrors.subParts.length} object part issue{formErrors.subParts.length === 1 ? '' : 's'}
                                                 </summary>
                                                 <ul class="mt-2 pl-5 list-disc space-y-1 text-xs">
                                                     {#each formErrors.subParts as partError}
@@ -553,6 +567,10 @@
                                             {formErrors.imageUpload}
                                         </div>
                                     {/if}
+                                    
+                                    <div class="mt-2 text-xs text-red-600 dark:text-red-400">
+                                        If the problem persists, try refreshing the page or checking your internet connection.
+                                    </div>
                                 </div>
                             </div>
                         </div>

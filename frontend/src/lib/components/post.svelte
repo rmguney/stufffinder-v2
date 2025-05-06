@@ -10,7 +10,8 @@
   import MysteryObjectSubParts from "./mysteryObjectSubParts.svelte";
   import { getMysteryObjectWithSubParts } from "$lib/utils/mysteryObjectUtils.js";
   import { createEventDispatcher } from 'svelte';
-  import { getAuthHeader } from '$lib/utils/auth'; 
+  import { getAuthHeader } from '$lib/utils/auth';
+  import { page } from '$app/stores';
 
   export let id = '';
   export let title = '';
@@ -218,7 +219,6 @@
 
   // More robust date formatting
   const formatDate = (isoDate) => {
-    console.log('isoDate: ', isoDate);
     if (!isoDate) {
       console.warn("Warning: Empty date value received");
       return "";
@@ -249,7 +249,6 @@
 
   // Debug logs to verify the date values
   $: if (variant === "thumb") {
-    console.log(`Post component (${id}): variant=${variant}, createdAt=${createdAt}, formatted=`, formatDate(createdAt));
   }
 
   function handleImageError(event) {
@@ -284,7 +283,6 @@
 
   // Function to ensure color values are properly formatted
   function formatColorForDisplay(color) {
-    console.log('Formatting color for display:', color);
     if (!color) return '#cccccc'; // Default fallback color
 
     if (typeof color === 'string') {
@@ -329,13 +327,11 @@
     const cleanHex = hexColor.replace('#', '');
 
     try {
-      console.log('Fetching color name for:', hexColor);
     const response = await fetch(`https://www.thecolorapi.com/id?hex=${cleanHex}`);
       if (!response.ok) {
         throw new Error('Failed to fetch color name');
       }
       const data = await response.json();
-      console.log('Color API response:', data);
       const colorName = data.name?.value || 'Unknown color';
 
       // Update cache
@@ -375,13 +371,11 @@
     isLoadingColorHexes = isLoadingColorHexes; // Trigger reactivity
 
     try {
-      console.log('Fetching hex for color name:', colorName);
       const response = await fetch(`https://www.thecolorapi.com/id?name=${encodeURIComponent(colorName)}`);
       if (!response.ok) {
         throw new Error('Failed to fetch color hex');
       }
       const data = await response.json();
-      console.log('Color API response for name:', data);
       const hexValue = data.hex?.value || '#cccccc';
 
       // Update cache
@@ -415,7 +409,10 @@
   onMount(async () => {
     fetchTagDetails();
      
-     if(currentUser){
+     // Check if the current URL ends with /advanced-search
+     const isAdvancedSearchPage = $page.url.pathname.endsWith('/advanced-search');
+
+     if(currentUser && !isAdvancedSearchPage){
       try {
         
         const [statusResponse,countResponse] = await Promise.all([

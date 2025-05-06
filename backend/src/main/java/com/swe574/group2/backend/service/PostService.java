@@ -8,6 +8,7 @@ import com.swe574.group2.backend.dao.PostRepository;
 import com.swe574.group2.backend.dao.UserRepository;
 import com.swe574.group2.backend.dto.PostCreationDto;
 import com.swe574.group2.backend.dto.PostDetailsDto;
+import com.swe574.group2.backend.dto.PostDetailsNoMediaDto; // Added import
 import com.swe574.group2.backend.dto.PostListDto;
 import com.swe574.group2.backend.dto.ResolutionDto;
 import com.swe574.group2.backend.dto.SearchResultDto;
@@ -56,6 +57,65 @@ public class PostService {
         this.followerNotificationService = followerNotificationService;
     }
 
+    // Main color mapping utility
+    private static final Map<String, String> MAIN_COLORS = Map.of(
+        "red", "#FF0000",
+        "green", "#00FF00",
+        "blue", "#0000FF",
+        "yellow", "#FFFF00",
+        "orange", "#FFA500",
+        "purple", "#800080",
+        "brown", "#A52A2A",
+        "black", "#000000",
+        "white", "#FFFFFF",
+        "gray", "#808080"
+    );
+
+    private static int[] hexToRgb(String hex) {
+        if (hex == null) return new int[]{0,0,0};
+        hex = hex.replace("#", "");
+        if (hex.length() == 3) {
+            hex = "" + hex.charAt(0) + hex.charAt(0)
+                    + hex.charAt(1) + hex.charAt(1)
+                    + hex.charAt(2) + hex.charAt(2);
+        }
+        try {
+            int r = Integer.parseInt(hex.substring(0, 2), 16);
+            int g = Integer.parseInt(hex.substring(2, 4), 16);
+            int b = Integer.parseInt(hex.substring(4, 6), 16);
+            return new int[]{r, g, b};
+        } catch (Exception e) {
+            return new int[]{0,0,0};
+        }
+    }
+
+    private static String getMainColorHex(String hex) {
+        int[] rgb = hexToRgb(hex);
+        String closest = null;
+        double minDist = Double.MAX_VALUE;
+        for (Map.Entry<String, String> entry : MAIN_COLORS.entrySet()) {
+            int[] mainRgb = hexToRgb(entry.getValue());
+            double dist = Math.pow(rgb[0] - mainRgb[0], 2)
+                        + Math.pow(rgb[1] - mainRgb[1], 2)
+                        + Math.pow(rgb[2] - mainRgb[2], 2);
+            if (dist < minDist) {
+                minDist = dist;
+                closest = entry.getValue();
+            }
+        }
+        return closest;
+    }
+
+    private static void assignMainColorRecursive(MysteryObject obj) {
+        if (obj == null) return;
+        obj.setMainColor(getMainColorHex(obj.getColor()));
+        if (obj.getSubParts() != null) {
+            for (MysteryObject sub : obj.getSubParts()) {
+                assignMainColorRecursive(sub);
+            }
+        }
+    }
+
     @Transactional
     public Map<String, Long> createPost(PostCreationDto postCreationDto, String userName) {
         Post post = new Post();
@@ -101,7 +161,7 @@ public class PostService {
 
         post.setUser(userRepository.findByEmail(userName).orElseThrow());
 
-        MysteryObject mysteryObject = postCreationDto.getMysteryObject();
+        MysteryObject mysteryObject = postCreationDto.getMysteryObject();        
 
         // Handle sub-parts if any
         List<MysteryObject> subParts = new ArrayList<>();
@@ -111,6 +171,8 @@ public class PostService {
             // Clear the sub-parts from the object so we can save it first
             mysteryObject.setSubParts(new ArrayList<>());
         }
+
+        assignMainColorRecursive(mysteryObject);
 
         mysteryObjectRepository.save(mysteryObject);
 
@@ -390,6 +452,64 @@ public class PostService {
         postDetailsDto.setUserDownvoted(userDownvoted);
         // Solved status is already set above
     }
+
+    // New method to get all post details without media
+    public List<PostDetailsNoMediaDto> getAllPostDetailsNoMedia(String username) {
+        User currentUser = username != null ? userRepository.findByEmail(username).orElse(null) : null; // Allow null user
+        List<Post> allPosts = postRepository.findAll(); // Fetch all posts
+
+        List<PostDetailsNoMediaDto> results = new ArrayList<>();
+        for (Post post : allPosts) {
+            Set<String> tags = postRepository.findTagKeysByPostId(post.getId());
+            PostDetailsNoMediaDto dto = new PostDetailsNoMediaDto();
+            mapPostToNoMediaDto(post, tags, dto, currentUser); // Use the new mapping method
+            results.add(dto);
+        }
+        return results;
+    }
+
+    // Helper method to map Post to PostDetailsNoMediaDto (without media)
+    private void mapPostToNoMediaDto(Post post, Set<String> tags, PostDetailsNoMediaDto postDetailsDto, User currentUser) {
+        postDetailsDto.setId(post.getId());
+        postDetailsDto.setAuthor(post.getUser().getUsername());
+        postDetailsDto.setTitle(post.getTitle());
+        postDetailsDto.setDescription(post.getDescription());
+        postDetailsDto.setTags(tags);
+        postDetailsDto.setMysteryObject(post.getMysteryObject() != null ?
+                MysteryObjectDto.fromEntity(post.getMysteryObject()) : null);
+        postDetailsDto.setCreatedAt(post.getCreatedAt());
+        postDetailsDto.setUpdatedAt(post.getUpdatedAt());
+        postDetailsDto.setUpvotes(post.getUpvotesCount());
+        postDetailsDto.setDownvotes(post.getDownvotesCount());
+        postDetailsDto.setSolved(post.isSolved()); // Set solved status regardless of authentication
+
+        // Add resolution information if post is solved
+        if (post.isSolved()) {
+            postDetailsDto.setResolutionDescription(post.getResolutionDescription());
+            postDetailsDto.setResolvedAt(post.getResolvedAt());
+
+            // Convert contributing comments to IDs
+            if (post.getContributingComments() != null && !post.getContributingComments().isEmpty()) {
+                List<Long> contributingCommentIds = post.getContributingComments().stream()
+                        .map(Comment::getId)
+                        .collect(Collectors.toList());
+                postDetailsDto.setContributingCommentIds(contributingCommentIds);
+            }
+        }
+
+        if (currentUser == null) {
+            postDetailsDto.setUserUpvoted(false);
+            postDetailsDto.setUserDownvoted(false);
+        } else {
+            // Check if the user has upvoted or downvoted the post
+            boolean userUpvoted = post.getUpvotedBy().contains(currentUser);
+            boolean userDownvoted = post.getDownvotedBy().contains(currentUser);
+            postDetailsDto.setUserUpvoted(userUpvoted);
+            postDetailsDto.setUserDownvoted(userDownvoted);
+        }
+        // No media file mapping here
+    }
+
 
     public List<PostListDto> getUserPosts(Long userId) {
         List<Post> posts = postRepository.findByUserId(userId);

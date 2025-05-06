@@ -14,6 +14,7 @@ public class MysteryObjectDto {
     private String material;
     private String writtenText;
     private String color;
+    private String mainColor;
     private String shape;
     private String descriptionOfParts;
     private String location;
@@ -52,6 +53,7 @@ public class MysteryObjectDto {
         dto.setMaterial(mysteryObject.getMaterial());
         dto.setWrittenText(mysteryObject.getWrittenText());
         dto.setColor(mysteryObject.getColor());
+        dto.setMainColor(mysteryObject.getMainColor());
         dto.setShape(mysteryObject.getShape());
         dto.setDescriptionOfParts(mysteryObject.getDescriptionOfParts());
         dto.setLocation(mysteryObject.getLocation());
@@ -95,6 +97,7 @@ public class MysteryObjectDto {
         entity.setMaterial(this.material);
         entity.setWrittenText(this.writtenText);
         entity.setColor(this.color);
+        entity.setMainColor(this.mainColor);
         entity.setShape(this.shape);
         entity.setDescriptionOfParts(this.descriptionOfParts);
         entity.setLocation(this.location);

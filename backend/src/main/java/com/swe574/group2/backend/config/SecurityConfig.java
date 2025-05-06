@@ -63,6 +63,7 @@ public class SecurityConfig {
                                 "api/users/**",
                                 "api/posts/getForPostList",
                                 "api/posts/getForPostDetails/**",
+                                "api/posts/all/details/no-media", // Allow unauthenticated access
                                 "api/posts/searchForPosts**",
                                 "api/posts/create-json", // New JSON endpoint for post creation
                                 "api/posts/mysteryObjects/**", // New endpoint for mystery object image upload

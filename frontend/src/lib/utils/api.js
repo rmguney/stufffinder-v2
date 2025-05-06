@@ -27,9 +27,49 @@ export async function apiRequest(endpoint, options = {}) {
       headers
     });
     
+    // Log basic response details for debugging
+    /* console.log(`API ${options.method || 'GET'} ${endpoint} response status:`, response.status); */
+
+    if (!response.ok) {
+      // Try to get text for error message, but handle potential errors during text() call
+      let errorText = `API request failed: ${response.status}`;
+      try {
+        const text = await response.text();
+        errorText += ` - ${text}`;
+      } catch (e) {
+        console.error("Failed to read error response body:", e);
+      }
+      throw new Error(errorText);
+    }
+
+    // Check if the response has content before trying to parse JSON
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        const jsonData = await response.json();
+        /* console.log(`API ${options.method || 'GET'} ${endpoint} response JSON data:`, jsonData); */
+        return jsonData;
+      } catch (e) {
+        console.error(`Failed to parse JSON response for ${endpoint}:`, e);
+        throw new Error(`Failed to parse JSON response: ${e.message}`);
+      }
+    } else {
+       // Handle non-JSON responses (e.g., plain text or empty body)
+       try {
+           const responseText = await response.text();
+           /* console.log(`API ${options.method || 'GET'} ${endpoint} response text:`, responseText.substring(0, 100) + (responseText.length > 100 ? '...' : '')); */
+           return responseText || null; // Return null for empty body
+       } catch (e) {
+           console.error(`Failed to read non-JSON response body for ${endpoint}:`, e);
+           // If reading text fails after a successful status, return null or handle as appropriate
+           return null;
+       }
+    }
+
+    /* // Original logic below - replaced by the above block
     // Get response as text first for better error handling
     const responseText = await response.text();
-    
+
     // Log response details for debugging
     /* console.log(`API ${options.method || 'GET'} ${endpoint} response:`, {
       status: response.status,

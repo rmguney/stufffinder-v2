@@ -1,7 +1,7 @@
 <script>
   import Post from '$lib/components/post.svelte';
   import { threadStore, forceRefreshThreads, isLoading } from '../../threadStore';
-  import { onMount } from 'svelte';
+  import { onMount, afterUpdate, onDestroy } from 'svelte';
   import { Button } from "$lib/components/ui/button";
   import * as Card from "$lib/components/ui/card";
   import { writable } from 'svelte/store';
@@ -105,6 +105,7 @@
       tagDetails.set(fetchedTagDetails);
     } catch (error) {
       console.error("Failed to fetch tag details:", error);
+      tagDetails.set({});
     }
   }
 
@@ -168,10 +169,17 @@
     tagImage = await fetchTagImage(tag);
   }
   
-  // Hide tooltip when mouse leaves
-  function handleTagLeave() {
+  // Helper to clear tooltip state
+  function clearTooltip() {
+    hoveredTag = null;
     tooltipVisible = false;
     tagImage = null;
+    tagImageLoading = false;
+  }
+
+  // Hide tooltip when mouse leaves
+  function handleTagLeave() {
+    clearTooltip();
   }
 
   // Function to safely parse dates for sorting
@@ -333,6 +341,94 @@
   function animationEnd() {
     animationInProgress = false;
   }
+
+  // Clear tooltip when paginatedThreads or filteredTags change
+  afterUpdate(() => {
+    // If the hoveredTag is no longer in the visible tags, clear tooltip
+    if (
+      hoveredTag &&
+      (
+        !filteredTags.includes(hoveredTag.id) ||
+        !paginatedThreads.some(thread => (thread.tags || []).includes(hoveredTag.id))
+      )
+    ) {
+      clearTooltip();
+    }
+  });
+
+  // Also clear tooltip on component destroy (route change)
+  onDestroy(() => {
+    clearTooltip();
+  });
+
+  // Also clear tooltip when filters/page change
+  $: {
+    // Any of these changes should clear lingering tooltips
+    filteredTags;
+    paginatedThreads;
+    currentPage;
+    solvedFilter;
+    tagFilter;
+    sortMethod;
+    clearTooltip();
+  }
+
+  // Function to fetch details for only the tags visible in paginatedThreads
+  async function fetchVisibleTagDetails() {
+    // Immediately clear existing tag details to prevent lingering
+    tagDetails.set({});
+    
+    // Get all unique tags from currently visible threads
+    const visibleTags = [
+      ...new Set(paginatedThreads.flatMap(thread => thread.tags || []))
+    ];
+    
+    if (!visibleTags.length) {
+      return; // Already cleared above
+    }
+    
+    try {
+      let fetchedTagDetails = {};
+      for (const qcode of visibleTags) {
+        if (!qcode) continue;
+        try {
+          const response = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${qcode}&format=json&languages=en&props=labels|descriptions&origin=*`);
+          const data = await response.json();
+          if (data.entities && data.entities[qcode]) {
+            const entity = data.entities[qcode];
+            fetchedTagDetails[qcode] = {
+              id: qcode,
+              label: entity.labels?.en?.value || 'Unknown label',
+              description: entity.descriptions?.en?.value || 'No description'
+            };
+          }
+        } catch (error) {
+          console.error(`Failed to fetch details for tag ${qcode}:`, error);
+        }
+      }
+      
+      // Replace tagDetails with only the visible tags' details
+      tagDetails.set(fetchedTagDetails);
+    } catch (error) {
+      console.error("Failed to fetch tag details:", error);
+    }
+  }
+
+  // Watch for changes in paginatedThreads
+  $: {
+    paginatedThreads;
+    // Original dependency chain remains
+    fetchVisibleTagDetails();
+  }
+
+  // Modified to force tag details refresh when page changes
+  $: {
+    currentPage; // Depend on page changes
+    // Force an immediate reset when page changes
+    tagDetails.set({}); 
+    // Schedule the fetch for visible tags
+    setTimeout(fetchVisibleTagDetails, 0);
+  }
 </script>
 
 <!-- Add filtering and sorting UI with collapsible feature -->
@@ -398,7 +494,7 @@
         >
           <span class="inline-flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
             Resolved
           </span>
@@ -414,7 +510,7 @@
         >
         <span class="inline-flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 000 2z" clip-rule="evenodd"/>
           </svg>
           Unresolved
         </span>
@@ -585,29 +681,31 @@
     {/each}
   {:else if paginatedThreads.length > 0}
     {#each paginatedThreads as thread}
-      <div class="w-full lg:w-[calc(33.333%-1rem)]">
-        <a href={`/thread/${thread.id}`}>
-          <Post
-            id={thread.id}
-            title={thread.title}
-            description={thread.description || ""}
-            tags={thread.tags || []}
-            imageSrc={thread.mysteryObjectImageUrl ? thread.mysteryObjectImageUrl : ''}
-            mediaFiles={thread.mediaFiles || []}
-            postedBy={thread.author}
-            createdAt={thread.createdAt}
-            updatedAt={thread.updatedAt}
-            upvotes={thread.upvotesCount || 0}
-            downvotes={thread.downvotesCount || 0}
-            commentCount={thread.commentCount || 0}
-            userUpvoted={thread.userUpvoted || false}
-            userDownvoted={thread.userDownvoted || false}
-            solved={thread.solved}
-            mysteryObject={thread.mysteryObject || null}
-            variant="thumb"
-          />
-        </a>
-      </div>
+      {#key thread.id}
+        <div class="w-full lg:w-[calc(33.333%-1rem)]">
+          <a href={`/thread/${thread.id}`}>
+            <Post
+              id={thread.id}
+              title={thread.title}
+              description={thread.description || ""}
+              tags={thread.tags || []}
+              imageSrc={thread.mysteryObjectImageUrl ? thread.mysteryObjectImageUrl : ''}
+              mediaFiles={thread.mediaFiles || []}
+              postedBy={thread.author}
+              createdAt={thread.createdAt}
+              updatedAt={thread.updatedAt}
+              upvotes={thread.upvotesCount || 0}
+              downvotes={thread.downvotesCount || 0}
+              commentCount={thread.commentCount || 0}
+              userUpvoted={thread.userUpvoted || false}
+              userDownvoted={thread.userDownvoted || false}
+              solved={thread.solved}
+              mysteryObject={thread.mysteryObject || null}
+              variant="thumb"
+            />
+          </a>
+        </div>
+      {/key}
     {/each}
   {:else}
     <div class="w-full text-center py-8">
@@ -639,7 +737,7 @@
       on:click={() => goToPage(1)}
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+        <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
       </svg>
     </Button>
     

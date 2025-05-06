@@ -1,6 +1,6 @@
 <script>
   import * as Card from "$lib/components/ui/card";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { writable } from "svelte/store";
   import { activeUser } from "../../userStore";
   import { Button } from "$lib/components/ui/button";
@@ -61,27 +61,60 @@
     );
   }
 
+  // Improved tag handling
   const fetchTagDetails = async () => {
-    if (!tags.length) {
+    // Clear tags first
+    tagDetails.set([]);
+    
+    if (!tags || !tags.length) {
       return;
     }
+    
     try {
       let fetchedTags = await Promise.all(tags.map(async (qcode) => {
-        const response = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${qcode}&format=json&languages=en&props=labels|descriptions&origin=*`);
-        const data = await response.json();
-        const entity = data.entities[qcode];
-        return {
-          label: entity.labels?.en?.value || 'Unknown label',
-          description: entity.descriptions?.en?.value || 'No description',
-          id: qcode
-        };
+        if (!qcode) return null;
+        
+        try {
+          const response = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${qcode}&format=json&languages=en&props=labels|descriptions&origin=*`);
+          const data = await response.json();
+          const entity = data.entities?.[qcode];
+          
+          return entity ? {
+            label: entity.labels?.en?.value || 'Unknown label',
+            description: entity.descriptions?.en?.value || 'No description',
+            id: qcode
+          } : null;
+        } catch (err) {
+          console.error(`Error fetching tag ${qcode}:`, err);
+          return null;
+        }
       }));
-      tagDetails.set(fetchedTags);
+      
+      // Filter out any null results from failed requests
+      tagDetails.set(fetchedTags.filter(Boolean));
     } catch (error) {
       console.error("Failed to fetch tag details:", error);
+      tagDetails.set([]);
     }
   };
   
+  // Clear and refetch tag details when tags prop changes or component is remounted
+  $: {
+    // Force explicit array checking to handle all edge cases
+    const tagsArray = Array.isArray(tags) ? tags : [];
+    tagDetails.set([]); // Always reset first
+    
+    // Only fetch if we have valid tags
+    if (tagsArray.length > 0) {
+      fetchTagDetails();
+    }
+  }
+
+  // Add cleanup on component destruction
+  onDestroy(() => {
+    tagDetails.set([]); // Clear tags when component is removed
+  });
+
   // Resolution modal state
   let showResolutionModal = false;
   let resolutionDescription = "";

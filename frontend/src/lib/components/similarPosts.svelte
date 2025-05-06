@@ -17,14 +17,11 @@
   // Enhanced carousel control with proper reference 
   let similarPosts = [];
   
-  // Track container width changes more effectively with debouncing
+  let visibleSlides = 4;
   let carouselContainer;
-  let resizeTimeout;
   let currentSlide = 0;
   let touchStartX = 0;
-  let touchEndX = 0;
-  let visibleSlides = 3;
-  let containerWidth;
+  let touchEndX = 1;
 
   // Enhanced loading state for semantic relationships
   let loadingSemantic = true;
@@ -741,17 +738,6 @@
     }
   }
 
-  // Update visibleSlides and handle edge cases
-  function updateVisibleSlides() {
-    if (containerWidth < 500) visibleSlides = 1; 
-    else if (containerWidth < 900) visibleSlides = 2;
-    else visibleSlides = 3;
-    
-    // Ensure currentSlide doesn't exceed bounds
-    const maxSlide = Math.max(0, similarPosts.length - visibleSlides);
-    if (currentSlide > maxSlide) currentSlide = maxSlide;
-  }
-
   // Completely rebuilt pagination system
   function calculatePagination() {
     if (!similarPosts || !similarPosts.length) {
@@ -795,7 +781,7 @@
     if (pagination.hasNext) {
       currentSlide = Math.min(
         currentSlide + visibleSlides, 
-        similarPosts.length - visibleSlides
+        Math.max(0, similarPosts.length - visibleSlides)
       );
     }
   }
@@ -829,8 +815,8 @@
 
   function handleSwipe() {
     const swipeDistance = touchEndX - touchStartX;
-    // Improved threshold based on screen width
-    const threshold = Math.min(containerWidth * 0.1, 80);
+    // Use a fixed threshold rather than one based on container width
+    const threshold = 80;
     
     if (swipeDistance > threshold) {
       // Swipe right
@@ -839,20 +825,6 @@
       // Swipe left
       nextSlide();
     }
-  }
-
-  // Function to handle window resize events
-  function handleResize() {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      if (carouselContainer) {
-        containerWidth = carouselContainer.offsetWidth;
-        
-        // Ensure currentSlide is valid after resize
-        const maxSlide = Math.max(0, similarPosts.length - visibleSlides);
-        if (currentSlide > maxSlide) currentSlide = maxSlide;
-      }
-    }, 100);
   }
 
   // Function to get a friendly display for relation types
@@ -1222,7 +1194,7 @@
     const genericParentClasses = [
       "taxon", "material", "entity", "object", "thing", "item", "substance", 
       "physical object", "abstract object", "physical entity", "abstract entity",
-      "chemical compound", "chemical element", "chemical substance", "product"
+      "chemical compound", "chemical element", "chemical substance", "product", "solid"
     ];
     
     // Helper function to check if a label is too generic
@@ -1386,9 +1358,9 @@
         }
         
         // Default to a more informative generic statement
-        return "Topics are connected through semantic relationships";
+        return "Objects are connected through distant semantic links";
       }
-      return "Topics have conceptual similarities";
+      return `Objects have similar high level classifications`;
     }
   }
 
@@ -1545,11 +1517,6 @@
 
   // Calculate total pages for pagination
   $: totalPages = similarPosts ? Math.ceil(similarPosts.length / visibleSlides) : 0;
-
-  // Update visible slides when container width changes
-  $: if (containerWidth) {
-    updateVisibleSlides();
-  }
   
 </script>
 
@@ -1561,22 +1528,18 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5 text-teal-600" viewBox="0 0 20 20" fill="currentColor">
             <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z" />
           </svg>
-          Similar Posts ({postsWithSemanticInfo.length || internalSimilarPosts.length})
+          Similarity among {postsWithSemanticInfo.length || internalSimilarPosts.length} posts
         </h3>
         <p class="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
           Based on {thread?.tags?.length || 0} tag{thread?.tags?.length !== 1 ? 's' : ''}
-          {#if loadingSubclassRelations}
-            <span class="italic ml-1">(calculating relations...)</span>
-          {/if}
         </p>
       </div>
     </div>
 
-    <!-- Carousel container with proper binding -->
+    <!-- Carousel container with fixed width slides -->
     <div
       class="relative overflow-hidden"
       bind:this={carouselContainer}
-      bind:clientWidth={containerWidth}
     >
       <div
         class="flex py-2 px-1.5"
@@ -1602,93 +1565,88 @@
             </div>
           </div>
         {:else if postsWithSemanticInfo.length > 0}
-          <div
-            class="flex transition-transform duration-300 ease-in-out will-change-transform"
-            style="transform: translateX(-{currentSlide * (100 / visibleSlides)}%); width: {postsWithSemanticInfo.length * (100 / visibleSlides)}%"
+          <!-- Use a fixed grid layout instead of dynamic sizing -->
+          <div 
+            class="grid grid-cols-4 w-full transition-transform duration-300 ease-in-out"
+            style="transform: translateX(-{currentSlide * 100}%);"
           >
-            {#each postsWithSemanticInfo as post, index (post.id)}
-              <!-- Only render posts that would be visible or close to becoming visible -->
-              {#if index >= Math.max(0, currentSlide - 1) && index < currentSlide + visibleSlides + 1}
-                <div class="px-1.5 snap-center" style="width: {100 / visibleSlides}%"> 
-                  <a href={`/thread/${post.id}`} class="block h-full">
-                    <!-- Post card with optimized compact layout -->
-                    <div class="bg-neutral-50 dark:bg-neutral-900 rounded border border-neutral-200 dark:border-neutral-800 shadow-sm h-full hover:border-neutral-300 dark:hover:border-neutral-700 transition-all hover:shadow-md overflow-hidden flex flex-col">
-                      <!-- Image container -->
-                      <div class="aspect-video w-full overflow-hidden relative bg-neutral-100 dark:bg-neutral-850 border-b border-neutral-200 dark:border-neutral-800">
-                        {#if post.mysteryObjectImageUrl || (post.mediaFiles && post.mediaFiles.length > 0)}
-                          <img 
-                            src={post.mysteryObjectImageUrl || (post.mediaFiles && post.mediaFiles.length > 0 ? post.mediaFiles[0].url : '')} 
-                            alt={post.title} 
-                            class="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        {:else}
-                          <div class="absolute inset-0 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-300 dark:text-neutral-700" viewBox="0 0 20 20" fill="currentColor">
-                              <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
-                            </svg>
-                          </div>
-                        {/if}
-                        
-                        <!-- Match percentage display -->
-                        <div class="absolute bottom-0 left-0 right-0 flex justify-between items-center px-2 py-1 bg-gradient-to-t from-black/70 to-transparent">
-                          <div class="px-1.5 py-0.5 bg-black/40 backdrop-blur-sm rounded-sm text-white text-xs font-medium">
-                            {post.similarityScore}% match
-                          </div>
+            {#each postsWithSemanticInfo as post (post.id)}
+              <div class="px-1.5 w-full"> 
+                <a href={`/thread/${post.id}`} class="block h-full">
+                  <!-- Post card with optimized compact layout -->
+                  <div class="bg-neutral-50 dark:bg-neutral-900 rounded border border-neutral-200 dark:border-neutral-800 shadow-sm h-full hover:border-neutral-300 dark:hover:border-neutral-700 transition-all hover:shadow-md overflow-hidden flex flex-col">
+                    <!-- Image container -->
+                    <div class="aspect-video w-full overflow-hidden relative bg-neutral-100 dark:bg-neutral-850 border-b border-neutral-200 dark:border-neutral-800">
+                      {#if post.mysteryObjectImageUrl || (post.mediaFiles && post.mediaFiles.length > 0)}
+                        <img 
+                          src={post.mysteryObjectImageUrl || (post.mediaFiles && post.mediaFiles.length > 0 ? post.mediaFiles[0].url : '')} 
+                          alt={post.title} 
+                          class="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      {:else}
+                        <div class="absolute inset-0 flex items-center justify-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-300 dark:text-neutral-700" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+                          </svg>
                         </div>
-                      </div>
+                      {/if}
                       
-                      <!-- Content section with optimized spacing -->
-                      <div class="p-2 flex-1 flex flex-col">
-                        <!-- Post title - single line only -->
-                        <h4 class="font-medium text-sm line-clamp-1 text-neutral-900 dark:text-white mb-1.5">
-                          {post.title}
-                        </h4>
-                        
-                        <!-- Enhanced relationship explanation -->
-                        <div class="text-xs text-neutral-600 dark:text-neutral-300 border-l-2 border-teal-500 dark:border-teal-600 pl-2 py-0.5 mb-auto bg-teal-50/50 dark:bg-teal-900/10 rounded-r">
-                          {#if post.relationshipExplanation}
-                            {post.relationshipExplanation}
-                          {:else}
-                            Topics are semantically related
-                          {/if}
-                        </div>
-                        
-                        <!-- Author and info footer - no extra margin -->
-                        <div class="mt-1.5 pt-1.5 border-t border-neutral-100 dark:border-neutral-800 text-xs text-neutral-500 dark:text-neutral-400 flex items-center justify-between">
-                          <div class="truncate max-w-[80px]">{post.author}</div>
-                          <div class="flex items-center gap-2">
-                            <div class="flex items-center">
-                              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd" />
-                              </svg>
-                              {post.commentCount || 0}
-                            </div>
-                            
-                            <!-- Both resolved and unresolved status indicators -->
-                            {#if post.solved}
-                              <div class="flex items-center text-emerald-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                </svg>
-                              </div>
-                            {:else}
-                              <div class="flex items-center text-rose-800">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                                </svg>
-                              </div>
-                            {/if}
-                          </div>
+                      <!-- Match percentage display -->
+                      <div class="absolute bottom-0 left-0 right-0 flex justify-between items-center px-2 py-1 bg-gradient-to-t from-black/70 to-transparent">
+                        <div class="px-1.5 py-0.5 bg-black/40 backdrop-blur-sm rounded-sm text-white text-xs font-medium">
+                          {post.similarityScore}% match
                         </div>
                       </div>
                     </div>
-                  </a>
-                </div>
-              {:else}
-                <!-- Placeholder for non-visible slides to maintain correct positioning -->
-                <div class="px-1.5 snap-center" style="width: {100 / visibleSlides}%"></div>
-              {/if}
+                    
+                    <!-- Content section with optimized spacing -->
+                    <div class="p-2 flex-1 flex flex-col">
+                      <!-- Post title - single line only -->
+                      <h4 class="font-medium text-sm line-clamp-1 text-neutral-900 dark:text-white mb-1.5">
+                        {post.title}
+                      </h4>
+                      
+                      <!-- Enhanced relationship explanation -->
+                      <div class="text-xs text-neutral-600 dark:text-neutral-300 border-l-2 border-teal-500 dark:border-teal-600 pl-2 py-0.5 mb-auto bg-teal-50/50 dark:bg-teal-900/10 rounded-r">
+                        {#if post.relationshipExplanation}
+                          {post.relationshipExplanation}
+                        {:else}
+                          Topics are semantically related
+                        {/if}
+                      </div>
+                      
+                      <!-- Author and info footer - no extra margin -->
+                      <div class="mt-1.5 pt-1.5 border-t border-neutral-100 dark:border-neutral-800 text-xs text-neutral-500 dark:text-neutral-400 flex items-center justify-between">
+                        <div class="truncate max-w-[80px]">{post.author}</div>
+                        <div class="flex items-center gap-2">
+                          <div class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-0.5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8zm0 4h-2v2h2v-2z" clip-rule="evenodd" />
+                            </svg>
+                            {post.commentCount || 0}
+                          </div>
+                          
+                          <!-- Both resolved and unresolved status indicators -->
+                          {#if post.solved}
+                            <div class="flex items-center text-emerald-600">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                              </svg>
+                            </div>
+                          {:else}
+                            <div class="flex items-center text-rose-800">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                              </svg>
+                            </div>
+                          {/if}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </a>
+              </div>
             {/each}
           </div>
         {:else}
@@ -1719,7 +1677,7 @@
         </div>
       {/if}
       
-      <!-- Improved overlay navigation buttons tied to pagination -->
+      <!-- Navigation buttons -->
       {#if similarPosts && similarPosts.length > visibleSlides}
         <div class="block">
           <button 

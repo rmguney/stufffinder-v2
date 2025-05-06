@@ -93,7 +93,19 @@
             
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`Failed to fetch post details: ${response.status} ${errorText || response.statusText}`);
+                const status = response.status;
+                let userFriendlyMessage;
+                
+                // Translate technical errors into user-friendly messages
+                if (status === 404) {
+                    userFriendlyMessage = "We couldn't find this post. It may have been removed or you don't have permission to view it.";
+                } else if (status === 401 || status === 403) {
+                    userFriendlyMessage = "You don't have permission to edit this post. Please check if you're logged in correctly.";
+                } else {
+                    userFriendlyMessage = "We couldn't load this post. Please try again later.";
+                }
+                
+                throw new Error(userFriendlyMessage);
             }
             
             const postData = await response.json();
@@ -101,7 +113,7 @@
             
             // Check if current user is the author
             if (postData.author !== $activeUser) {
-                errors.auth = "You don't have permission to edit this post";
+                errors.auth = "You don't have permission to edit this post. Only the original author can make changes.";
                 goto(`/thread/${postId}`);
                 return;
             }
@@ -169,10 +181,10 @@
             }
         } catch (error) {
             console.error('Error loading post for editing:', error);
-            errors.auth = error.message || "Error loading post data";
+            errors.auth = error.message || "We couldn't load your post. Please refresh the page or try again later.";
             
             // Show notification for 5 seconds
-            errorNotificationMessage = "Failed to load post data. Please try again.";
+            errorNotificationMessage = error.message || "Failed to load post data. Please try refreshing the page.";
             showErrorNotification = true;
             setTimeout(() => { showErrorNotification = false; }, 5000);
         } finally {
@@ -360,7 +372,18 @@
 
             if (!updateResponse.ok) {
                 const errorText = await updateResponse.text();
-                throw new Error(`Failed to update post: ${updateResponse.status} - ${errorText}`);
+                const status = updateResponse.status;
+                
+                // Translate status codes to user-friendly messages
+                if (status === 401 || status === 403) {
+                    throw new Error("Your session may have expired. Please try logging in again.");
+                } else if (status === 413) {
+                    throw new Error("Your post couldn't be updated because it contains files that are too large.");
+                } else if (status === 400) {
+                    throw new Error("Some information in your post isn't valid. Please check all fields and try again.");
+                } else {
+                    throw new Error("Your changes couldn't be saved at this time. Please try again later.");
+                }
             }
 
             const responseData = await updateResponse.json();
@@ -380,14 +403,14 @@
                     
                     if (!imageResponse.ok) {
                         const errorText = await imageResponse.text();
-                        throw new Error(`Failed to upload main image: ${errorText}`);
+                        throw new Error(`We couldn't update the main image, but other changes were saved.`);
                     }
                 } catch (mediaError) {
                     console.error('Error uploading main image:', mediaError);
-                    errors.mediaUpload = mediaError.message || "Failed to upload main image";
+                    errors.mediaUpload = "The main image couldn't be updated, but your other changes were saved successfully.";
                     
                     // Continue with other operations despite main image failure
-                    errorNotificationMessage = "Post updated but main image upload failed";
+                    errorNotificationMessage = "Post updated but we couldn't change the main image. You can try again.";
                     showErrorNotification = true;
                     setTimeout(() => { showErrorNotification = false; }, 5000);
                 }
@@ -414,17 +437,17 @@
                     
                     if (!mediaResponse.ok) {
                         const errorText = await mediaResponse.text();
-                        throw new Error(`Failed to upload media ${i+1}: ${errorText}`);
+                        throw new Error(`We couldn't upload this media file. It may be too large or in an unsupported format.`);
                     }
                 } catch (mediaError) {
                     console.error(`Error uploading media file ${i+1}:`, mediaError);
-                    mediaUploadErrors.push(`Media file ${i+1}: ${mediaError.message}`);
+                    mediaUploadErrors.push(`Media file ${i+1}: Couldn't be added to your post`);
                 }
             }
             
             if (mediaUploadErrors.length > 0) {
-                errors.mediaUpload = `Some media files failed to upload: ${mediaUploadErrors.length} errors`;
-                errorNotificationMessage = "Post updated but some media files failed to upload";
+                errors.mediaUpload = `We saved your post but couldn't add ${mediaUploadErrors.length} new media file${mediaUploadErrors.length === 1 ? '' : 's'}.`;
+                errorNotificationMessage = "Post updated but some media files weren't added. You can try adding them again.";
                 showErrorNotification = true;
                 setTimeout(() => { showErrorNotification = false; }, 5000);
             }
@@ -454,11 +477,13 @@
                         
                         if (!subPartResponse.ok) {
                             const errorText = await subPartResponse.text();
-                            throw new Error(`Failed to ${method === 'POST' ? 'create' : 'update'} sub-part: ${errorText}`);
+                            const action = method === 'POST' ? 'add' : 'update';
+                            throw new Error(`We couldn't ${action} this part. Please check the information you provided.`);
                         }
                     } catch (subpartError) {
                         console.error(`Error handling sub-part ${i+1}:`, subpartError);
-                        subpartErrors.push(`Sub-part ${i+1}: ${subpartError.message}`);
+                        const partName = mysteryObjectSubParts[i].description || `Part ${i+1}`;
+                        subpartErrors.push(`"${partName}": Couldn't be saved`);
                     }
                 }
                 
@@ -491,8 +516,8 @@
             }
             
             if (subpartErrors.length > 0) {
-                errors.subparts = `Some sub-parts failed to update: ${subpartErrors.length} errors`;
-                errorNotificationMessage = "Post updated but some sub-part changes failed";
+                errors.subparts = `We saved your post but ${subpartErrors.length} object part${subpartErrors.length === 1 ? '' : 's'} couldn't be updated.`;
+                errorNotificationMessage = "Post updated but some object parts weren't saved. You can try updating them again.";
                 showErrorNotification = true;
                 setTimeout(() => { showErrorNotification = false; }, 5000);
             }
@@ -506,8 +531,8 @@
             }
         } catch (error) {
             console.error('Error updating post:', error);
-            errors.api = `Failed to update post: ${error.message}`;
-            errorNotificationMessage = "Failed to update post";
+            errors.api = error.message || "We couldn't update your post at this time. Please try again later.";
+            errorNotificationMessage = error.message || "Failed to update post";
             showErrorNotification = true;
             setTimeout(() => { showErrorNotification = false; }, 5000);
         } finally {
@@ -518,7 +543,7 @@
 
 <div class="flex flex-col items-center bg-change dark:bg-dark shifting p-3 py-5">
     <div class="w-full max-w-7xl mx-auto">
-        <!-- Error notification toast -->
+        <!-- Error notification toast with improved messaging -->
         {#if showErrorNotification}
             <div class="fixed top-5 right-5 z-50 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800/50 text-red-800 dark:text-red-300 px-4 py-3 rounded-lg shadow-lg flex items-center animate-slide-in">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
@@ -553,7 +578,7 @@
                     </div>
                 {:else}
                     <Card.Content class="p-4 sm:p-6">
-                        <!-- Authentication error -->
+                        <!-- Authentication error with improved messaging -->
                         {#if errors.auth}
                             <div class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-md mb-4 border border-red-200 dark:border-red-800/50">
                                 <div class="flex items-center">
@@ -562,10 +587,11 @@
                                     </svg>
                                     {errors.auth}
                                 </div>
+                                <p class="text-xs text-red-700 dark:text-red-400 mt-2 ml-7">If you think this is a mistake, try logging out and logging back in.</p>
                             </div>
                         {/if}
                         
-                        <!-- API error -->
+                        <!-- API error with improved messaging -->
                         {#if errors.api}
                             <div class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-md mb-4 border border-red-200 dark:border-red-800/50">
                                 <div class="flex items-center">
@@ -574,10 +600,11 @@
                                     </svg>
                                     {errors.api}
                                 </div>
+                                <p class="text-xs text-red-700 dark:text-red-400 mt-2 ml-7">You might want to check your internet connection or try again in a few minutes.</p>
                             </div>
                         {/if}
                         
-                        <!-- Media upload errors -->
+                        <!-- Media upload errors with improved messaging -->
                         {#if errors.mediaUpload}
                             <div class="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 p-3 rounded-md mb-4 border border-yellow-200 dark:border-yellow-800/50">
                                 <div class="flex items-center">
@@ -586,11 +613,11 @@
                                     </svg>
                                     {errors.mediaUpload}
                                 </div>
-                                <p class="text-xs text-yellow-700 dark:text-yellow-400 mt-1 ml-7">Your post will be updated but some media files couldn't be uploaded.</p>
+                                <p class="text-xs text-yellow-700 dark:text-yellow-400 mt-1 ml-7">The rest of your changes have been saved. You can try uploading the media files again later.</p>
                             </div>
                         {/if}
                         
-                        <!-- Subparts errors -->
+                        <!-- Subparts errors with improved messaging -->
                         {#if errors.subparts}
                             <div class="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 p-3 rounded-md mb-4 border border-yellow-200 dark:border-yellow-800/50">
                                 <div class="flex items-center">
@@ -599,7 +626,7 @@
                                     </svg>
                                     {errors.subparts}
                                 </div>
-                                <p class="text-xs text-yellow-700 dark:text-yellow-400 mt-1 ml-7">Your post will be updated but some sub-part changes couldn't be saved.</p>
+                                <p class="text-xs text-yellow-700 dark:text-yellow-400 mt-1 ml-7">Your post has been updated with the main changes. Try simplifying the object parts if they have too many details.</p>
                             </div>
                         {/if}
 

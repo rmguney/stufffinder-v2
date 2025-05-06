@@ -9,6 +9,7 @@ import com.swe574.group2.backend.dao.MediaFileRepository;
 import com.swe574.group2.backend.dao.PostRepository;
 import com.swe574.group2.backend.dto.PostCreationDto;
 import com.swe574.group2.backend.dto.PostDetailsDto;
+import com.swe574.group2.backend.dto.PostDetailsNoMediaDto; // Added import
 import com.swe574.group2.backend.dto.PostListDto;
 import com.swe574.group2.backend.dto.SearchResultDto;
 import com.swe574.group2.backend.entity.MediaFile;
@@ -226,6 +227,14 @@ public class PostController {
         String username = userDetails != null ? userDetails.getUsername() : null;
         PostDetailsDto postDetailsDto = postService.getPostDetails(postId, username);
         return ResponseEntity.ok(postDetailsDto);
+    }
+
+    // New endpoint to get all post details without media
+    @GetMapping("/all/details/no-media")
+    public ResponseEntity<List<PostDetailsNoMediaDto>> getAllPostDetailsNoMedia(@AuthenticationPrincipal UserDetails userDetails) {
+        String username = userDetails != null ? userDetails.getUsername() : null;
+        List<PostDetailsNoMediaDto> postDetailsList = postService.getAllPostDetailsNoMedia(username);
+        return ResponseEntity.ok(postDetailsList);
     }
 
     @PostMapping("/upvote/{postId}")

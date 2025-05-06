@@ -811,11 +811,11 @@
         <!-- Right column with content - consistent padding with comment component -->
         <div class="flex-1 p-4">
           <!-- Post metadata -->
-          <div class="flex flex-row justify-between">
+          <div class="flex flex-row justify-between text-sm">
             <div>
               <a
                 href={`/user/${postedBy}`}
-                class="font-medium hover:text-rose-900 hover:underline"
+                class="text-md font-bold hover:text-rose-900 hover:underline"
               >
                 {postedBy || "Anonymous"}
               </a>

@@ -11,8 +11,8 @@
   import { PUBLIC_API_URL } from "$env/static/public";
   import { processMediaFiles, processCommentMediaFiles } from '$lib/utils/mediaUtils';
   import { goto } from '$app/navigation';
-  import { writable } from 'svelte/store';
-  import SimilarPostsCarousel from '$lib/components/similar-posts-carousel.svelte';
+  import { writable, derived } from 'svelte/store';
+  import SimilarPostsCarousel from '$lib/components/similarPosts.svelte';
   
   // Create a store for tag details
   const tagDetails = writable({});
@@ -192,9 +192,17 @@
         comments: []
       });
       
+      // Trigger related tag fetching after post data is updated
+      if (postData.tags && postData.tags.length > 0) {
+        fetchRelatedTags(postData.tags);
+      } else {
+        relatedTags.set(new Set()); // Clear related tags if post has no tags
+      }
+
       return postData;
     } catch (error) {
       console.error('Error fetching post with media:', error);
+      relatedTags.set(new Set()); // Clear on error
       throw error;
     }
   }
@@ -249,6 +257,63 @@
       tagDetails.update(existing => ({...existing, ...fetchedTagDetails}));
     } catch (error) {
       console.error("Failed to fetch tag details:", error);
+    }
+  }
+
+  // Function to fetch related tags (parents/children via P279) from Wikidata
+  async function fetchRelatedTags(tagsToQuery) {
+    if (!tagsToQuery || tagsToQuery.length === 0) {
+      relatedTags.set(new Set());
+      return;
+    }
+
+    loadingRelated.set(true);
+    const fetchedRelated = new Set();
+    const tagsToFetchDetails = new Set(); // Keep track of new tags needing details
+
+    try {
+      for (const qid of tagsToQuery) {
+        if (!qid) continue;
+
+        // 1. Get Parents (Superclasses - P279)
+        try {
+          const entityResponse = await fetch(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${qid}&props=claims&format=json&languages=en&origin=*`);
+          const entityData = await entityResponse.json();
+          const claims = entityData.entities?.[qid]?.claims;
+          if (claims?.P279) {
+            claims.P279.forEach(claim => {
+              const parentQid = claim.mainsnak?.datavalue?.value?.id;
+              if (parentQid && !tagsToQuery.includes(parentQid)) { // Avoid adding original tags
+                 fetchedRelated.add(parentQid);
+                 tagsToFetchDetails.add(parentQid);
+              }
+            });
+          }
+        } catch (err) {
+          console.error(`Error fetching parents for ${qid}:`, err);
+        }
+
+        // 2. Get Children (Subclasses - Items having P279 = qid)
+        // Note: Wikidata API doesn't directly support reverse lookups efficiently via wbgetclaims for *values*.
+        // A SPARQL query is better but more complex. For simplicity, we'll skip direct children fetching via API for now.
+        // Alternative: Could use SPARQL if needed later.
+        // Example SPARQL (run separately or via endpoint):
+        // SELECT ?item WHERE { ?item wdt:P279 wd:{qid}. }
+
+      }
+
+      relatedTags.set(fetchedRelated);
+
+      // Fetch details for the newly found related tags
+      if (tagsToFetchDetails.size > 0) {
+        await fetchTagDetails([...tagsToFetchDetails]);
+      }
+
+    } catch (error) {
+      console.error("Error fetching related tags:", error);
+      relatedTags.set(new Set()); // Clear on error
+    } finally {
+      loadingRelated.set(false);
     }
   }
 
@@ -605,115 +670,50 @@
     ? findContributingComments(comments, thread.resolution.contributingComments) 
     : [];
 
-  // Find similar posts based on matching tags with the current thread
-  $: similarPosts = $threadStore.filter(t => {
-    // Don't include the current thread - handle string/number ID inconsistencies
-    if (t.id == data.id || String(t.id) === String(data.id)) return false;
-    
-    // Check if there are any matching tags
-    if (!thread?.tags || !t.tags) return false;
-    
-    // Count matching tags
-    const matchingTags = t.tags.filter(tag => thread.tags.includes(tag));
-    
-    // Only include posts with 1 or more matching tags
-    return matchingTags.length > 0;
-  }).map(post => {
-    // Calculate number of matching tags for sorting
-    const matchingTagCount = post.tags.filter(tag => thread?.tags?.includes(tag)).length;
-    return { ...post, matchingTagCount };
-  }).sort((a, b) => {
-    // Sort by number of matching tags (descending)
-    return b.matchingTagCount - a.matchingTagCount;
-  }).slice(0, 10); // Limit to 10 similar posts
+  // Find similar posts based on matching exact and related tags
+  $: similarPosts = derived(
+    [threadStore, relatedTags, loadingRelated],
+    ([$threadStoreAll, $relatedTags, $loadingRelatedValue]) => {
+      if ($loadingRelatedValue || !thread?.tags) {
+        // Return empty or potentially cached results while loading/no tags
+        return [];
+      }
+
+      const currentThreadTags = thread.tags || [];
+      const expandedTagSet = new Set([...currentThreadTags, ...$relatedTags]);
+
+      if (expandedTagSet.size === 0) return []; // No tags to compare
+
+      const similar = $threadStoreAll.filter(t => {
+        // Exclude current thread
+        if (t.id == data.id || String(t.id) === String(data.id)) return false;
+        // Check if post has tags and at least one matches the expanded set
+        return t.tags && t.tags.some(tag => expandedTagSet.has(tag));
+      }).map(post => {
+        const postTags = post.tags || [];
+        // Calculate match counts
+        const exactMatchCount = postTags.filter(tag => currentThreadTags.includes(tag)).length;
+        const relatedMatchCount = postTags.filter(tag => $relatedTags.has(tag) && !currentThreadTags.includes(tag)).length;
+        // Fetch details for tags in these similar posts if not already fetched
+        fetchTagDetails(postTags.filter(tag => !$tagDetails[tag]));
+        return { ...post, exactMatchCount, relatedMatchCount };
+      }).sort((a, b) => {
+        // Sort by exact matches (desc), then related matches (desc)
+        if (b.exactMatchCount !== a.exactMatchCount) {
+          return b.exactMatchCount - a.exactMatchCount;
+        }
+        return b.relatedMatchCount - a.relatedMatchCount;
+      }).slice(0, 10); // Limit results
+
+      return similar;
+    }
+  );
 
   // Current slide index for carousel
   let currentSlide = 0;
   let touchStartX = 0;
   let touchEndX = 0;
   
-  // Calculate visible slides based on screen width
-  let visibleSlides = 3;
-  let containerWidth;
-  
-  // Update visible slides based on container width
-  $: {
-    if (containerWidth) {
-      if (containerWidth < 640) visibleSlides = 1;
-      else if (containerWidth < 1024) visibleSlides = 2;
-      else visibleSlides = 3;
-    }
-  }
-  
-  // Functions to navigate carousel
-  function nextSlide() {
-    if (currentSlide < similarPosts.length - visibleSlides) {
-      currentSlide++;
-    }
-  }
-  
-  function prevSlide() {
-    if (currentSlide > 0) {
-      currentSlide--;
-    }
-  }
-  
-  // Touch handlers for mobile swipe
-  function handleTouchStart(e) {
-    touchStartX = e.touches[0].clientX;
-  }
-  
-  function handleTouchEnd(e) {
-    touchEndX = e.changedTouches[0].clientX;
-    handleSwipe();
-  }
-  
-  function handleSwipe() {
-    const swipeDistance = touchEndX - touchStartX;
-    if (swipeDistance > 50) {
-      // Swipe right
-      prevSlide();
-    } else if (swipeDistance < -50) {
-      // Swipe left
-      nextSlide();
-    }
-  }
-
-</script>
-
-{#if showResolutionModal}
-  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300">
-    <div class="bg-white dark:dark:bg-neutral-950 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-neutral-200 dark:border-neutral-800 animate-in fade-in zoom-in-95 duration-200">
-      <div class="p-6">
-        <h2 class="text-xl font-semibold mb-4 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-teal-600 dark:text-teal-500" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-          </svg>
-          Resolve Mystery Object
-        </h2>
-        
-        {#if resolutionError}
-          <div class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-lg mb-4 border border-red-200 dark:border-red-800/50">
-            {resolutionError}
-          </div>
-        {/if}
-        
-        <div class="mb-5">
-          <label for="resolution-description" class="block text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300">Resolution Description*</label>
-          <Textarea 
-            id="resolution-description" 
-            bind:value={resolutionDescription} 
-            class="w-full p-3 border rounded-lg text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
-            placeholder="Explain how this mystery object was resolved..."
-            rows="4"
-          />
-        </div>
-        
-        <div class="mb-5">
-          <h3 class="text-sm font-medium mb-2 flex items-center text-neutral-700 dark:text-neutral-300">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-neutral-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z" clip-rule="evenodd" />
-            </svg>
             Contributing Comments
           </h3>
           <p class="text-xs text-neutral-600 dark:text-neutral-400 mb-2">

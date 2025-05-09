@@ -69,6 +69,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
 
         UserProfileDto profileDto = modelMapper.map(user, UserProfileDto.class);
+        profileDto.setRole(user.getRole().name());
 
         // Map badges
         List<BadgeDto> badgeDtos = user.getUserBadges().stream()

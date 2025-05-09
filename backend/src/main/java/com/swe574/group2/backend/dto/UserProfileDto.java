@@ -14,6 +14,7 @@ public class UserProfileDto {
     private Long id;
     private String username;
     private String email; // Consider if email should be public
+    private String role;
     private String bio;
     private String profilePictureUrl;
     private String location; // JSON string representing country codes, e.g., ["TR", "US"]

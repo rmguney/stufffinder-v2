@@ -35,6 +35,7 @@ if (browser) {
     } else {
       deleteCookie('currentUser');
       deleteCookie('tokenKey');
+      deleteCookie("userRole")
     }
   });
 }

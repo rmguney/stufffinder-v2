@@ -14,6 +14,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import com.swe574.group2.backend.entity.Role;
 
 import java.util.HashMap;
 import java.util.List;
@@ -73,12 +74,13 @@ public class UserController {
             User authenticatedUser = userRepository.findByEmail(user.getEmail())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Generate the token using email and userId
-            String token = jwtUtil.generateToken(authenticatedUser.getEmail(), authenticatedUser.getId());
+            // Generate the token using email, userId, and role
+            String token = jwtUtil.generateToken(authenticatedUser.getEmail(), authenticatedUser.getId(), authenticatedUser.getRole());
 
             // Create a JSON response with the token
             Map<String, String> response = new HashMap<>();
             response.put("token", token);
+            response.put("role", authenticatedUser.getRole().name());
             return ResponseEntity.ok(response);
 
         } catch (BadCredentialsException e) {

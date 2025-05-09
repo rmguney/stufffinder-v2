@@ -54,7 +54,7 @@ public class NotificationService {
         notification.setComment(comment);
         notificationRepository.save(notification);
     }
-    
+
     public void sendContributingCommentNotification(Long userId, Post post, Comment comment) {
         User user = userRepository.findById(userId).orElseThrow();
         Notification notification = new Notification();
@@ -67,10 +67,17 @@ public class NotificationService {
     }
 
     public List<NotificationDto> getUserNotifications(Long userId) {
-        List<NotificationDto> response =
-                notificationRepository.findByUserIdAndIsReadFalse(userId).stream()
-                        .map(notification -> new NotificationDto(notification.getId(), notification.getMessage(), notification.getType().name(), notification.getPost().getId(), notification.getComment().getId(), notification.getUser().getId(), notification.isRead(), notification.getCreatedAt()))
-                        .toList();
+        List<NotificationDto> response = notificationRepository.findByUserIdAndIsReadFalse(userId).stream()
+                .map(notification -> new NotificationDto(
+                        notification.getId(),
+                        notification.getMessage(),
+                        notification.getType().name(),
+                        notification.getPost() != null ? notification.getPost().getId() : null,
+                        notification.getComment() != null ? notification.getComment().getId() : null,
+                        notification.getUser().getId(),
+                        notification.isRead(),
+                        notification.getCreatedAt()))
+                .toList();
         return response;
     }
 

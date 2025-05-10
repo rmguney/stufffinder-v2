@@ -35,12 +35,13 @@ public class Notification {
     private Comment comment;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(50)")
     private NotificationType type;
 
     public enum NotificationType {
         COMMENT,
         UPVOTE,
-        BEST_ANSWER
+        BEST_ANSWER,
+        REPORT
     }
 }

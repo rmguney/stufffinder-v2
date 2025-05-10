@@ -1,5 +1,5 @@
 <script>
-    import { onMount, onDestroy } from 'svelte';
+    import { onMount, onDestroy } from "svelte";
     import * as Popover from "$lib/components/ui/popover/index.js";
     import * as Card from "$lib/components/ui/card";
     import { Button } from "$lib/components/ui/button";
@@ -31,29 +31,29 @@
         const date = new Date(timestamp);
         const now = new Date();
         const diff = now - date;
-        
+
         // If less than 24 hours, show relative time
         if (diff < 24 * 60 * 60 * 1000) {
             // Less than a minute
             if (diff < 60 * 1000) {
-                return 'Just now';
+                return "Just now";
             }
             // Less than an hour
             if (diff < 60 * 60 * 1000) {
                 const minutes = Math.floor(diff / (60 * 1000));
-                return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+                return `${minutes} ${minutes === 1 ? "minute" : "minutes"} ago`;
             }
             // Less than a day
             const hours = Math.floor(diff / (60 * 60 * 1000));
-            return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+            return `${hours} ${hours === 1 ? "hour" : "hours"} ago`;
         }
-        
+
         // Show date and time for older notifications
-        return date.toLocaleString('en-US', { 
-            month: 'short', 
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
+        return date.toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
         });
     }
 
@@ -77,15 +77,21 @@
             isOpen = false;
             goto(`/thread/${notification.postId}`);
         }
+
+        if (notification.type === "REPORT") {
+            isOpen = false;
+            goto("/admin");
+            return;
+        }
     }
 
     // Bell animation when receiving new notifications
     $: if ($allUnreadCount > 0) {
         const bell = document.querySelector(".notification-bell");
         if (bell) {
-            bell.classList.add('animate-ring');
+            bell.classList.add("animate-ring");
             setTimeout(() => {
-                bell.classList.remove('animate-ring');
+                bell.classList.remove("animate-ring");
             }, 1000);
         }
     }
@@ -109,68 +115,6 @@
     });
 </script>
 
-<style>
-    /* Bell ring animation */
-    @keyframes ring {
-        0% { transform: rotate(0); }
-        5% { transform: rotate(15deg); }
-        10% { transform: rotate(-15deg); }
-        15% { transform: rotate(13deg); }
-        20% { transform: rotate(-13deg); }
-        25% { transform: rotate(11deg); }
-        30% { transform: rotate(-11deg); }
-        35% { transform: rotate(9deg); }
-        40% { transform: rotate(-9deg); }
-        45% { transform: rotate(7deg); }
-        50% { transform: rotate(-7deg); }
-        55% { transform: rotate(5deg); }
-        60% { transform: rotate(-5deg); }
-        65% { transform: rotate(3deg); }
-        70% { transform: rotate(-3deg); }
-        75% { transform: rotate(1deg); }
-        80% { transform: rotate(-1deg); }
-        85% { transform: rotate(0); }
-        100% { transform: rotate(0); }
-    }
-
-    .animate-ring {
-        animation: ring 1s ease;
-        transform-origin: top center;
-    }
-
-    @keyframes pulse {
-        0% { transform: scale(0.95); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(0.95); }
-    }
-
-    .badge-pulse {
-        animation: pulse 2s infinite;
-    }
-
-    .indicator {
-        width: 0.5rem;
-        height: 0.5rem;
-        border-radius: 9999px;
-        position: absolute;
-        left: 0.25rem;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-    
-    .comment-indicator {
-        background-color: #3b82f6;
-    }
-    
-    .upvote-indicator {
-        background-color: #10b981;
-    }
-    
-    .best-answer-indicator {
-        background-color: #eab308;
-    }
-</style>
-
 {#if $activeUser}
     <Popover.Root bind:open={isOpen}>
         <Popover.Trigger asChild let:builder>
@@ -180,8 +124,18 @@
                 class="relative notification-bell rounded-full h-8 w-8 sm:h-10 sm:w-10 p-0"
                 builders={[builder]}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-4 w-4 sm:h-5 sm:w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
+                    ></path>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                 </svg>
 
@@ -222,7 +176,7 @@
                         </Button>
                     {/if}
                 </Card.Header>
-                
+
                 <Separator />
 
                 <div
@@ -246,7 +200,9 @@
                                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                                 />
                             </svg>
-                            <p class="text-sm sm:text-base">No notifications yet</p>
+                            <p class="text-sm sm:text-base">
+                                No notifications yet
+                            </p>
                         </div>
                     {:else}
                         <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -261,34 +217,41 @@
                                     handleNotificationClick(notification)}
                             >
                                 <!-- Type indicator -->
-                                <div class="indicator 
-                                    {notification.type === 'COMMENT' ? 'comment-indicator' : 
-                                    notification.type === 'UPVOTE' ? 'upvote-indicator' : 
-                                    'best-answer-indicator'}">
-                                </div>
-                                
+                                <div
+                                    class="indicator
+                                    {notification.type === 'COMMENT'
+                                        ? 'comment-indicator'
+                                        : notification.type === 'UPVOTE'
+                                          ? 'upvote-indicator'
+                                          : 'best-answer-indicator'}"
+                                ></div>
+
                                 <!-- Content -->
                                 <div class="flex flex-col">
                                     <span class="text-xs sm:text-sm">
                                         {notification.message}
                                     </span>
-                                    <span class="text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                                        {formatTimestamp(notification.createdAt)}
+                                    <span
+                                        class="text-[10px] sm:text-xs text-neutral-500 dark:text-neutral-400 mt-1"
+                                    >
+                                        {formatTimestamp(
+                                            notification.createdAt,
+                                        )}
                                     </span>
                                 </div>
                             </div>
                         {/each}
                     {/if}
                 </div>
-                
+
                 <Separator />
-                
+
                 <Card.Footer class="p-2 flex justify-center">
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
+                    <Button
+                        variant="ghost"
+                        size="sm"
                         class="w-full text-xs text-neutral-500 dark:text-neutral-400 rounded-full hover:bg-neutral-900 hover:text-white h-7 sm:h-8"
-                        on:click={() => isOpen = false}
+                        on:click={() => (isOpen = false)}
                     >
                         Close
                     </Button>
@@ -300,3 +263,109 @@
 
 <!-- this is a linter exception do not delete -->
 <div class="animate-ring hidden"></div>
+
+<style>
+    /* Bell ring animation */
+    @keyframes ring {
+        0% {
+            transform: rotate(0);
+        }
+        5% {
+            transform: rotate(15deg);
+        }
+        10% {
+            transform: rotate(-15deg);
+        }
+        15% {
+            transform: rotate(13deg);
+        }
+        20% {
+            transform: rotate(-13deg);
+        }
+        25% {
+            transform: rotate(11deg);
+        }
+        30% {
+            transform: rotate(-11deg);
+        }
+        35% {
+            transform: rotate(9deg);
+        }
+        40% {
+            transform: rotate(-9deg);
+        }
+        45% {
+            transform: rotate(7deg);
+        }
+        50% {
+            transform: rotate(-7deg);
+        }
+        55% {
+            transform: rotate(5deg);
+        }
+        60% {
+            transform: rotate(-5deg);
+        }
+        65% {
+            transform: rotate(3deg);
+        }
+        70% {
+            transform: rotate(-3deg);
+        }
+        75% {
+            transform: rotate(1deg);
+        }
+        80% {
+            transform: rotate(-1deg);
+        }
+        85% {
+            transform: rotate(0);
+        }
+        100% {
+            transform: rotate(0);
+        }
+    }
+
+    .animate-ring {
+        animation: ring 1s ease;
+        transform-origin: top center;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(0.95);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(0.95);
+        }
+    }
+
+    .badge-pulse {
+        animation: pulse 2s infinite;
+    }
+
+    .indicator {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 9999px;
+        position: absolute;
+        left: 0.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .comment-indicator {
+        background-color: #3b82f6;
+    }
+
+    .upvote-indicator {
+        background-color: #10b981;
+    }
+
+    .best-answer-indicator {
+        background-color: #eab308;
+    }
+</style>

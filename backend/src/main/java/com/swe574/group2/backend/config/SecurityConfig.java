@@ -55,6 +55,7 @@ public class SecurityConfig {
         http
                 .cors(customizer -> customizer.configurationSource(corsConfigurationSource())) // Apply CORS configuration
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
+                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
                         .requestMatchers(
                                 "api/auth/register",
                                 "api/auth/login",

@@ -208,6 +208,7 @@
       if (data.token) {
         setCookie('tokenKey', data.token);
       }
+      setCookie('userRole', data.role);
 
       // Store user data
       activeUser.set(username);

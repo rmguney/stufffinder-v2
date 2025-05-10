@@ -10,6 +10,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import com.swe574.group2.backend.entity.Role;
 
 @Component
 public class JwtUtil {
@@ -21,11 +22,12 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    public String generateToken(String email, Long userId) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);  // Add user-specific data
-        return createToken(claims, email);
-    }
+public String generateToken(String email, Long userId, Role role) {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("userId", userId);
+    claims.put("role", role.name());
+    return createToken(claims, email);
+}
 
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()

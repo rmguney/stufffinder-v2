@@ -877,11 +877,11 @@
                   {#if !isCurrentUserProfile && $activeUser != null}
                     <div class="flex gap-2 flex-wrap justify-center">
                       <Button
-                        variant="outline"
+                        variant={isFollowing ? "outline" : "default"}
                         size="sm"
-                        class={`text-xs px-4 rounded-full border-primary text-primary 
-             hover:bg-[#0F766E] border-2 hover:border-[#0F993C] hover:text-white transition
-             ${isFollowing ? "bg-transparent" : "bg-[#0F766E]"}`}
+                        class={`text-xs px-4 rounded-full ${isFollowing 
+                          ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50 hover:bg-blue-200 dark:hover:bg-blue-900/50" 
+                          : "bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-300 border border-teal-200 dark:border-teal-800/50 hover:bg-teal-200 dark:hover:bg-teal-900/50"}`}
                         on:click={toggleFollow}
                         disabled={followLoading}
                       >
@@ -891,7 +891,7 @@
                       <Button
                         variant="outline"
                         size="sm"
-                        class="text-xs px-4 rounded-full border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition disabled:opacity-50"
+                        class="text-xs px-4 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-800/50 hover:bg-rose-200 dark:hover:bg-rose-900/50 disabled:opacity-50 disabled:hover:bg-rose-100 dark:disabled:hover:bg-rose-900/30"
                         on:click={() => (showReportModal = true)}
                         disabled={userAlreadyReported || userRole === "BANNED"}
                       >
@@ -1308,7 +1308,7 @@
                               >
                                 <path
                                   fill-rule="evenodd"
-                                  d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z"
+                                  d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v5zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z"
                                   clip-rule="evenodd"
                                 />
                               </svg>
@@ -1537,7 +1537,7 @@
                                 >
                                   <path
                                     fill-rule="evenodd"
-                                    d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z"
+                                    d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v5zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z"
                                     clip-rule="evenodd"
                                   />
                                 </svg>

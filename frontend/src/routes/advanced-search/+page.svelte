@@ -16,6 +16,23 @@
   let error = null;
   let availableAttributes = []; // To store attributes that have at least one non-null value
 
+  const colorNameHexMap = {
+    "Red": "#FF0000",
+    "Green": "#00FF00",
+    "Blue": "#0000FF",
+    "Yellow": "#FFFF00",
+    "Orange": "#FFA500",
+    "Purple": "#800080",
+    "Brown": "#A52A2A",
+    "Black": "#000000",
+    "White": "#FFFFFF",
+    "Gray": "#808080"
+  };
+
+  const hexColorNameMap = Object.fromEntries(
+    Object.entries(colorNameHexMap).map(([name, hex]) => [hex, name])
+  );
+
   const filterableAttributes = [
     "material",
     "writtenText",
@@ -122,15 +139,20 @@
 
       // Special handling for boolean and enum
       if (booleanAttributes.includes(attr)) {
-        // For boolean attributes, only include if at least one post has a value
         if (hasValues) {
           options[attr] = [true, false];
           attributesWithValues.add(attr);
         }
       } else if (attr === "item_condition") {
-        // For item_condition, only include if at least one post has a value
         if (hasValues) {
           options[attr] = conditionEnumValues;
+          attributesWithValues.add(attr);
+        }
+      } else if (attr === "mainColor") {
+        if (values.size > 0) {
+          options[attr] = Array.from(values)
+            .map(hex => ({ name: hexColorNameMap[hex] || hex, value: hex }))
+            .sort((a, b) => a.name.localeCompare(b.name));
           attributesWithValues.add(attr);
         }
       } else {
@@ -206,9 +228,13 @@
     }
     // Handle other attributes
     else if (selectedValue !== "") {
+      let filterToAdd = { attribute: selectedAttribute, value: selectedValue };
+      if (selectedAttribute === "mainColor") {
+        filterToAdd.displayName = hexColorNameMap[selectedValue] || selectedValue;
+      }
       activeFilters = [
         ...activeFilters,
-        { attribute: selectedAttribute, value: selectedValue },
+        filterToAdd,
       ];
       selectedValue = "";
     }
@@ -393,6 +419,25 @@
                     {/each}
                   </select>
                 </div>
+                <!-- Main Color Selection -->
+              {:else if selectedAttribute === 'mainColor'}
+                <div>
+                  <label
+                    for="value-select"
+                    class="block text-sm font-medium text-neutral-600 dark:text-neutral-400"
+                    >Value:</label
+                  >
+                  <select
+                    id="value-select"
+                    bind:value={selectedValue}
+                    class="mt-1 block w-full pl-3 pr-10 py-1.5 text-sm bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                  >
+                    <option value="">-- Select Color --</option>
+                    {#each currentOptions as option (option.value)}
+                      <option value={option.value}>{option.name}</option>
+                    {/each}
+                  </select>
+                </div>
                 <!-- Regular Selection with Options -->
               {:else if currentOptions.length > 0}
                 <div>
@@ -467,6 +512,8 @@
                       {:else if ["width", "height", "length"].includes(filter.attribute)}
                         cm
                       {/if}
+                    {:else if filter.attribute === 'mainColor'}
+                      {filter.attribute}: {filter.displayName || hexColorNameMap[filter.value] || String(filter.value)}
                     {:else}
                       {filter.attribute}: {String(filter.value)}
                     {/if}

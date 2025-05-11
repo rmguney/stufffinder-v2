@@ -6,6 +6,8 @@
     import * as Checkbox from "$lib/components/ui/checkbox";
     import { PUBLIC_API_URL } from "$env/static/public";
     import { onMount, onDestroy } from 'svelte';
+    import { slide } from 'svelte/transition';
+    import { cubicOut } from 'svelte/easing';
 
     let searchQuery = "";
     let searchResults = [];
@@ -20,11 +22,40 @@
     let isInitialLoad = true; // Track if this is the initial load
     let searchPending = false; // Track if a search is already pending
     
+    // Sorting state - set recent as default
+    let sortMethod = "recent";
+    
     // Semantic search additions
     let semanticExpansions = [];
     let selectedExpansions = [];
     let showExpansions = false;
     let allVisibleExpansions = []; // This will hold all expansions that should be visible
+
+    // Collapsible state for filter/sort section
+    let isFilterExpanded = false;
+    let animationInProgress = false;
+
+    // Add solvedFilter state
+    let solvedFilter = "ALL"; // ALL, SOLVED, UNSOLVED
+
+    // Pagination state for search results
+    let currentPage = 1;
+    const postsPerPage = 6;
+
+    // Calculate pagination values for filtered results
+    $: totalPages = Math.ceil(filteredResults.length / postsPerPage);
+    $: paginatedResults = filteredResults.slice(
+        (currentPage - 1) * postsPerPage,
+        currentPage * postsPerPage
+    );
+
+    function toggleFilterSection() {
+        if (!animationInProgress) {
+            isFilterExpanded = !isFilterExpanded;
+        }
+    }
+    function animationStart() { animationInProgress = true; }
+    function animationEnd() { animationInProgress = false; }
 
     // Define a list of mystery object attributes to check for matches
     const mysteryObjectAttributes = [
@@ -325,8 +356,9 @@
             console.log("Searching with expanded query:", expandedQuery);
             
             try {
-                // Use the backend endpoint
-                const response = await fetch(`${PUBLIC_API_URL}/api/posts/searchForPosts?q=${encodeURIComponent(expandedQuery)}`);
+                // Use the backend endpoint with sorting parameters
+                const sortParam = getSortParam(sortMethod);
+                const response = await fetch(`${PUBLIC_API_URL}/api/posts/searchForPosts?q=${encodeURIComponent(expandedQuery)}&page=0&size=50&sort=${sortParam}`);
                 
                 if (!response.ok) {
                     throw new Error(`Search request failed: ${response.status}`);
@@ -363,6 +395,19 @@
         } finally {
             loading = false;
             searchPending = false;
+        }
+    }
+    
+    // Get sort parameter based on sorting method
+    function getSortParam(method) {
+        switch (method) {
+            case "solved":
+                return "solved,desc"; // solved=true first
+            case "alphabetical":
+                return "title,asc";
+            case "recent":
+            default:
+                return "id,desc";
         }
     }
 
@@ -628,6 +673,47 @@
     }
     // Initialize lastUrlUpdate
     let lastUrlUpdate = '';
+
+    // Trigger search when sorting method changes
+    $: if (!isInitialLoad && sortMethod) {
+        performSearch();
+    }
+
+    // Filtering logic for search results
+    $: filteredResults = searchResults.filter(post => {
+        if (solvedFilter === "ALL") return true;
+        if (solvedFilter === "SOLVED") return post.solved === true || post.isSolved === true;
+        if (solvedFilter === "UNSOLVED") return !post.solved && !post.isSolved;
+        return true;
+    });
+
+    // Function to change pages
+    function goToPage(page) {
+        if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    // Function to generate pagination range (same as main page)
+    function getPaginationRange(current, total) {
+        if (total <= 5) {
+            return Array.from({ length: total }, (_, i) => i + 1);
+        }
+        if (current <= 3) {
+            return [1, 2, 3, 4, 5];
+        }
+        if (current >= total - 2) {
+            return [total - 4, total - 3, total - 2, total - 1, total];
+        }
+        return [current - 2, current - 1, current, current + 1, current + 2];
+    }
+
+    // Reset page when filters, search, or sort change
+    $: {
+        solvedFilter; sortMethod; searchQuery; selectedExpansions;
+        currentPage = 1;
+    }
 </script>
 
 <div class="flex flex-col items-center h-full min-h-screen text-text bg-change dark:bg-dark shifting p-3 py-5">
@@ -640,6 +726,109 @@
         </small>
       </Card.Title>
       
+      <!-- Collapsible Filter & Sort section -->
+      <div class="w-full bg-white dark:bg-neutral-950 shadow-sm rounded-md border border-neutral-200 dark:border-neutral-800 mb-4">
+        <div class="p-2.5 sm:p-3 flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 cursor-pointer" on:click={toggleFilterSection}>
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-neutral-600 dark:text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <h3 class="font-medium text-sm text-neutral-800 dark:text-neutral-200">Filter & Sort</h3>
+            {#if !isFilterExpanded}
+              <div class="ml-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+                Sort: {sortMethod === 'recent' ? 'Recent' : 'A-Z'}
+              </div>
+            {/if}
+          </div>
+          <div class="text-neutral-500 dark:text-neutral-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class={`h-4 w-4 transition-transform duration-300 ${isFilterExpanded ? 'rotate-180' : 'rotate-0'}`} viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+        {#if isFilterExpanded}
+          <div 
+            transition:slide={{ duration: 300, easing: cubicOut }}
+            on:introstart={animationStart}
+            on:outrostart={animationStart}
+            on:introend={animationEnd}
+            on:outroend={animationEnd}
+            class="p-3 sm:p-4"
+          >
+            <!-- Filter by solved status - main page style -->
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+              <span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Filter by:</span>
+              <button 
+                class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium border transition-colors
+                  {solvedFilter === 'ALL' 
+                    ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                on:click={() => solvedFilter = 'ALL'}
+              >
+                <span class="flex items-center">All</span>
+              </button>
+              <button 
+                class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium
+                  {solvedFilter === 'SOLVED' 
+                    ? 'bg-emerald-600 text-white' 
+                    : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'}"
+                on:click={() => solvedFilter = 'SOLVED'}
+              >
+                <span class="inline-flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1.5 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  Resolved
+                </span>
+              </button>
+              <button 
+                class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium
+                  {solvedFilter === 'UNSOLVED' 
+                    ? 'bg-rose-600 text-white' 
+                    : 'bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300 border border-rose-100 dark:border-rose-800/40 hover:bg-rose-100 dark:hover:bg-rose-900/30'}"
+                on:click={() => solvedFilter = 'UNSOLVED'}
+              >
+                <span class="inline-flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mx-1 -ml-0.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/>
+                  </svg>
+                  Unresolved
+                </span>
+              </button>
+            </div>
+            <!-- Sort controls (no solved status sort) -->
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+              <span class="text-sm font-medium text-neutral-600 dark:text-neutral-400">Sort by:</span>
+              <button 
+                class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium border transition-colors
+                  {sortMethod === 'alphabetical' 
+                    ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                on:click={() => sortMethod = 'alphabetical'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                </svg>
+                A-Z
+              </button>
+              <button 
+                class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium border transition-colors
+                  {sortMethod === 'recent' 
+                    ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 border-neutral-700 dark:border-neutral-300' 
+                    : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700'}"
+                on:click={() => sortMethod = 'recent'}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="size-3 mr-1">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                Recent
+              </button>
+            </div>
+          </div>
+        {/if}
+      </div>
+      <!-- End Filter & Sort section -->
+
       <div class="px-4 sm:px-6 pb-6">
         <!-- Search Form with submission handling -->
         <form on:submit={handleSubmit} class="mb-6">
@@ -770,7 +959,7 @@
                    aria-hidden="true"></div>
               <p class="text-neutral-500 dark:text-neutral-400">Searching...</p>
             </div>
-          {:else if searchResults.length === 0 && searchQuery.trim().length >= 3}
+          {:else if filteredResults.length === 0 && searchQuery.trim().length >= 3}
             <div class="text-center py-12">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-neutral-300 dark:text-neutral-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -785,7 +974,7 @@
               <p class="text-neutral-500 dark:text-neutral-400">Type at least 3 characters to search</p>
             </div>
           {:else}
-            {#each searchResults as post}
+            {#each paginatedResults as post}
               <a 
                 href={`/thread/${post.id}`} 
                 class="block p-4 sm:p-5 border border-neutral-200 dark:border-neutral-700 rounded-lg hover:border-teal-500 dark:hover:border-teal-500 transition-colors duration-200 bg-white dark:bg-neutral-950 shadow-sm hover:shadow-md"
@@ -846,6 +1035,73 @@
                 </div>
               </a>
             {/each}
+            <!-- Pagination controls -->
+            {#if totalPages > 1}
+            <div class="flex justify-center mt-8 mb-4">
+              <div class="flex items-center gap-1">
+                <!-- First page button -->
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  class="h-8 w-8 p-0 rounded-md"
+                  disabled={currentPage === 1 || totalPages === 0}
+                  on:click={() => goToPage(1)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                  </svg>
+                </Button>
+                <!-- Previous page button -->
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  class="h-8 w-8 p-0 rounded-md"
+                  disabled={currentPage === 1 || totalPages === 0}
+                  on:click={() => goToPage(currentPage - 1)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </Button>
+                <!-- Page numbers -->
+                {#each totalPages > 0 ? getPaginationRange(currentPage, totalPages) : [1] as page}
+                  <Button 
+                    variant={page === currentPage ? 'default' : 'outline'}
+                    size="sm" 
+                    class="h-8 w-8 p-0 {page === currentPage ? 'bg-teal-600 hover:bg-teal-700 text-white' : ''} rounded-md"
+                    disabled={totalPages === 0}
+                    on:click={() => goToPage(page)}
+                  >
+                    {page}
+                  </Button>
+                {/each}
+                <!-- Next page button -->
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  class="h-8 w-8 p-0 rounded-md"
+                  disabled={currentPage === totalPages || totalPages <= 1}
+                  on:click={() => goToPage(currentPage + 1)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </Button>
+                <!-- Last page button -->
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  class="h-8 w-8 p-0 rounded-md"
+                  disabled={currentPage === totalPages || totalPages <= 1}
+                  on:click={() => goToPage(totalPages)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 6.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0zM10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-3.293a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+            {/if}
           {/if}
         </div>
       </div>

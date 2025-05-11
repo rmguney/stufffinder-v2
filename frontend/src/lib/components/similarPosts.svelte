@@ -946,7 +946,7 @@
       // Process all posts for semantic relationships
       const allPosts = internalSimilarPosts;
       
-      console.log(`Processing ${allPosts.length} posts for semantic relationships`);
+      // console.log(`Processing ${allPosts.length} posts for semantic relationships`);
       
       // Process posts for various relationship types
       const processedResults = await Promise.all(
@@ -977,7 +977,7 @@
                 const isSubclassRelated = await checkSubclassRelation(sourceTag, targetTag);
                 
                 if (isSubclassRelated) {
-                  console.log(`Found subclass relation between ${sourceTag} and ${targetTag}`);
+                  // console.log(`Found subclass relation between ${sourceTag} and ${targetTag}`);
                   subclassFound = true;
                   
                   // Fetch details
@@ -1034,7 +1034,7 @@
                   const result = await checkTransitiveRelations(sourceTag, targetTag);
                   
                   if (result.hasTransitiveRelation) {
-                    console.log(`Found transitive relation between ${sourceTag} and ${targetTag}`);
+                    // console.log(`Found transitive relation between ${sourceTag} and ${targetTag}`);
                     transitiveFound = true;
                     transitiveInfo = result;
                     break;
@@ -1124,7 +1124,7 @@
         (post.semanticLinks && post.semanticLinks.length > 0 && post.similarityScore >= 12)
       );
       
-      console.log(`Found ${relevantResults.length} related posts`);
+      // console.log(`Found ${relevantResults.length} related posts`);
       
       // Sort with enhanced priority system
       postsWithSemanticInfo = relevantResults.sort((a, b) => {
@@ -1372,7 +1372,7 @@
     // This will run both when navigating between threads AND when thread data becomes available after refresh
     if (thread?.id) {
       if (!threadLoaded || previousThreadId !== thread.id) {
-        console.log(`Thread data loaded or changed: ${thread.id}`);
+        // console.log(`Thread data loaded or changed: ${thread.id}`);
         previousThreadId = thread.id;
         threadLoaded = true;
         resetComponent();
@@ -1396,7 +1396,7 @@
       const newTags = updatedThread.tags || [];
       
       if (JSON.stringify(currentTags) !== JSON.stringify(newTags)) {
-        console.log("Thread tags have changed, updating similar posts");
+        // console.log("Thread tags have changed, updating similar posts");
         initializeSimilarPosts();
       }
     }
@@ -1404,7 +1404,7 @@
 
   // Reset component when navigating to a new thread
   function resetComponent() {
-    console.log("Resetting similar posts component - new thread or refresh detected");
+    // console.log("Resetting similar posts component - new thread or refresh detected");
     internalSimilarPosts = [];
     postsWithSemanticInfo = [];
     loadingSemantic = true;
@@ -1469,7 +1469,7 @@
     // Short delay to ensure that thread data has time to load after page refresh
     setTimeout(() => {
       if (thread?.id && thread.tags && thread.tags.length > 0) {
-        console.log("Initializing similar posts on mount");
+        // console.log("Initializing similar posts on mount");
         previousThreadId = thread.id;
         threadLoaded = true;
         resetComponent();
@@ -1481,7 +1481,7 @@
     // Set up event listener for window focus to refresh data when returning to the page
     const handleFocus = () => {
       if (threadLoaded && thread?.id) {
-        console.log("Window focused, checking for updates to similar posts");
+        // console.log("Window focused, checking for updates to similar posts");
         initializeSimilarPosts();
       }
     };

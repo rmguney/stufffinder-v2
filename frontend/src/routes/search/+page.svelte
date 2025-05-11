@@ -175,7 +175,7 @@
             
             // Process multiple entities to get more diverse results
             const topEntities = searchData.search.slice(0, 3);
-            console.log("Top Wikidata entities found:", topEntities.map(e => `${e.id} (${e.label})`));
+            // console.log("Top Wikidata entities found:", topEntities.map(e => `${e.id} (${e.label})`));
             
             // Create a map to track unique results and avoid duplicates
             const uniqueResults = new Map();
@@ -278,7 +278,7 @@
                 .sort((a, b) => b.score - a.score)
                 .slice(0, 10); // Limit to top 10 most relevant results
             
-            console.log("Found semantic expansions:", results);
+            // console.log("Found semantic expansions:", results);
             return results;
         } catch (error) {
             console.error('Error expanding search terms:', error);
@@ -322,7 +322,7 @@
             
             // Build the expanded search query
             const expandedQuery = buildExpandedQuery();
-            console.log("Searching with expanded query:", expandedQuery);
+            // console.log("Searching with expanded query:", expandedQuery);
             
             try {
                 // Use the backend endpoint
@@ -354,7 +354,7 @@
                         await fetchTagLabels(Array.from(tagIds));
                     }
                     
-                    console.log("Search results:", searchResults);
+                    // console.log("Search results:", searchResults);
                 }
             } catch (error) {
                 console.error("Error searching posts:", error);

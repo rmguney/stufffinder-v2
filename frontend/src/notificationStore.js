@@ -167,7 +167,6 @@ export async function markFollowerNotificationAsRead(notificationId) {
 // Function to mark all notifications as read
 export async function markAllAsRead() {
     try {
-        console.log(notifications);
         const notificationsValue = get(notifications);
         for (const notification of notificationsValue) {
             if (!notification.isRead) {

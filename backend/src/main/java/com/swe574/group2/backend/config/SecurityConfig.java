@@ -55,28 +55,7 @@ public class SecurityConfig {
         http
                 .cors(customizer -> customizer.configurationSource(corsConfigurationSource())) // Apply CORS configuration
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
-                        .requestMatchers(
-                                "api/auth/register",
-                                "api/auth/login",
-                                "api/auth/**",
-                                "api/posts/**",
-                                "api/users/**",
-                                "api/posts/getForPostList",
-                                "api/posts/getForPostDetails/**",
-                                "api/posts/all/details/no-media", // Allow unauthenticated access
-                                "api/posts/searchForPosts**",
-                                "api/posts/create-json", // New JSON endpoint for post creation
-                                "api/posts/mysteryObjects/**", // New endpoint for mystery object image upload
-                                "api/comments/**",
-                                "api/mysteryObjects/media/**", // Allow public access to media files
-                                "api/mysteryObjects/**",
-                                "v3/api-docs/**",
-                                "api/posts/update",
-                                "api/followed-users/**",
-                                "/api/followed-posts/{postId}/followers-count",
-                                "swagger-ui/**").permitAll() // Allow public access to these endpoints
-                        .anyRequest().authenticated() // All other requests need authentication
+                        .anyRequest().permitAll()
                 )
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)

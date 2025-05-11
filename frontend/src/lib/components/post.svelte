@@ -67,6 +67,7 @@
     "colorName",
     "color_name",
     "color_label",
+    "mainColor"
   ];
 
   // Explicitly check if there's any color name field being generated separately from color

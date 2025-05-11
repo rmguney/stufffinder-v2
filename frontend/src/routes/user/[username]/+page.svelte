@@ -16,6 +16,8 @@
   } from "$lib/components/ui/tabs";
   import { activeUser } from "../../../userStore";
   import UserCountrySelector from "$lib/components/userCountrySelector.svelte";
+  import Badge from "$lib/components/Badge.svelte";
+  import { calculateUserBadges, badgeDefinitions } from "$lib/utils/badgeUtils.js";
 
   // State variables
   let userId;
@@ -29,6 +31,7 @@
   let userImage = null;
   let userCountries = []; // Selected countries (up to 3)
   let userBadges = []; // Store fetched badges
+  let calculatedBadges = []; // Store calculated badges
   let isCurrentUserProfile = false;
   let isFollowing = false;
   let followLoading = false;
@@ -738,6 +741,28 @@
       } finally {
         loadingComments = false;
       }
+
+      // After user data is loaded, calculate badges
+      const badgeUserData = {
+        threads,
+        comments,
+        userRole,
+        followingCount,
+        followerCount,
+        userBio,
+        userImage,
+        userCountries
+      };
+      
+      calculatedBadges = calculateUserBadges(badgeUserData);
+      
+      // Merge with server-provided badges if any
+      const serverBadgesIds = userBadges.map(badge => badge.id);
+      
+      // Only add calculated badges that aren't already provided by the server
+      calculatedBadges = calculatedBadges.filter(badge => 
+        !serverBadgesIds.includes(badge.id)
+      );
     } catch (error) {
       console.error("Error fetching user data:", error);
       loadingThreads = false;
@@ -1005,39 +1030,33 @@
                 <div
                   class="bg-white dark:bg-neutral-950 rounded-md border border-neutral-200 dark:border-neutral-800 p-3 h-full"
                 >
-                  <h3
-                    class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 flex items-center justify-center"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-4 w-4 mr-1.5 text-amber-500"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clip-rule="evenodd"
-                      />
+                  <h3 class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                     </svg>
                     Badges & Achievements
                   </h3>
                   <div class="flex flex-wrap gap-2 justify-center">
-                    {#if userBadges.length > 0}
+                    {#if userBadges.length > 0 || calculatedBadges.length > 0}
+                      <!-- Display server-provided badges first -->
                       {#each userBadges as badge (badge.id)}
-                        <div
-                          class="text-xs border border-neutral-200 dark:border-neutral-700 rounded-full px-3 py-1 bg-neutral-50 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 flex items-center gap-1"
-                          title={badge.description}
-                        >
+                        <!-- If the badge has an iconUrl, display it as is -->
+                        <div class="text-xs border border-neutral-200 dark:border-neutral-700 rounded-full px-3 py-1 bg-neutral-50 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 flex items-center gap-1" title={badge.description}>
                           {#if badge.iconUrl}
-                            <img
-                              src={badge.iconUrl}
-                              alt={badge.name}
-                              class="h-3 w-3"
-                            />
+                            <img src={badge.iconUrl} alt={badge.name} class="h-3 w-3" />
                           {/if}
                           <span>{badge.name}</span>
                         </div>
+                      {/each}
+                      
+                      <!-- Display calculated badges -->
+                      {#each calculatedBadges as badge (badge.id)}
+                        <Badge 
+                          name={badge.name}
+                          description={badge.description}
+                          color={badge.color}
+                          icon={badge.icon}
+                        />
                       {/each}
                     {:else}
                       <div class="text-xs text-neutral-500 italic">
@@ -1502,7 +1521,7 @@
                                   fill="currentColor"
                                 >
                                   <path
-                                    d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"
+                                    d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 005.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"
                                   />
                                 </svg>
                               </div>
@@ -1616,10 +1635,10 @@
                                 >
                                   <path
                                     d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"
-                                  />
-                                </svg>
-                                {comment.upvotes || 0}
-                              </span>
+                                />
+                              </svg>
+                              {comment.upvotes || 0}
+                            </span>
                             </div>
                           </div>
                         </div>

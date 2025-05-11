@@ -1,0 +1,1 @@
+@keyframes svelte-k08umy-fadeIn{0%{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@keyframes svelte-k08umy-slide-in{0%{transform:translate(100%);opacity:0}to{transform:translate(0);opacity:1}}form.svelte-k08umy{animation:svelte-k08umy-fadeIn .4s ease-out}.animate-slide-in.svelte-k08umy{animation:svelte-k08umy-slide-in .3s ease-out}

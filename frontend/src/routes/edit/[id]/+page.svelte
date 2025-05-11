@@ -387,7 +387,7 @@
             }
 
             const responseData = await updateResponse.json();
-            console.log("Post updated successfully:", responseData);
+            // console.log("Post updated successfully:", responseData);
 
             // Update main image if needed
             if (mediaFiles.length > 0 && mediaFiles[0].file) {

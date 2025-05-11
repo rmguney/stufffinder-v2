@@ -30,14 +30,14 @@
         }
         
         currentPath = $page.url.pathname;
-        console.log("currentpath" + currentPath)
+        // console.log("currentpath" + currentPath)
         
         // Don't refetch on the notifications page itself to avoid duplicate calls
         if (currentPath !== '/notifications') {
             // console.log('Page changed, fetching notifications');
             if ($activeUser) {
                 fetchNotifications();
-                console.log("notif called from layout")
+                // console.log("notif called from layout")
             }
         }
         
@@ -80,7 +80,7 @@
                 }
             });
         } catch (error) {
-            console.log('Not running in Capacitor environment');
+            // console.log('Not running in Capacitor environment');
         }
     
         return () => {

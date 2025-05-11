@@ -264,7 +264,7 @@
             };
 
             // First create the post without files
-            console.log("Creating post with JSON data");
+            // console.log("Creating post with JSON data");
             const createResponse = await fetch(`${PUBLIC_API_URL}/api/posts/create-json`, {
                 method: 'POST',
                 headers: {
@@ -302,14 +302,14 @@
             }
 
             const responseData = await createResponse.json();
-            console.log("Post created successfully:", responseData);
+            // console.log("Post created successfully:", responseData);
 
             // Then upload image separately if available
             if (mediaFiles.length > 0) {
                 const imageFormData = new FormData();
                 imageFormData.append('file', mediaFiles[0].file);
 
-                console.log("Uploading main image");
+                // console.log("Uploading main image");
                 try {
                     const imageResponse = await fetch(`${PUBLIC_API_URL}/api/posts/${responseData.postId}/mysteryObjects/${responseData.mysteryObjectId}/set-image`, {
                         method: 'POST',
@@ -330,7 +330,7 @@
             // Upload media files
             let mediaUploadErrors = 0;
             if (mediaFiles.length > 0) {
-                console.log(`Uploading ${mediaFiles.length} media files`);
+                // console.log(`Uploading ${mediaFiles.length} media files`);
 
                 for (let i = 0; i < mediaFiles.length; i++) {
                     const mediaItem = mediaFiles[i];
@@ -339,7 +339,7 @@
                     mediaFormData.append('type', mediaItem.type || 'image');
 
                     try {
-                        console.log(`Uploading media file ${i+1}/${mediaFiles.length}`);
+                        // console.log(`Uploading media file ${i+1}/${mediaFiles.length}`);
                         const mediaResponse = await fetch(`${PUBLIC_API_URL}/api/mysteryObjects/${responseData.mysteryObjectId}/upload-media`, {
                             method: 'POST',
                             body: mediaFormData,
@@ -355,7 +355,7 @@
                             mediaUploadErrors++;
                             console.error(`Failed to upload media file ${i+1}:`, mediaResponse.status, mediaResponse.statusText);
                         } else {
-                            console.log(`Media file ${i+1} uploaded successfully`);
+                            // console.log(`Media file ${i+1} uploaded successfully`);
                         }
                     } catch (mediaError) {
                         formErrors.mediaFiles.push({
@@ -372,12 +372,12 @@
             // Add sub-parts to the mystery object
             let subPartErrors = 0;
             if (mysteryObjectSubParts.length > 0) {
-                console.log(`Adding ${mysteryObjectSubParts.length} sub-parts to mystery object`);
+                // console.log(`Adding ${mysteryObjectSubParts.length} sub-parts to mystery object`);
 
                 // Process sub-parts sequentially to avoid race conditions
                 for (let i = 0; i < mysteryObjectSubParts.length; i++) {
                     try {
-                        console.log(`Adding sub-part ${i+1}/${mysteryObjectSubParts.length}`);
+                        // console.log(`Adding sub-part ${i+1}/${mysteryObjectSubParts.length}`);
 
                         // Create a clean object suitable for the API
                         const cleanSubPart = prepareSubPartForApi(mysteryObjectSubParts[i]);
@@ -402,7 +402,7 @@
                             const errorText = await subPartResponse.text();
                             console.error('Error response:', errorText);
                         } else {
-                            console.log(`Sub-part ${i+1} added successfully`);
+                            // console.log(`Sub-part ${i+1} added successfully`);
                         }
                     } catch (subPartError) {
                         subPartErrors++;

@@ -148,13 +148,13 @@
 
   // Completely rewritten media processing function that handles all edge cases
   function processThreadMediaFiles(thread) {
-    console.log("Processing media for thread:", thread.id, thread.title);
+    // console.log("Processing media for thread:", thread.id, thread.title);
     const mediaFiles = [];
 
     try {
       // Check directly for image URL in the thread
       if (thread.imageUrl) {
-        console.log("Found direct imageUrl:", thread.imageUrl);
+        // console.log("Found direct imageUrl:", thread.imageUrl);
         mediaFiles.push({
           type: "image",
           url: thread.imageUrl,
@@ -167,17 +167,17 @@
         Array.isArray(thread.mediaFiles) &&
         thread.mediaFiles.length > 0
       ) {
-        console.log(
+        /* // console.log(
           "Found mediaFiles array with length:",
           thread.mediaFiles.length,
-        );
+        ); */
 
         thread.mediaFiles.forEach((media, index) => {
           if (media.id) {
             const url = `${PUBLIC_API_URL}/api/mysteryObjects/media/${media.id}`;
-            console.log(
+           /*  // console.log(
               `Adding media ${index} with ID ${media.id}, URL: ${url}`,
-            );
+            ); */
 
             mediaFiles.push({
               id: media.id,
@@ -193,12 +193,12 @@
 
       // Check for mystery object with various image properties
       else if (thread.mysteryObject) {
-        console.log("Checking mysteryObject for images");
+        // console.log("Checking mysteryObject for images");
         const mo = thread.mysteryObject;
 
         // Try direct imageUrl
         if (mo.imageUrl) {
-          console.log("Found mysteryObject.imageUrl:", mo.imageUrl);
+          // console.log("Found mysteryObject.imageUrl:", mo.imageUrl);
           mediaFiles.push({
             type: "image",
             url: mo.imageUrl,
@@ -207,24 +207,24 @@
         // Try image ID
         else if (mo.imageId) {
           const url = `${PUBLIC_API_URL}/api/mysteryObjects/media/${mo.imageId}`;
-          console.log("Found mysteryObject.imageId:", mo.imageId, "URL:", url);
+          /* // console.log("Found mysteryObject.imageId:", mo.imageId, "URL:", url);
           mediaFiles.push({
             type: "image",
             url: url,
-          });
+          }); */
         }
         // Try media array in mystery object
         else if (mo.media && Array.isArray(mo.media) && mo.media.length > 0) {
-          console.log(
+         /*  // console.log(
             "Found mysteryObject.media array with length:",
             mo.media.length,
-          );
+          ); */
           mo.media.forEach((media, index) => {
             if (media.id) {
               const url = `${PUBLIC_API_URL}/api/mysteryObjects/media/${media.id}`;
-              console.log(
+              /* // console.log(
                 `Adding mystery object media ${index} with ID ${media.id}, URL: ${url}`,
-              );
+              ); */
 
               mediaFiles.push({
                 id: media.id,
@@ -238,16 +238,16 @@
 
       // As a last resort, check for base64 encoded image
       else if (thread.mysteryObjectImage) {
-        console.log("Found base64 mysteryObjectImage");
+        // console.log("Found base64 mysteryObjectImage");
         mediaFiles.push({
           type: "image",
           url: `data:image/png;base64,${thread.mysteryObjectImage}`,
         });
       }
 
-      console.log(
+      /* // console.log(
         `Total media files found for thread ${thread.id}: ${mediaFiles.length}`,
-      );
+      ); */
     } catch (error) {
       console.error("Error processing thread media:", error);
     }
@@ -391,7 +391,7 @@
       initialUserBio = userBio;
 
       // Add success feedback (e.g., toast notification)
-      console.log("Profile saved successfully!");
+      // console.log("Profile saved successfully!");
     } catch (error) {
       console.error("Error saving profile:", error);
       saveError = error.message || "Failed to save profile. Please try again.";
@@ -404,7 +404,7 @@
   function handleCountryChange() {
     if (profileLoaded) {
       // Only save if initial load is complete
-      console.log("Country changed, auto-saving profile...");
+      // console.log("Country changed, auto-saving profile...");
       saveProfile();
     }
   }
@@ -448,19 +448,19 @@
   // Additional function to check for comment content
   function logCommentData() {
     if (comments.length > 0) {
-      console.log("Sample comment data:", comments[0]);
+      // console.log("Sample comment data:", comments[0]);
     }
   }
 
   // Additional function to debug post images
   function debugThreadImages() {
     if (threads.length > 0) {
-      console.log("Sample thread data:", threads[0]);
+      // console.log("Sample thread data:", threads[0]);
       if (threads[0].mysteryObject) {
-        console.log("Mystery object:", threads[0].mysteryObject);
+        // console.log("Mystery object:", threads[0].mysteryObject);
       }
       if (threads[0].mediaFiles) {
-        console.log("Media files:", threads[0].mediaFiles);
+        // console.log("Media files:", threads[0].mediaFiles);
       }
     }
   }
@@ -672,7 +672,7 @@
         if (!postsResponse.ok) throw new Error("Failed to fetch posts");
         const postsData = await postsResponse.json();
 
-        console.log("User's posts raw data:", postsData);
+        // console.log("User's posts raw data:", postsData);
 
         // Add direct API call for each post to get detailed data including images
         const enrichedPosts = [];
@@ -683,7 +683,7 @@
             );
             if (detailResponse.ok) {
               const detailData = await detailResponse.json();
-              console.log(`Detailed data for post ${post.id}:`, detailData);
+              // console.log(`Detailed data for post ${post.id}:`, detailData);
               enrichedPosts.push({ ...post, ...detailData });
             } else {
               enrichedPosts.push(post);
@@ -1198,7 +1198,7 @@
                             alt={thread.title}
                             class="w-full h-full object-cover"
                             on:error={(e) => {
-                              console.log(`Image error for ${thread.id}:`, e);
+                              // console.log(`Image error for ${thread.id}:`, e);
                               e.target.src =
                                 "https://via.placeholder.com/300x200?text=No+Image";
                             }}

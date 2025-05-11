@@ -14,14 +14,14 @@
   // Make sorting trigger immediately when threadStore updates
   $: {
     if ($threadStore.length > 0 && !initialSortDone) {
-      console.log("Initial thread data received - applying default sort");
+      // console.log("Initial thread data received - applying default sort");
       sortMethod = "recent"; // Set default sort to recent (thread ID)
       initialSortDone = true;
     }
   }
 
   onMount(async function () {
-    console.log("Thread data sample:", $threadStore.length > 0 ? $threadStore[0] : "No threads");
+    // console.log("Thread data sample:", $threadStore.length > 0 ? $threadStore[0] : "No threads");
     fetchAllTagDetails();
   });
 
@@ -185,13 +185,13 @@
   // Function to safely parse dates for sorting
   function parseDateSafe(dateString) {
     if (!dateString) {
-      console.log("Warning: Empty date string received in sorting");
+      // console.log("Warning: Empty date string received in sorting");
       return 0; // Default to oldest date equivalent (epoch)
     }
     
     try {
       // Log the raw date string for debugging
-      console.log("Parsing date string:", dateString);
+      // console.log("Parsing date string:", dateString);
       
       const date = new Date(dateString);
       
@@ -202,7 +202,7 @@
       }
       
       const timestamp = date.getTime();
-      console.log(`Date ${dateString} parsed to timestamp: ${timestamp}`);
+      // console.log(`Date ${dateString} parsed to timestamp: ${timestamp}`);
       return timestamp; // Return timestamp for consistent comparison
     } catch (error) {
       console.error("Date parsing error in sorting:", error, "for date:", dateString);
@@ -217,7 +217,7 @@
     // Create a copy to avoid modifying the original
     const sorted = [...threads];
     
-    console.log(`Sorting ${sorted.length} threads by method: ${method}`);
+    // console.log(`Sorting ${sorted.length} threads by method: ${method}`);
     
     // Sort function with comments, alphabetical, and ID (recent) options
     switch (method) {
@@ -233,12 +233,12 @@
         
         // Log the first few sorted items to verify ordering
         if (sorted.length > 0) {
-          console.log("First three threads after sorting by ID:", 
+          /* console.log("First three threads after sorting by ID:", 
             sorted.slice(0, Math.min(3, sorted.length)).map(t => ({ 
               id: t.id, 
               title: t.title.substring(0, 20)
             }))
-          );
+          ); */
         }
         break;
       default:

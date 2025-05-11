@@ -988,16 +988,16 @@
               <!-- Right column: Location and About -->
               <div class="w-full md:w-1/3 order-2 md:order-3">
                 <!-- Stack Location and About vertically -->
-                <div class="flex flex-col gap-2 mt-4">
+                <div class="flex flex-col gap-2 mt-4  justify-start">
                   <!-- Location - With left alignment -->
-                  <div class="p-3 rounded-lg border border-neutral-200 dark:border-neutral-800">
+                  <div class="p-3 rounded-lg border border-neutral-200 dark:border-neutral-800  justify-start">
                     <h3 class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-200 flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-teal-500" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
                     </svg>
                     Location
                     </h3>
-                    <div class="relative z-50 location-select-container">
+                    <div class="relative z-50 location-select-container  justify-start">
                       <UserCountrySelector
                         bind:selectedCountries={userCountries}
                         isEditable={isCurrentUserProfile}
@@ -1872,6 +1872,8 @@
   /* Force left alignment for all content in the selector */
   :global(.location-select-container *) {
     text-align: left !important;
+    justify-content: flex-start !important;
+    margin-right: auto !important;
   }
   
   /* Handle the specific country display elements */

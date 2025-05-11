@@ -10,9 +10,11 @@
     import NotificationBell from "./NotificationBell.svelte";
     import { browser } from "$app/environment";
     import { onMount } from "svelte";
+    import { PUBLIC_API_URL } from "$env/static/public"; 
 
     let loginBar = false;
     let isAdmin = false;
+    let profilePictureUrl = null; // Add variable to store profile picture URL
 
     function handleLogout() {
         activeUser.set(null);
@@ -24,14 +26,44 @@
         loginBar = !loginBar;
     }
 
+    // Function to fetch the user's profile picture
+    async function fetchUserProfilePicture() {
+        if (!$activeUser) return;
+        
+        try {
+            const response = await fetch(`${PUBLIC_API_URL}/api/users/${$activeUser}/profile`);
+            
+            if (response.ok) {
+                const profileData = await response.json();
+                
+                if (profileData.profilePictureUrl) {
+                    profilePictureUrl = profileData.profilePictureUrl;
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching profile picture:', error);
+        }
+    }
+
+    // Update the profile picture when the active user changes
     $: if (browser && $activeUser) {
+        fetchUserProfilePicture();
+        
         const cookies = document.cookie.split(";").map((c) => c.trim());
         const roleCookie = cookies.find((c) => c.startsWith("userRole="));
         const role = roleCookie?.split("=")[1];
         isAdmin = role === "ADMIN";
     } else {
         isAdmin = false;
+        profilePictureUrl = null;
     }
+
+    // Fetch the profile picture on component mount if user is logged in
+    onMount(() => {
+        if ($activeUser) {
+            fetchUserProfilePicture();
+        }
+    });
 </script>
 
 <header
@@ -178,11 +210,19 @@
 
                     <a
                         href={`/user/${$activeUser}`}
-                        class="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                        class="flex items-center justify-center h-5 w-5 sm:h-7 sm:w-7 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors overflow-hidden"
                     >
-                        <span class="text-lg">
-                            {$activeUser[0].toUpperCase()}
-                        </span>
+                        {#if profilePictureUrl}
+                            <img 
+                                src={profilePictureUrl} 
+                                alt={$activeUser} 
+                                class="w-full h-full object-cover"
+                            />
+                        {:else}
+                            <span class="text-lg">
+                                {$activeUser[0].toUpperCase()}
+                            </span>
+                        {/if}
                     </a>
                     <!-- Show text button on larger screens, icon on mobile -->
                     <Button

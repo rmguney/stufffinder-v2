@@ -270,287 +270,258 @@
   <title>Advanced Search</title>
 </svelte:head>
 
-<div class="flex flex-col items-center bg-change dark:bg-dark shifting p-3 py-5">
-  <div class="w-full max-w-7xl mx-auto">
-    {#if isLoading}
-      <div class="flex justify-center items-center py-16">
-        <div
-          class="inline-block h-10 w-10 border-4 border-neutral-200 dark:border-neutral-800 border-t-teal-600 dark:border-t-teal-500 rounded-full animate-spin"
-        ></div>
-      </div>
-    {:else if error}
-      <p class="text-red-500">Error: {error}</p>
-    {:else}
-      <!-- Filter Builder - Styling updated to match postContainer -->
+<div class="container mx-auto p-4 bg-change dark:bg-dark shifting">
+  <h1 class="text-2xl font-bold mb-4">Advanced Post Search</h1>
+
+  {#if isLoading}
+    <div class="flex justify-center items-center py-16">
       <div
-        class="w-full bg-white dark:bg-neutral-950 shadow-sm rounded-md border border-neutral-200 dark:border-neutral-800 mb-4"
-      >
-        <div class="p-2.5 sm:p-3 border-b border-neutral-100 dark:border-neutral-800">
-          <h2 class="flex items-center text-lg font-semibold text-neutral-900 dark:text-white gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-neutral-600 dark:text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <span class="text-sm">Advanced Search</span>
-          </h2>
+        class="inline-block h-10 w-10 border-4 border-neutral-200 dark:border-neutral-800 border-t-teal-600 dark:border-t-teal-500 rounded-full animate-spin"
+      ></div>
+    </div>
+  {:else if error}
+    <p class="text-red-500">Error: {error}</p>
+  {:else}
+    <!-- Filter Builder -->
+    <div
+      class="filter-builder bg-card border border-border p-6 rounded-lg shadow-md mb-6"
+    >
+      <h2 class="text-xl font-semibold text-card-foreground mb-4">
+        Build Your Filter
+      </h2>
+      <div class="flex flex-wrap gap-4 items-end">
+        <!-- Attribute Selection -->
+        <div>
+          <label
+            for="attribute-select"
+            class="block text-sm font-medium text-muted-foreground"
+            >Attribute:</label
+          >
+          <select
+            id="attribute-select"
+            bind:value={selectedAttribute}
+            class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-input text-foreground border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary sm:text-sm"
+          >
+            <option value="">-- Select Attribute --</option>
+            {#each availableAttributes as attr}
+              <option value={attr}
+                >{attr
+                  .replace(/([A-Z])/g, " $1")
+                  .replace(/^./, (str) => str.toUpperCase())}</option
+              >
+              <!-- Add spaces before caps -->
+            {/each}
+          </select>
         </div>
-        
-        <div class="p-3 sm:p-4">
-          <div class="flex flex-wrap gap-3 items-end">
-            <!-- Attribute Selection -->
+
+        <!-- Value Selection -->
+        {#if selectedAttribute}
+          <!-- Numerical Range Selection -->
+          {#if numericalAttributes.includes(selectedAttribute)}
+            <div class="flex flex-col gap-2">
+              <label class="block text-sm font-medium text-muted-foreground"
+                >Range:</label
+              >
+              <div class="flex items-center gap-2">
+                <input
+                  type="number"
+                  bind:value={minValue}
+                  placeholder="Min"
+                  class="mt-1 block w-24 bg-input text-foreground border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary sm:text-sm"
+                />
+                <span class="text-muted-foreground">to</span>
+                <input
+                  type="number"
+                  bind:value={maxValue}
+                  placeholder="Max"
+                  class="mt-1 block w-24 bg-input text-foreground border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary sm:text-sm"
+                />
+                <span class="text-xs text-muted-foreground">
+                  {#if selectedAttribute === "weight"}
+                    (grams)
+                  {:else if selectedAttribute === "value"}
+                    ($)
+                  {:else if ["width", "height", "length"].includes(selectedAttribute)}
+                    (cm)
+                  {/if}
+                </span>
+              </div>
+              <p class="text-xs text-muted-foreground">
+                Leave empty for no limit
+              </p>
+            </div>
+            <!-- Boolean Selection -->
+          {:else if booleanAttributes.includes(selectedAttribute)}
             <div>
               <label
-                for="attribute-select"
-                class="block text-sm font-medium text-neutral-600 dark:text-neutral-400"
-                >Attribute:</label
+                for="value-select"
+                class="block text-sm font-medium text-muted-foreground"
+                >Value:</label
               >
               <select
-                id="attribute-select"
-                bind:value={selectedAttribute}
-                class="mt-1 block w-full pl-3 pr-10 py-1.5 text-sm bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
+                id="value-select"
+                bind:value={selectedValue}
+                class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-input text-foreground border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary sm:text-sm"
               >
-                <option value="">-- Select Attribute --</option>
-                {#each availableAttributes as attr}
-                  <option value={attr}
-                    >{attr
-                      .replace(/([A-Z])/g, " $1")
-                      .replace(/^./, (str) => str.toUpperCase())}</option
-                  >
-                  <!-- Add spaces before caps -->
+                <option value="">-- Select Value --</option>
+                <option value="true">True</option>
+                <option value="false">False</option>
+              </select>
+            </div>
+            <!-- Condition Enum Selection -->
+          {:else if selectedAttribute === "item_condition"}
+            <div>
+              <label
+                for="value-select"
+                class="block text-sm font-medium text-muted-foreground"
+                >Value:</label
+              >
+              <select
+                id="value-select"
+                bind:value={selectedValue}
+                class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-input text-foreground border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary sm:text-sm"
+              >
+                <option value="">-- Select Condition --</option>
+                {#each currentOptions as option}
+                  <option value={option}>{option}</option>
                 {/each}
               </select>
             </div>
-
-            <!-- Value Selection -->
-            {#if selectedAttribute}
-              <!-- Numerical Range Selection -->
-              {#if numericalAttributes.includes(selectedAttribute)}
-                <div class="flex flex-col gap-2">
-                  <label class="block text-sm font-medium text-neutral-600 dark:text-neutral-400"
-                    >Range:</label
-                  >
-                  <div class="flex items-center gap-2">
-                    <input
-                      type="number"
-                      bind:value={minValue}
-                      placeholder="Min"
-                      class="mt-1 block w-24 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 text-xs py-1.5 px-3"
-                    />
-                    <span class="text-neutral-600 dark:text-neutral-400 text-xs">to</span>
-                    <input
-                      type="number"
-                      bind:value={maxValue}
-                      placeholder="Max"
-                      class="mt-1 block w-24 bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 text-xs py-1.5 px-3"
-                    />
-                    <span class="text-xs text-neutral-500 dark:text-neutral-400">
-                      {#if selectedAttribute === "weight"}
-                        (grams)
-                      {:else if selectedAttribute === "value"}
-                        ($)
-                      {:else if ["width", "height", "length"].includes(selectedAttribute)}
-                        (cm)
-                      {/if}
-                    </span>
-                  </div>
-                  <p class="text-xs text-neutral-500 dark:text-neutral-400">
-                    Leave empty for no limit
-                  </p>
-                </div>
-                <!-- Boolean Selection -->
-              {:else if booleanAttributes.includes(selectedAttribute)}
-                <div>
-                  <label
-                    for="value-select"
-                    class="block text-sm font-medium text-neutral-600 dark:text-neutral-400"
-                    >Value:</label
-                  >
-                  <select
-                    id="value-select"
-                    bind:value={selectedValue}
-                    class="mt-1 block w-full pl-3 pr-10 py-1.5 text-sm bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
-                  >
-                    <option value="">-- Select Value --</option>
-                    <option value="true">True</option>
-                    <option value="false">False</option>
-                  </select>
-                </div>
-                <!-- Condition Enum Selection -->
-              {:else if selectedAttribute === "item_condition"}
-                <div>
-                  <label
-                    for="value-select"
-                    class="block text-sm font-medium text-neutral-600 dark:text-neutral-400"
-                    >Value:</label
-                  >
-                  <select
-                    id="value-select"
-                    bind:value={selectedValue}
-                    class="mt-1 block w-full pl-3 pr-10 py-1.5 text-sm bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
-                  >
-                    <option value="">-- Select Condition --</option>
-                    {#each currentOptions as option}
-                      <option value={option}>{option}</option>
-                    {/each}
-                  </select>
-                </div>
-                <!-- Regular Selection with Options -->
-              {:else if currentOptions.length > 0}
-                <div>
-                  <label
-                    for="value-select"
-                    class="block text-sm font-medium text-neutral-600 dark:text-neutral-400"
-                    >Value:</label
-                  >
-                  <select
-                    id="value-select"
-                    bind:value={selectedValue}
-                    class="mt-1 block w-full pl-3 pr-10 py-1.5 text-sm bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500"
-                  >
-                    <option value="">-- Select Value --</option>
-                    {#each currentOptions as option}
-                      <option value={option}>{option}</option>
-                    {/each}
-                  </select>
-                </div>
-                <!-- Text Input for Other Cases -->
-              {:else}
-                <div>
-                  <label
-                    for="value-input"
-                    class="block text-sm font-medium text-neutral-600 dark:text-neutral-400"
-                    >Value:</label
-                  >
-                  <input
-                    id="value-input"
-                    type="text"
-                    bind:value={selectedValue}
-                    placeholder="Enter value"
-                    class="mt-1 block w-full bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white border border-neutral-200 dark:border-neutral-700 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500 text-xs py-1.5 px-3"
-                  />
-                </div>
-              {/if}
-            {/if}
-
-            <!-- Add Filter Button -->
-            <Button
-              on:click={addFilter}
-              disabled={!selectedAttribute ||
-                (numericalAttributes.includes(selectedAttribute)
-                  ? minValue === "" && maxValue === ""
-                  : selectedValue === "")}
-              class="text-xs bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-0.5 rounded-full"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-              </svg>
-              Add Filter
-            </Button>
-          </div>
-
-          <!-- Active Filters Display -->
-          {#if activeFilters.length > 0}
-            <div class="mt-3 mb-2">
-              <h3 class="text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1.5">
-                Active Filters:
-              </h3>
-              <ul class="flex flex-wrap gap-1.5">
-                {#each activeFilters as filter}
-                  <li
-                    class="bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 rounded-full px-2.5 py-0.5 text-xs flex items-center border border-neutral-200 dark:border-neutral-700"
-                  >
-                    {#if filter.type === "range"}
-                      {filter.attribute}: {filter.displayMin} to {filter.displayMax}
-                      {#if filter.attribute === "weight"}
-                        g
-                      {:else if filter.attribute === "value"}
-                        $
-                      {:else if ["width", "height", "length"].includes(filter.attribute)}
-                        cm
-                      {/if}
-                    {:else}
-                      {filter.attribute}: {String(filter.value)}
-                    {/if}
-                    <button
-                      on:click={() => removeFilter(filter.attribute)}
-                      class="ml-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-semibold text-lg"
-                      >×</button
-                    >
-                  </li>
+            <!-- Regular Selection with Options -->
+          {:else if currentOptions.length > 0}
+            <div>
+              <label
+                for="value-select"
+                class="block text-sm font-medium text-muted-foreground"
+                >Value:</label
+              >
+              <select
+                id="value-select"
+                bind:value={selectedValue}
+                class="mt-1 block w-full pl-3 pr-10 py-2 text-base bg-input text-foreground border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary sm:text-sm"
+              >
+                <option value="">-- Select Value --</option>
+                {#each currentOptions as option}
+                  <option value={option}>{option}</option>
                 {/each}
-              </ul>
+              </select>
+            </div>
+            <!-- Text Input for Other Cases -->
+          {:else}
+            <div>
+              <label
+                for="value-input"
+                class="block text-sm font-medium text-muted-foreground"
+                >Value:</label
+              >
+              <input
+                id="value-input"
+                type="text"
+                bind:value={selectedValue}
+                placeholder="Enter value"
+                class="mt-1 block w-full bg-input text-foreground border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary sm:text-sm"
+              />
             </div>
           {/if}
-          
-          <!-- Search Execution - Moved to left side -->
-          <div class="mt-3 flex justify-start border-t border-neutral-100 dark:border-neutral-800 pt-2">
-            <Button
-              on:click={performSearch}
-              class="text-xs bg-teal-600 hover:bg-teal-700 text-white px-2.5 py-0.5 rounded-full"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
-              </svg>
-              Search Posts
-            </Button>
-          </div>
-        </div>
+        {/if}
+
+        <!-- Add Filter Button -->
+        <Button
+          on:click={addFilter}
+          disabled={!selectedAttribute ||
+            (numericalAttributes.includes(selectedAttribute)
+              ? minValue === "" && maxValue === ""
+              : selectedValue === "")}
+          variant="default"
+        >
+          Add Filter
+        </Button>
       </div>
 
-      <!-- Search Results with postContainer-like header -->
-      <div class="search-results">
-        <!-- Results header with styling matching postContainer -->
-        <div class="w-full bg-white dark:bg-neutral-950 shadow-sm rounded-md border border-neutral-200 dark:border-neutral-800 mb-4">
-          <div class="p-2.5 flex items-center justify-between">
-            <div class="flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-neutral-600 dark:text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
-              <h3 class="font-medium text-sm text-neutral-800 dark:text-neutral-200">
-                Results ({filteredPosts.length})
-              </h3>
-            </div>
-          </div>
-        </div>
-        
-        {#if filteredPosts.length > 0}
-          <!-- Iterate and render individual Post components -->
-          <div
-            class="flex flex-col lg:flex-wrap lg:flex-row justify-center gap-4 lg:gap-6"
-          >
-            {#each filteredPosts as post (post.id)}
-              <div class="w-full lg:w-[calc(33.333%-1rem)]">
-                <a href={`/thread/${post.id}`} class="block">
-                  <Post
-                    id={post.id}
-                    title={post.title}
-                    description={post.description || ""}
-                    tags={post.tags || []}
-                    imageSrc={post.mysteryObject?.imageUrl || ""}
-                    mediaFiles={post.mediaFiles || []}
-                    postedBy={post.author}
-                    createdAt={post.createdAt}
-                    updatedAt={post.updatedAt}
-                    upvotes={post.upvotes || 0}
-                    downvotes={post.downvotes || 0}
-                    commentCount={post.commentCount || 0}
-                    userUpvoted={post.userUpvoted || false}
-                    userDownvoted={post.userDownvoted || false}
-                    solved={post.solved}
-                    mysteryObject={post.mysteryObject || null}
-                    variant="thumb"
-                  />
-                </a>
-              </div>
+      <!-- Active Filters Display -->
+      {#if activeFilters.length > 0}
+        <div class="mt-4">
+          <h3 class="text-lg font-semibold text-card-foreground mb-2">
+            Active Filters:
+          </h3>
+          <ul class="flex flex-wrap gap-2">
+            {#each activeFilters as filter}
+              <li
+                class="bg-muted text-muted-foreground rounded-md px-3 py-1.5 text-sm flex items-center shadow-sm"
+              >
+                {#if filter.type === "range"}
+                  {filter.attribute}: {filter.displayMin} to {filter.displayMax}
+                  {#if filter.attribute === "weight"}
+                    g
+                  {:else if filter.attribute === "value"}
+                    $
+                  {:else if ["width", "height", "length"].includes(filter.attribute)}
+                    cm
+                  {/if}
+                {:else}
+                  {filter.attribute}: {String(filter.value)}
+                {/if}
+                <button
+                  on:click={() => removeFilter(filter.attribute)}
+                  class="ml-2 text-destructive hover:text-destructive/80 font-semibold text-lg"
+                  >×</button
+                >
+              </li>
             {/each}
-          </div>
-        {:else}
-          <div class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 p-6 text-center">
-            <p class="text-neutral-600 dark:text-neutral-400">
-              No posts match the current filters or no posts loaded.
-            </p>
-          </div>
-        {/if}
-      </div>
-    {/if}
-  </div>
+          </ul>
+        </div>
+      {/if}
+    </div>
+
+    <!-- Search Execution -->
+    <div class="mb-6">
+      <Button
+        on:click={performSearch}
+        variant="default"
+        class="w-full sm:w-auto"
+      >
+        Search Posts
+      </Button>
+    </div>
+
+    <!-- Search Results -->
+    <!-- Search Results -->
+    <div class="search-results">
+      <h2 class="text-xl mb-2">Results ({filteredPosts.length})</h2>
+      {#if filteredPosts.length > 0}
+        <!-- Iterate and render individual Post components -->
+        <div
+          class="flex flex-col lg:flex-wrap lg:flex-row justify-center gap-4 lg:gap-6"
+        >
+          {#each filteredPosts as post (post.id)}
+            <div class="w-full lg:w-[calc(33.333%-1rem)]">
+              <a href={`/thread/${post.id}`}>
+                <Post
+                  id={post.id}
+                  title={post.title}
+                  description={post.description || ""}
+                  tags={post.tags || []}
+                  imageSrc={post.mysteryObject?.imageUrl || ""}
+                  mediaFiles={post.mediaFiles || []}
+                  postedBy={post.author}
+                  createdAt={post.createdAt}
+                  updatedAt={post.updatedAt}
+                  upvotes={post.upvotes || 0}
+                  downvotes={post.downvotes || 0}
+                  commentCount={post.commentCount || 0}
+                  userUpvoted={post.userUpvoted || false}
+                  userDownvoted={post.userDownvoted || false}
+                  solved={post.solved}
+                  mysteryObject={post.mysteryObject || null}
+                  variant="thumb"
+                />
+              </a>
+            </div>
+          {/each}
+        </div>
+      {:else}
+        <p>No posts match the current filters or no posts loaded.</p>
+      {/if}
+    </div>
+  {/if}
 </div>

@@ -800,29 +800,248 @@
         </Card.Header>
       </Card.Root>
     {:else}
-      <!-- Profile Header Card - Reorganized Layout -->
+      <!-- Profile Header Card -->
       <Card.Root
-        class="overflow-hidden bg-white dark:bg-neutral-950 shadow-md rounded-lg border border-neutral-200 dark:border-neutral-800"
+        class="overflow-hidden bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800"
       >
-        <Card.Header class="p-0">
-          <!-- Removed padding-top (pt-4) to fix excess padding -->
-          <div class="px-4 pb-4">
-            <!-- Three column layout: Badges | Profile | About & Location -->
-            <div class="flex flex-col md:flex-row md:gap-4">
-              
-              <!-- Left column: Achievements section - No changes needed -->
-              <div class="w-full md:w-1/3 order-3 md:order-1 mb-4">
-                <div class="p-3 rounded-lg mt-4 h-full border border-neutral-200 dark:border-neutral-800">
-                  <h3 class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-200 flex items-center">
+        <Card.Header class="p-6">
+          <!-- Reorganized profile layout with centered alignment -->
+          <div class="flex flex-col gap-5 items-center">
+            <div class="flex flex-col md:flex-row gap-5 md:gap-8 items-center">
+              <!-- Profile Image with upload button -->
+              <div class="relative">
+                <div
+                  class="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden
+                           ring-2 ring-primary/30 ring-offset-2 ring-offset-white dark:ring-offset-neutral-950
+                           bg-gradient-to-br from-neutral-100 to-neutral-50 dark:from-neutral-800 dark:to-neutral-900
+                           shadow-md transition-shadow duration-300"
+                >
+                  {#if userImage}
+                    <img
+                      src={userImage}
+                      alt={userName}
+                      class="w-full h-full object-cover"
+                    />
+                  {:else}
+                    <div class="flex items-center justify-center w-full h-full">
+                      <span
+                        class="text-3xl sm:text-4xl font-medium bg-clip-text text-transparent bg-gradient-to-br from-primary to-primary/70"
+                      >
+                        {userName ? userName[0].toUpperCase() : "?"}
+                      </span>
+                    </div>
+                  {/if}
+                </div>
+
+                {#if isCurrentUserProfile}
+                  <label
+                    for="profile-image-upload"
+                    class="absolute bottom-1 right-1 cursor-pointer p-2 bg-primary dark:bg-neutral-950 text-white rounded-full
+                          shadow-md hover:bg-primary-dark dark:hover:bg-neutral-900 transition-colors duration-200"
+                    title="Change profile picture"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"
+                      />
+                      <circle cx="12" cy="13" r="3" />
+                    </svg>
+                    <input
+                      id="profile-image-upload"
+                      type="file"
+                      class="hidden"
+                      accept="image/*"
+                      on:change={handleImageUpload}
+                    />
+                  </label>
+                {/if}
+              </div>
+
+              <!-- User Info Column - Name and Location -->
+              <div class="flex-1 space-y-3 text-center">
+                <div class="flex items-center justify-center gap-3 flex-wrap">
+                  <Card.Title class="text-2xl md:text-3xl font-bold"
+                    >{userName}</Card.Title
+                  >
+
+                  {#if !isCurrentUserProfile && $activeUser != null}
+                    <div class="flex gap-2 flex-wrap justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class={`text-xs px-4 rounded-full border-primary text-primary 
+             hover:bg-[#0F766E] border-2 hover:border-[#0F993C] hover:text-white transition
+             ${isFollowing ? "bg-transparent" : "bg-[#0F766E]"}`}
+                        on:click={toggleFollow}
+                        disabled={followLoading}
+                      >
+                        {isFollowing ? "Following" : "Follow"}
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="text-xs px-4 rounded-full border-red-600 text-red-600 hover:bg-red-600 hover:text-white transition disabled:opacity-50"
+                        on:click={() => (showReportModal = true)}
+                        disabled={userAlreadyReported || userRole === "BANNED"}
+                      >
+                        {userAlreadyReported
+                          ? "Reported"
+                          : userRole === "BANNED"
+                            ? "Banned"
+                            : "Report"}
+                      </Button>
+                    </div>
+                  {/if}
+                </div>
+
+                <div
+                  class="flex justify-center gap-6 text-sm text-neutral-600 dark:text-neutral-400 mt-1"
+                >
+                  <div>
+                    <span class="font-semibold">{followerCount}</span> Followers
+                  </div>
+                  <div>
+                    <span class="font-semibold">{followingCount}</span> Following
+                  </div>
+                </div>
+
+                <!-- Location info integrated here without border -->
+                <div class="pt-1">
+                  <div
+                    class="flex items-center justify-center gap-1.5 text-sm text-neutral-700 dark:text-neutral-300 mb-1.5"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="h-4 w-4 text-teal-500"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                    <span>Location</span>
+                  </div>
+                  <!-- Country selector with proper z-index and event handler -->
+                  <div class="relative z-50">
+                    <UserCountrySelector
+                      bind:selectedCountries={userCountries}
+                      isEditable={isCurrentUserProfile}
+                      maxCountries={3}
+                      on:change={handleCountryChange}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom row: Bio and Badges in a two-column layout - Centered alignment -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+              <!-- User Bio -->
+              <div class="md:col-span-1 order-2 md:order-1">
+                {#if isCurrentUserProfile}
+                  <div
+                    class="relative bg-white dark:bg-neutral-950 rounded-md border border-neutral-200 dark:border-neutral-800"
+                  >
+                    <textarea
+                      placeholder="Add your bio..."
+                      class="w-full p-3 pb-9 border-0 rounded-md text-sm bg-transparent resize-none focus:ring-0 focus:outline-none text-center"
+                      rows="3"
+                      bind:value={userBio}
+                    ></textarea>
+                    {#if bioChanged}
+                      <div class="absolute bottom-0 right-0 p-1.5">
+                        <Button
+                          class="h-7 px-3 py-0 text-xs rounded-full bg-white hover:bg-white/50 dark:bg-black dark:hover:bg-black/50 text-black dark:text-white shadow-sm flex items-center justify-center gap-1"
+                          size="sm"
+                          on:click={saveProfile}
+                          disabled={savingProfile}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            ><path
+                              d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+                            /><polyline
+                              points="17 21 17 13 7 13 7 21"
+                            /><polyline points="7 3 7 8 15 8" /></svg
+                          >
+                          {savingProfile ? "Saving..." : "Save Bio"}
+                        </Button>
+                      </div>
+                    {/if}
+                    {#if saveError}
+                      <p class="text-xs text-red-500 mt-1 text-center">
+                        {saveError}
+                      </p>
+                    {/if}
+                  </div>
+                {:else if userBio}
+                  <div
+                    class="bg-white dark:bg-neutral-950 rounded-md border border-neutral-200 dark:border-neutral-800 p-3 h-full"
+                  >
+                    <h3
+                      class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 text-center"
+                    >
+                      Bio
+                    </h3>
+                    <p class="text-sm text-center">{userBio}</p>
+                  </div>
+                {:else}
+                  <div
+                    class="bg-white dark:bg-neutral-950 rounded-md border border-neutral-200 dark:border-neutral-800 p-3 h-full"
+                  >
+                    <h3
+                      class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 text-center"
+                    >
+                      Bio
+                    </h3>
+                    <p
+                      class="text-sm text-neutral-500 dark:text-neutral-400 italic text-center"
+                    >
+                      No bio provided
+                    </p>
+                  </div>
+                {/if}
+              </div>
+
+              <!-- Badges -->
+              <div class="md:col-span-1 order-1 md:order-2">
+                <div
+                  class="bg-white dark:bg-neutral-950 rounded-md border border-neutral-200 dark:border-neutral-800 p-3 h-full"
+                >
+                  <h3 class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-300 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-amber-500" viewBox="0 0 20 20" fill="currentColor">
                       <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                     </svg>
-                    Achievements
+                    Badges & Achievements
                   </h3>
-                  <div class="flex flex-wrap gap-1">
+                  <div class="flex flex-wrap gap-2 justify-center">
                     {#if userBadges.length > 0 || calculatedBadges.length > 0}
+                      <!-- Display server-provided badges first -->
                       {#each userBadges as badge (badge.id)}
-                        <div class="text-xs border border-neutral-200 dark:border-neutral-700 rounded-full px-2 py-0.5 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 flex items-center gap-1" title={badge.description}>
+                        <!-- If the badge has an iconUrl, display it as is -->
+                        <div class="text-xs border border-neutral-200 dark:border-neutral-700 rounded-full px-3 py-1 bg-neutral-50 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 flex items-center gap-1" title={badge.description}>
                           {#if badge.iconUrl}
                             <img src={badge.iconUrl} alt={badge.name} class="h-3 w-3" />
                           {/if}
@@ -830,6 +1049,7 @@
                         </div>
                       {/each}
                       
+                      <!-- Display calculated badges -->
                       {#each calculatedBadges as badge (badge.id)}
                         <Badge 
                           name={badge.name}
@@ -839,237 +1059,8 @@
                         />
                       {/each}
                     {:else}
-                      <div class="text-xs text-neutral-500 dark:text-neutral-400 italic">
+                      <div class="text-xs text-neutral-500 italic">
                         No badges earned yet.
-                      </div>
-                    {/if}
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Center column: Main profile info -->
-              <div class="w-full md:w-1/3 flex flex-col items-center order-1 md:order-2">
-                <!-- Avatar with improved styling and larger size - Update -mt-12 to mt-4 since gradient is gone -->
-                <div class="relative mt-4">
-                  <div
-                    class="w-24 h-24 rounded-full overflow-hidden
-                           ring-3 ring-white dark:ring-neutral-900 shadow-lg
-                           bg-gradient-to-br from-neutral-100 to-neutral-50 dark:from-neutral-800 dark:to-neutral-900"
-                  >
-                    {#if userImage}
-                      <img
-                        src={userImage}
-                        alt={userName}
-                        class="w-full h-full object-cover"
-                      />
-                    {:else}
-                      <div class="flex items-center justify-center w-full h-full bg-gradient-to-br from-primary-100 to-primary-50 dark:from-primary-900/40 dark:to-primary-800/40">
-                        <span
-                          class="text-3xl font-medium text-primary-600 dark:text-primary-400"
-                        >
-                          {userName ? userName[0].toUpperCase() : "?"}
-                        </span>
-                      </div>
-                    {/if}
-                  </div>
-
-                  {#if isCurrentUserProfile}
-                    <label
-                      for="profile-image-upload"
-                      class="absolute bottom-0 right-0 cursor-pointer p-1.5 bg-primary text-white dark:bg-neutral-600 dark:text-white rounded-full
-                            shadow-md hover:bg-primary-600 dark:hover:bg-primary-500 transition-colors duration-200 transform translate-x-1 translate-y-1"
-                      title="Change profile picture"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
-                        <circle cx="12" cy="13" r="3" />
-                      </svg>
-                      <input
-                        id="profile-image-upload"
-                        type="file"
-                        class="hidden"
-                        accept="image/*"
-                        on:change={handleImageUpload}
-                      />
-                    </label>
-                  {/if}
-                </div>
-
-                <!-- Username and Role - Larger text -->
-                <div class="text-center mt-3 mb-2">
-                  <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">{userName}</h1>
-                  {#if userRole !== "USER"}
-                    <span class="inline-block px-2 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-sm rounded-full mt-1">
-                      {userRole}
-                    </span>
-                  {/if}
-                </div>
-
-                <!-- Stats Bar - Larger text -->
-                <div class="flex items-center gap-4 mb-4 text-base">
-                  <div class="text-center">
-                    <span class="block font-semibold text-neutral-900 dark:text-white">{followerCount}</span>
-                    <span class="text-sm text-neutral-500 dark:text-neutral-400">Followers</span>
-                  </div>
-                  <div class="h-8 border-r border-neutral-200 dark:border-neutral-800"></div>
-                  <div class="text-center">
-                    <span class="block font-semibold text-neutral-900 dark:text-white">{followingCount}</span>
-                    <span class="text-sm text-neutral-500 dark:text-neutral-400">Following</span>
-                  </div>
-                </div>
-
-                <!-- Action Buttons with improved dark mode styling -->
-                {#if !isCurrentUserProfile && $activeUser != null}
-                  <div class="flex gap-3 mb-2">
-                    <Button
-                      variant={isFollowing ? "outline" : "default"}
-                      size="sm"
-                      class={`h-8 text-sm rounded-full px-4 ${isFollowing 
-                        ? "bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800/50 dark:hover:bg-blue-900/50" 
-                        : "bg-primary hover:bg-primary-600 text-white dark:bg-primary-600 dark:hover:bg-primary-500"}`}
-                      on:click={toggleFollow}
-                      disabled={followLoading}
-                    >
-                      {#if followLoading}
-                        <span class="inline-block h-3 w-3 mr-1.5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-                      {:else if isFollowing}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                          <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
-                        </svg>
-                      {:else}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                        </svg>
-                      {/if}
-                      {isFollowing ? "Following" : "Follow"}
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="h-8 text-sm rounded-full px-4 bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800/50 dark:hover:bg-rose-900/50 disabled:opacity-50 disabled:hover:bg-rose-50 dark:disabled:hover:bg-rose-900/30 flex items-center"
-                      on:click={() => (showReportModal = true)}
-                      disabled={userAlreadyReported || userRole === "BANNED"}
-                    >
-                      {#if userAlreadyReported}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                        </svg>
-                      {:else if userRole === "BANNED"}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clip-rule="evenodd" />
-                        </svg>
-                      {:else}
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-                        </svg>
-                      {/if}
-                      {userAlreadyReported
-                        ? "Reported"
-                        : userRole === "BANNED"
-                          ? "Banned"
-                          : "Report"}
-                    </Button>
-                  </div>
-                {/if}
-              </div>
-              
-              <!-- Right column: Location and About -->
-              <div class="w-full md:w-1/3 order-2 md:order-3">
-                <!-- Stack Location and About vertically -->
-                <div class="flex flex-col gap-2 mt-4  justify-start">
-                  <!-- Location - With left alignment -->
-                  <div class="p-3 rounded-lg border border-neutral-200 dark:border-neutral-800  justify-start">
-                    <h3 class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-200 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-teal-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                    </svg>
-                    Location
-                    </h3>
-                    <div class="relative z-50 location-select-container  justify-start">
-                      <UserCountrySelector
-                        bind:selectedCountries={userCountries}
-                        isEditable={isCurrentUserProfile}
-                        maxCountries={3}
-                        on:change={handleCountryChange}
-                      />
-                    </div>
-                  </div>
-
-                  <!-- About section - No changes needed -->
-                  <div class="p-3 rounded-lg border border-neutral-200 dark:border-neutral-800">
-                    <h3 class="text-sm font-medium mb-2 text-neutral-700 dark:text-neutral-200 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                      </svg>
-                      About
-                    </h3>
-                    
-                    {#if isCurrentUserProfile}
-                      <div class="relative">
-                        <!-- Auto-expanding textarea with script to handle height -->
-                        <div class="relative">
-                          <textarea
-                            id="bio-textarea"
-                            placeholder="Tell us about yourself..."
-                            class="w-full py-2 px-3 border border-neutral-200 dark:border-neutral-700 rounded-md text-sm bg-white dark:bg-neutral-900 resize-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 focus:outline-none overflow-hidden min-h-[60px]"
-                            bind:value={userBio}
-                            on:input={e => {
-                              const textarea = e.target;
-                              textarea.style.height = 'auto';
-                              textarea.style.height = Math.max(60, textarea.scrollHeight) + 'px';
-                            }}
-                          ></textarea>
-                        </div>
-                        
-                        {#if bioChanged}
-                          <div class="absolute bottom-1.5 right-1.5">
-                            <Button
-                              class="h-6 px-2 text-xs rounded-full bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800/50 dark:hover:bg-blue-900/60 flex items-center justify-center gap-1"
-                              size="sm"
-                              on:click={saveProfile}
-                              disabled={savingProfile}
-                            >
-                              {#if savingProfile}
-                                <span class="inline-block h-2.5 w-2.5 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
-                              {:else}
-                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                                  <polyline points="17 21 17 13 7 13 7 21"/>
-                                  <polyline points="7 3 7 8 15 8"/>
-                                </svg>
-                              {/if}
-                              {savingProfile ? "..." : "Save"}
-                            </Button>
-                          </div>
-                        {/if}
-                        {#if saveError}
-                          <p class="text-xs text-red-500 mt-1">
-                            {saveError}
-                          </p>
-                        {/if}
-                      </div>
-                    {:else if userBio}
-                      <div class="text-sm mt-1 bg-white dark:bg-neutral-800 p-2 rounded-md border border-neutral-100 dark:border-neutral-700 min-h-[60px]">
-                        <p>{userBio}</p>
-                      </div>
-                    {:else}
-                      <div class="text-sm text-neutral-500 dark:text-neutral-400 italic mt-1.5 flex items-center min-h-[60px]">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1 text-neutral-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
-                        </svg>
-                        No bio provided
                       </div>
                     {/if}
                   </div>
@@ -1080,27 +1071,27 @@
         </Card.Header>
       </Card.Root>
 
-      <!-- Tabs with styling consistent with profile card -->
+      <!-- Completely redesigned tab component for posts/comments -->
       <div
-        class="bg-white dark:bg-neutral-950 shadow-md rounded-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden"
+        class="bg-white dark:bg-neutral-950 shadow-md rounded-md border border-neutral-200 dark:border-neutral-800 overflow-hidden"
       >
         <Tabs defaultValue="posts" class="w-full">
-          <!-- Updated tab header styling for consistency -->
+          <!-- Fixed tab header styling -->
           <div
             class="px-4 pt-4 border-b border-neutral-200 dark:border-neutral-800"
           >
             <div
-              class="grid grid-cols-2 w-full rounded-md overflow-hidden border border-neutral-200 dark:border-neutral-800"
+              class="grid grid-cols-2 w-full bg-neutral-100 dark:bg-neutral-900 rounded-md overflow-hidden"
             >
               <TabsTrigger
                 value="posts"
-                class="text-center rounded-none data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 h-11 transition-all text-base font-medium"
+                class="text-center rounded-none data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 h-10 transition-all"
               >
                 <div class="flex items-center justify-center gap-1.5">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
+                    width="14"
+                    height="14"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -1113,18 +1104,18 @@
                       d="M15 3v18"
                     /></svg
                   >
-                  <span class="text-sm">Posts ({threads.length})</span>
+                  <span>Posts ({threads.length})</span>
                 </div>
               </TabsTrigger>
               <TabsTrigger
                 value="comments"
-                class="text-center rounded-none data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 h-11 transition-all text-base font-medium"
+                class="text-center rounded-none data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 h-10 transition-all"
               >
                 <div class="flex items-center justify-center gap-1.5">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
+                    width="14"
+                    height="14"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -1137,7 +1128,7 @@
                       d="M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1"
                     /></svg
                   >
-                  <span class="text-sm">Comments ({comments.length})</span>
+                  <span>Comments ({comments.length})</span>
                 </div>
               </TabsTrigger>
             </div>
@@ -1317,7 +1308,7 @@
                               >
                                 <path
                                   fill-rule="evenodd"
-                                  d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v5zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z"
+                                  d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z"
                                   clip-rule="evenodd"
                                 />
                               </svg>
@@ -1499,7 +1490,7 @@
                                 >
                                   <path
                                     fill-rule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z"
                                     clip-rule="evenodd"
                                   />
                                 </svg>
@@ -1546,7 +1537,7 @@
                                 >
                                   <path
                                     fill-rule="evenodd"
-                                    d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2v5zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z"
+                                    d="M18 5v8a2 2 0 01-2 2h-5l-5 4v-4H4a2 2 0 01-2-2V5a2 2 0 012-2h12a2 2 0 012 2zM7 8H5v2h2V8zm2 0h2v2H9V8zm6 0h-2v2h2V8z"
                                     clip-rule="evenodd"
                                   />
                                 </svg>
@@ -1605,7 +1596,7 @@
                               >
                                 <path
                                   fill-rule="evenodd"
-                                  d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0  0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"
+                                  d="M12.586 4.586a2 2 0 112.828 2.828l-3 3a2 2 0 01-2.828 0 1 1 0 00-1.414 1.414 4 4 0 005.656 0l3-3a4 4 0 00-5.656-5.656l-1.5 1.5a1 1 0 101.414 1.414l1.5-1.5zm-5 5a2 2 0 012.828 0 1 1 0 101.414-1.414 4 4 0 00-5.656 0l-3 3a4 4 0 105.656 5.656l1.5-1.5a1 1 0 10-1.414-1.414l-1.5 1.5a2 2 0 11-2.828-2.828l3-3z"
                                   clip-rule="evenodd"
                                 />
                               </svg>
@@ -1773,72 +1764,44 @@
   </div>
 </div>
 {#if showReportModal}
-  <div class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all duration-300">
+  <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div
-      class="bg-white dark:bg-neutral-950 rounded-xl shadow-2xl w-full max-w-md overflow-y-auto border border-neutral-200 dark:border-neutral-800 animate-in fade-in zoom-in-95 duration-200"
+      class="bg-white dark:bg-neutral-900 rounded-lg p-6 w-full max-w-md shadow-lg relative"
     >
-      <div class="p-6">
-        <h2 class="text-lg font-semibold mb-4 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-rose-600 dark:text-rose-500" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-          </svg>
-          Report User
-        </h2>
+      <h2 class="text-lg font-semibold mb-4 text-red-600">Report User</h2>
 
-        <!-- svelte-ignore a11y-label-has-associated-control -->
-        <label class="block mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">Reason</label>
-        <select
-          bind:value={reportReason}
-          class="w-full mb-4 p-2 rounded-md border text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500"
+      <!-- svelte-ignore a11y-label-has-associated-control -->
+      <label class="block mb-2 text-sm font-medium">Reason</label>
+      <select
+        bind:value={reportReason}
+        class="w-full mb-4 p-2 rounded border dark:bg-neutral-800 dark:border-neutral-700"
+      >
+        <option value="SPAM">Spam</option>
+        <option value="ABUSE">Abuse</option>
+        <option value="COPYRIGHT">Copyright</option>
+        <option value="OTHER">Other</option>
+      </select>
+
+      <!-- svelte-ignore a11y-label-has-associated-control -->
+      <label class="block mb-2 text-sm font-medium">Notes (optional)</label>
+      <textarea
+        bind:value={reportNotes}
+        class="w-full p-2 rounded border dark:bg-neutral-800 dark:border-neutral-700 mb-4"
+        rows="3"
+        placeholder="Additional context..."
+      ></textarea>
+
+      {#if reportError}
+        <p class="text-sm text-red-500 mb-3">{reportError}</p>
+      {/if}
+
+      <div class="flex justify-end gap-2">
+        <Button on:click={() => (showReportModal = false)} variant="outline"
+          >Cancel</Button
         >
-          <option value="SPAM">Spam</option>
-          <option value="ABUSE">Abuse</option>
-          <option value="COPYRIGHT">Copyright</option>
-          <option value="OTHER">Other</option>
-        </select>
-
-        <!-- svelte-ignore a11y-label-has-associated-control -->
-        <label class="block mb-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">Notes (optional)</label>
-        <textarea
-          bind:value={reportNotes}
-          class="w-full p-2 rounded-md border text-sm bg-white dark:bg-neutral-950 border-neutral-200 dark:border-neutral-700 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500 mb-4"
-          rows="3"
-          placeholder="Additional context..."
-        ></textarea>
-
-        {#if reportError}
-          <div class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 p-3 rounded-md mb-4 text-sm border border-red-200 dark:border-red-800/50">
-            {reportError}
-          </div>
-        {/if}
-
-        <div class="flex justify-end gap-3 mt-6">
-          <Button 
-            variant="outline" 
-            on:click={() => (showReportModal = false)}
-            class="text-sm rounded-full bg-neutral-100 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-800"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-            Cancel
-          </Button>
-          <Button 
-            variant="default"
-            on:click={submitReport} 
-            disabled={reportSubmitting}
-            class="text-sm rounded-full bg-rose-600 hover:bg-rose-700 text-white px-4"
-          >
-            {#if reportSubmitting}
-              <span class="inline-block h-4 w-4 mr-1.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-            {:else}
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-            </svg>
-            {/if}
-            {reportSubmitting ? "Submitting..." : "Submit Report"}
-          </Button>
-        </div>
+        <Button on:click={submitReport} disabled={reportSubmitting}>
+          {reportSubmitting ? "Reporting..." : "Submit Report"}
+        </Button>
       </div>
     </div>
   </div>
@@ -1850,36 +1813,5 @@
   .text-transparent {
     -webkit-background-clip: text;
     background-clip: text;
-  }
-  
-  /* Enhanced more specific selectors for location alignment */
-  :global(.location-select-container .selection),
-  :global(.location-select-container ul),
-  :global(.location-select-container div) {
-    justify-content: flex-start !important;
-    text-align: left !important;
-  }
-  
-  :global(.location-select-container .country-flag-item),
-  :global(.location-select-container .placeholder),
-  :global(.location-select-container .country-item) {
-    justify-content: flex-start !important;
-    margin-right: auto !important;
-    text-align: left !important;
-    width: 100% !important;
-  }
-  
-  /* Force left alignment for all content in the selector */
-  :global(.location-select-container *) {
-    text-align: left !important;
-    justify-content: flex-start !important;
-    margin-right: auto !important;
-  }
-  
-  /* Handle the specific country display elements */
-  :global(.location-select-container .multiselect-item) {
-    display: flex !important;
-    justify-content: flex-start !important;
-    width: 100% !important;
   }
 </style>

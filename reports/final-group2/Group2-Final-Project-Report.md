@@ -243,6 +243,10 @@ Following requirements are gathered and met with the final release of the softwa
 
 ![comment-creation](assets/comment-creation.png)
 
+### Sequence Diagram for Reporting
+
+![report](assets/report.png)
+
 ## 4. Docker Quickstart Manual
 
 ### 4.1. Backend (Composed Java Maven App)
@@ -1140,14 +1144,217 @@ Top 3 contributions on documentation, all being as inclusive as possible since t
 
 ## 9. Individual Contributions for [Mustafa Bektaş](https://github.com/mustafa-bektas)
 
+### Executive Summary
 
+I served as a core backend developer and technical problem solver for the project. My primary responsibilities included designing and implementing key backend features such as the post resolution system, advanced search, multi-part mystery object support, and multimedia handling for both posts and comments. I also led efforts to improve code quality and maintainability through comprehensive unit testing, cloud migration, and deployment automation. In addition to my development work, I was highly active in code reviews, providing feedback and approvals on a wide range of pull requests, and ensuring the robustness and scalability of the platform.
 
+### Major Implementations
 
+Below is a selection of major features, enhancements, and fixes implemented by me, as evidenced by closed issues and merged pull requests:
 
+#### Backend and Feature Implementations
 
+- [Implement resolution feature](https://github.com/rmguney/swe574-2025s-g2/issues/121), [121-resolution PR](https://github.com/rmguney/swe574-2025s-g2/pull/188): Designed and implemented the post resolution system, enabling users to mark posts as solved with structured explanations.
+- [Mystery objects should consist of multiple parts](https://github.com/rmguney/swe574-2025s-g2/issues/122), [122-subpart PR](https://github.com/rmguney/swe574-2025s-g2/pull/155): Enabled support for multi-part mystery objects.
+- [Add missing fields to mystery object sub parts](https://github.com/rmguney/swe574-2025s-g2/issues/156), [PR #157](https://github.com/rmguney/swe574-2025s-g2/pull/157): Extended sub-part data model and UI.
+- [Comment types for thread organization](https://github.com/rmguney/swe574-2025s-g2/issues/186), [Comment-types PR](https://github.com/rmguney/swe574-2025s-g2/pull/187): Introduced comment categorization for improved discussion structure.
+- [Comments should support multimedia](https://github.com/rmguney/swe574-2025s-g2/issues/120), [PR #135](https://github.com/rmguney/swe574-2025s-g2/pull/135): Enabled image and media uploads in comments.
+- [Post creation - color should be chosen from color wheel](https://github.com/rmguney/swe574-2025s-g2/issues/118), [PR #228](https://github.com/rmguney/swe574-2025s-g2/pull/228): Added color picker and hex color storage for posts and subparts.
+- [Enhance user profile](https://github.com/rmguney/swe574-2025s-g2/issues/117), [Backend services for profile page and badges](https://github.com/rmguney/swe574-2025s-g2/pull/208): Improved user profile features and badge display.
+- [Semantic Search](https://github.com/rmguney/swe574-2025s-g2/issues/101), [Semantic search PR](https://github.com/rmguney/swe574-2025s-g2/pull/102): Implemented semantic search using Wikidata API.
+- [Sorting, filtering and pagination for search results](https://github.com/rmguney/swe574-2025s-g2/issues/123), [Advanced-search PR](https://github.com/rmguney/swe574-2025s-g2/pull/235): Developed advanced search and result filtering.
+- [Increase unit test coverage](https://github.com/rmguney/swe574-2025s-g2/issues/236), [Unit tests PR](https://github.com/rmguney/swe574-2025s-g2/pull/237): Added comprehensive unit tests for core services.
+- [Migrate stored images to Google Cloud](https://github.com/rmguney/swe574-2025s-g2/issues/108), [PR #109](https://github.com/rmguney/swe574-2025s-g2/pull/109): Migrated image storage to cloud infrastructure.
+- [Dockerize and deploy the project](https://github.com/rmguney/swe574-2025s-g2/issues/58), [PR #60](https://github.com/rmguney/swe574-2025s-g2/pull/60): Containerized and deployed the application.
+- [Fixes and hotfixes](https://github.com/rmguney/swe574-2025s-g2/issues/246), [Hotfix PR](https://github.com/rmguney/swe574-2025s-g2/pull/247): Addressed release and deployment issues.
 
+#### Additional Notable Contributions
 
+- [Profile page integration](https://github.com/rmguney/swe574-2025s-g2/issues/42), [PR #43](https://github.com/rmguney/swe574-2025s-g2/pull/43)
+- [Multiple images support](https://github.com/rmguney/swe574-2025s-g2/issues/177), [Hotfix PR](https://github.com/rmguney/swe574-2025s-g2/pull/178)
+- [Store JWT token in cookies](https://github.com/rmguney/swe574-2025s-g2/issues/86), [PR #87](https://github.com/rmguney/swe574-2025s-g2/pull/87)
+- [Integrate search API](https://github.com/rmguney/swe574-2025s-g2/issues/50), [PR #52](https://github.com/rmguney/swe574-2025s-g2/pull/52)
+- [Fix base64 image view](https://github.com/rmguney/swe574-2025s-g2/issues/124)
+- [Deploy the latest version of the app on the cloud](https://github.com/rmguney/swe574-2025s-g2/issues/169)
+- [Resolution comments are duplicated](https://github.com/rmguney/swe574-2025s-g2/issues/203)
+- [FollowedUserController.isFollowing throws exception](https://github.com/rmguney/swe574-2025s-g2/issues/223)
 
+For a full list of contributions, see [all closed issues](https://github.com/rmguney/swe574-2025s-g2/issues?q=is%3Aissue+author%3Amustafa-bektas+is%3Aclosed) and [all merged PRs](https://github.com/rmguney/swe574-2025s-g2/pulls?q=is%3Apr+author%3Amustafa-bektas+is%3Aclosed).
+
+### Code Reviews
+
+I have actively participated in the code review process, providing feedback, approvals, and comments on a wide range of pull requests. Below is a selection of significant PRs reviewed, including the review state and comments where applicable:
+
+- [#249](https://github.com/rmguney/swe574-2025s-g2/pull/249): updated apk build (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-05-11
+
+- [#242](https://github.com/rmguney/swe574-2025s-g2/pull/242): implement Badge System #149 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-05-11
+
+- [#240](https://github.com/rmguney/swe574-2025s-g2/pull/240): Implement reporting and moderation tools with admin panel 201 (by MertUnlu-SWE)  
+  - Review State: COMMENTED  
+  - Review Comment: cant review most of the edited files on the backend because of the immense amount of unnecessary changes to formatting, indentation, spacing, etc. i'd say approve the pr if @MertUnlu-SWE says everything definitely works  
+  - Reviewed At: 2025-05-09
+
+- [#233](https://github.com/rmguney/swe574-2025s-g2/pull/233): post recommendation feature #219 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-05-06
+
+- [#231](https://github.com/rmguney/swe574-2025s-g2/pull/231): graceful error handling checks for the entire website #230 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-05-05
+
+- [#229](https://github.com/rmguney/swe574-2025s-g2/pull/229): post recommendation feature #219 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-05-05
+
+- [#226](https://github.com/rmguney/swe574-2025s-g2/pull/226): FollowedUserController.isFollowing throws exception when visiting a profile without logging in (by MertUnlu-SWE)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-05-03
+
+- [#207](https://github.com/rmguney/swe574-2025s-g2/pull/207): visual bugs and consistency checks for the entire website #206 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-20
+
+- [#205](https://github.com/rmguney/swe574-2025s-g2/pull/205): enhance user profile #117, and frontend base for implement Reputation and Badge System #149 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-20
+
+- [#204](https://github.com/rmguney/swe574-2025s-g2/pull/204): Resolution comments are duplicated #203 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-17
+
+- [#200](https://github.com/rmguney/swe574-2025s-g2/pull/200): hotfix #196 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-17
+
+- [#199](https://github.com/rmguney/swe574-2025s-g2/pull/199): Update README.md (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-16
+
+- [#198](https://github.com/rmguney/swe574-2025s-g2/pull/198): hotfix (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-16
+
+- [#197](https://github.com/rmguney/swe574-2025s-g2/pull/197): sorting, filtering and pagination for home page #196 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-16
+
+- [#195](https://github.com/rmguney/swe574-2025s-g2/pull/195): handling of wikidata tags #180 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-16
+
+- [#194](https://github.com/rmguney/swe574-2025s-g2/pull/194): general bugfixes, visual adjustments, and feature improvements #181, #190, #191, #192, #193 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-16
+
+- [#182](https://github.com/rmguney/swe574-2025s-g2/pull/182): object parts display bugs #176 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-14
+
+- [#163](https://github.com/rmguney/swe574-2025s-g2/pull/163): color picker issues in the post creation page #162 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-02
+
+- [#161](https://github.com/rmguney/swe574-2025s-g2/pull/161): color display issues in the thread page #160 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-04-02
+
+- [#153](https://github.com/rmguney/swe574-2025s-g2/pull/153): swipe gesture support to go back on mobile devices #129 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-30
+
+- [#148](https://github.com/rmguney/swe574-2025s-g2/pull/148): add color display for the thread details page #144 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-28
+
+- [#143](https://github.com/rmguney/swe574-2025s-g2/pull/143): add exceptions for linter #142 and cleanup (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-25
+
+- [#140](https://github.com/rmguney/swe574-2025s-g2/pull/140): css fix for better background (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-19
+
+- [#139](https://github.com/rmguney/swe574-2025s-g2/pull/139): visual bugs after new features #136 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-19
+
+- [#133](https://github.com/rmguney/swe574-2025s-g2/pull/133): ux improvements and general visual consistency checks #131 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-18
+
+- [#132](https://github.com/rmguney/swe574-2025s-g2/pull/132): materials selection suggestions #130, general visual consistency checks #131 (create) (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-18
+
+- [#126](https://github.com/rmguney/swe574-2025s-g2/pull/126): post creation - color should be chosen from color wheel #118 + facelift (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-18
+
+- [#115](https://github.com/rmguney/swe574-2025s-g2/pull/115): Dedicated reports folder (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-17
+
+- [#114](https://github.com/rmguney/swe574-2025s-g2/pull/114): add multimedia support to both post creation page and post display #113 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-17
+
+- [#107](https://github.com/rmguney/swe574-2025s-g2/pull/107): tailwind-css-doesnt-apply-to-subroutes-#67 fixed (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-13
+
+- [#88](https://github.com/rmguney/swe574-2025s-g2/pull/88): #76 semantic tag codes are shown instead of names in profile (by MertUnlu-SWE)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-07
+
+- [#82](https://github.com/rmguney/swe574-2025s-g2/pull/82): threadstore improvements, not done : writable stores cause delay on loading times #80 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-03
+
+- [#79](https://github.com/rmguney/swe574-2025s-g2/pull/79): change static adaptor for quick deployment for frontend #78 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-03-03
+
+- [#75](https://github.com/rmguney/swe574-2025s-g2/pull/75): Threadstore revert (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-02-28
+
+- [#72](https://github.com/rmguney/swe574-2025s-g2/pull/72): datetime doesnt show on thumbnail variant of the posts #71 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-02-28
+
+- [#70](https://github.com/rmguney/swe574-2025s-g2/pull/70): profile page shows post tags and date wrong #68 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-02-28
+
+- [#69](https://github.com/rmguney/swe574-2025s-g2/pull/69): modify shared notifications component for better mobile display #59 (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-02-28
+
+- [#55](https://github.com/rmguney/swe574-2025s-g2/pull/55): #54 : modified shared user profile component for better mobile display (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-02-27
+
+- [#51](https://github.com/rmguney/swe574-2025s-g2/pull/51): #39, #49 : UI branch merge  (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-02-27
+
+- [#45](https://github.com/rmguney/swe574-2025s-g2/pull/45): #30, #26 : comments and upvote downvote functions are implemented (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-02-26
+
+- [#38](https://github.com/rmguney/swe574-2025s-g2/pull/38): Post display api integration (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-02-25
+
+- [#35](https://github.com/rmguney/swe574-2025s-g2/pull/35): #27 merge ui for better mobile compatibility on shared components  (by rmguney)  
+  - Review State: APPROVED  
+  - Reviewed At: 2025-02-25
+
+For a full list of reviewed pull requests, see [GitHub PRs reviewed by Mustafa Bektaş](https://github.com/rmguney/swe574-2025s-g2/pulls?q=is%3Apr+reviewed-by%3Amustafa-bektas+is%3Aclosed).
 
 ## 10. Individual Contributions for [Mert Ünlü](https://github.com/MertUnlu-SWE)
 

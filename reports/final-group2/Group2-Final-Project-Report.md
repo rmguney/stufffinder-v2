@@ -231,14 +231,17 @@ Following requirements are gathered and met with the final release of the softwa
 
 ## 3. System Diagrams
 
+### Entity-Relationship Diagram
 
+![entity](assets/entity.png)
 
+### Sequence Diagram for Post Creation
 
+![post-creation](assets/post-creation.png)
 
+### Sequence Diagram for Commenting
 
-
-
-
+![comment-creation](assets/comment-creation.png)
 
 ## 4. Docker Quickstart Manual
 
